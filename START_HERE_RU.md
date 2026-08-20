@@ -1,8 +1,8 @@
-# Hybrid Harness R9 — чистая болванка для новой тестовой задачи
+# Hybrid Harness R10 — чистая болванка для новой тестовой задачи
 
-Это **IDLE-шаблон**: активной mission, product code и acceptance evidence нет. Harness/control уже установлен и должен проходить baseline validation.
+Это IDLE-шаблон: активной mission и product evidence нет.
 
-## 1. Сразу после распаковки
+## 1. Проверка после распаковки
 
 ```bash
 ./CONTROL_HARNESS.sh status
@@ -10,37 +10,34 @@
 ./CONTROL_HARNESS.sh hygiene
 ./CONTROL_HARNESS.sh portable-check
 python3 -m unittest discover -s tests -p 'test_*.py' -v
-# mutation gate запускается ОТДЕЛЬНО:
 ./CONTROL_HARNESS.sh selftest
 ```
 
-Ожидание: baseline Harness PASS, `active_mission=null`.
+Ожидание: `HARNESS_READY`, `active_mission=null`, все baseline gates PASS.
 
-## 2. Настройте внешний trust ДО dispatch mission
+## 2. External trust до dispatch
 
-Создайте private seeds **за пределами репозитория**:
+Private seeds храните вне Git:
 
 ```bash
 python3 tools/external_attestation.py keygen --private-out "$HOME/.hybrid-harness-test/reviewer.seed"
 python3 tools/external_attestation.py keygen --private-out "$HOME/.hybrid-harness-test/integrator.seed"
 ```
 
-Скопируйте выведенные `public_key_b64` в:
+Public keys внесите в `config/control/harness/trust-providers.v1.json` и commit на `main` до Work Order dispatch.
 
-`config/control/harness/trust-providers.v1.json`
+## 3. Опишите mission до product implementation
 
-для двух разных key IDs/purposes (`REVIEW_PASS`, `INTEGRATION_APPROVE`), затем commit на `main`. Private seeds в Git не добавлять.
-
-## 3. Опишите тестовую задачу
-
-Возьмите за основу `examples/` и создайте:
+Используйте `examples/` и создайте:
 
 - `config/control/specifications/MISSION-001.md`
 - `config/control/requirements/WO-001.json`
 - `config/control/acceptance/WO-001.json`
 - `config/control/missions/WO-001.json`
 
-Сначала выполните:
+Каждый acceptance predicate обязан иметь `partition_oracles`: expected oracle ID + statement для каждого partition.
+
+Проверьте control plane:
 
 ```bash
 ./CONTROL_HARNESS.sh requirements-scan config/control/specifications/MISSION-001.md
@@ -48,19 +45,14 @@ python3 tools/external_attestation.py keygen --private-out "$HOME/.hybrid-harnes
 ./CONTROL_HARNESS.sh acceptance-check WO-001
 ```
 
-Не начинайте product implementation, пока specification + requirements + acceptance + Work Order не согласованы и не находятся в durable base history.
+Только после durable dispatch начинайте implementation в отдельной feature branch.
 
-## 4. Активируйте mission
-
-Обновите `config/control/project-state.v1.json` только после control-plane commit: задайте `active_work_order`, `active_mission`, epoch/checkpoint/lease согласно Work Order. Product mutation делайте в отдельной feature branch.
-
-## 5. Product работа
+## 4. Product evidence
 
 - код: `src/`
 - implementer tests: `tests/product/`
-- verifier evidence: `evidence/verifier/`
-- machine receipts: создавайте только через `CONTROL_HARNESS.sh evidence-run`
-- immutable events: через `CONTROL_HARNESS.sh event-add`
+- machine product receipts: `./CONTROL_HARNESS.sh evidence-run ...`
+- immutable events: `./CONTROL_HARNESS.sh event-add ...`
 
 Перед review:
 
@@ -70,29 +62,36 @@ python3 tools/external_attestation.py keygen --private-out "$HOME/.hybrid-harnes
 ./CONTROL_HARNESS.sh report
 ```
 
-После полного review/integration lifecycle финальный gate:
+## 5. R10 verifier evidence
+
+Verifier tests кладите в `evidence/verifier/` и наследуйте от `VerifierTestCase`.
+Каждый test method связывайте decorator `@verifier_case(...)` с durable CASE ID, partitions и oracle IDs из Acceptance Contract.
+
+Пример: `examples/verifier-test.template.py`.
+
+Запускайте verifier только base-owned runner:
+
+```bash
+./CONTROL_HARNESS.sh verifier-run verifier-adversarial evidence/verifier 'test_*.py'
+```
+
+Этот command создаёт durable receipt с exact runtime PASS test IDs и observed oracle IDs. Затем создайте `verification-manifest.json` по `examples/verification-manifest.template.json`.
+
+R10 fail-closed если:
+
+- `covered_partitions` содержит partition, которого нет в referenced cases;
+- required partition отсутствует в union referenced cases;
+- manifest `test_id` не был реально выполнен и PASS;
+- runtime case/partition/oracle metadata отличается от manifest;
+- required contract oracle не был успешно observed тестом.
+
+## 6. Final gates
 
 ```bash
 ./CONTROL_HARNESS.sh validate-ready
 ./CONTROL_HARNESS.sh portable-check
+./CONTROL_HARNESS.sh selftest
 ./CONTROL_HARNESS.sh final-report
 ```
 
-## R8/R9 invariants, которые нельзя обходить
-
-- никаких `git replace` refs;
-- никакого amend/rebase/reset managed proof history;
-- immutable evidence нельзя mutate→revert;
-- closure/source paths проверяются commit-by-commit;
-- consumer event должен bind exact attestation SHA-256 + Git blob;
-- финальный proof должен воспроизводиться в обычном clean clone.
-
-
-## R9 hardening
-
-- `issued_at_utc` внешней подписи обязан лежать между временем prerequisite и consumer event с bounded skew 120 секунд; Git ancestry остаётся главным causal proof.
-- переносы строк внутри Markdown bullet сначала сворачиваются в один logical bullet, затем строятся normative clause IDs/hashes; форматирование не должно создавать fragment clauses.
-- итог миссии публикуйте через `./CONTROL_HARNESS.sh final-report`; не переписывайте test counts/HEADs вручную.
-- обычный `python3 -m unittest discover -s tests` не выполняет mutation selftest; `./CONTROL_HARNESS.sh selftest` является отдельным обязательным gate.
-
-> Миграция: R9 меняет identity логических normative clauses относительно R8 line-based parser. Для уже dispatched R8 mission не переписывайте manifest; создайте новый attempt/control base и повторно сформируйте traceability.
+Не переписывайте machine-derived counts/HEAD вручную: canonical итог — `final-report`.

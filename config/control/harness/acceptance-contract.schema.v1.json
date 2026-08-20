@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.acceptance_contract_schema.v1",
-  "revision": "HYBRID-HARNESS-R9",
+  "revision": "HYBRID-HARNESS-R10",
   "required": [
     "schema",
     "contract_id",
@@ -18,7 +18,8 @@
     "partitions",
     "required_evidence",
     "verifier_owned",
-    "requirement_ids"
+    "requirement_ids",
+    "partition_oracles"
   ],
   "classes": [
     "EXAMPLE",
@@ -47,6 +48,7 @@
     "Every machine-required domain partition for a semantic tag must be covered before completion.",
     "Universal predicates require more than one partition and cannot be proven by a single happy-path example.",
     "MEDIUM+ requires verifier-owned adversarial evidence and signed external review.",
-    "Predicate PASS is derived from predicate coverage; prose verdict alone is insufficient."
+    "Predicate PASS is derived from predicate coverage; prose verdict alone is insufficient.",
+    "Every predicate partition owns one or more pre-implementation oracle IDs/statements; verifier cases must bind and observe those exact oracles at runtime."
   ]
 }

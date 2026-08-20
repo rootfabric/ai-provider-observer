@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.policy.v5",
-  "revision": "HYBRID-HARNESS-R9",
+  "revision": "HYBRID-HARNESS-R10",
   "canonical_branch": "main",
   "principles": {
     "git_is_durable_memory": true,
@@ -62,7 +62,12 @@
     "attestation_wall_clock_claims_are_causally_consistent": true,
     "normative_markdown_wrapping_does_not_create_fragment_clauses": true,
     "final_report_values_are_machine_derived": true,
-    "mutation_selftest_is_separate_from_unit_test_discovery": true
+    "mutation_selftest_is_separate_from_unit_test_discovery": true,
+    "verifier_partition_coverage_is_case_derived": true,
+    "verifier_cases_bind_exact_executed_test_ids": true,
+    "verifier_receipts_capture_runtime_test_ids": true,
+    "semantic_oracles_are_contract_owned_and_runtime_observed": true,
+    "normative_prose_wrapping_does_not_create_fragment_clauses": true
   },
   "concurrency": {
     "runtime_mutation_lease_capacity": 1,

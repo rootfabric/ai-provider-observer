@@ -47,5 +47,5 @@
     "attempt_id is immutable; failed attempts are superseded, not rewritten.",
     "Every machine-extracted normative clause from the base-owned Mission Specification must map to a Requirement ID and acceptance predicate."
   ],
-  "revision": "HYBRID-HARNESS-R9"
+  "revision": "HYBRID-HARNESS-R10"
 }

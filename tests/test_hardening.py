@@ -40,15 +40,18 @@ def now_utc() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def receipt(subject: str, rid: str, out_rel: str, output: bytes, *, execution_head: str | None = None, input_files: list[dict] | None = None) -> dict:
-    return {
-        "schema":"hybrid_harness.evidence_receipt.v4", "receipt_id":rid, "subject_head":subject, "execution_head":execution_head or subject,
-        "command":["python3","-m","unittest"], "cwd":".",
+def receipt(subject: str, rid: str, out_rel: str, output: bytes, *, execution_head: str | None = None, input_files: list[dict] | None = None, command: list[str] | None = None, verifier_result: dict | None = None) -> dict:
+    obj = {
+        "schema":"hybrid_harness.evidence_receipt.v5", "receipt_id":rid, "subject_head":subject, "execution_head":execution_head or subject,
+        "command":command or ["python3","-m","unittest"], "cwd":".",
         "environment_mode":"SANITIZED_PLUS_DECLARED_OVERRIDES", "environment_overrides":{}, "base_environment":{},
         "resolved_executable":"python3", "python_version":sys.version.split()[0], "clean_subject_tree":True,
         "started_at_utc":now_utc(), "finished_at_utc":now_utc(), "exit_code":0,
-        "output_path":out_rel, "output_sha256":hashlib.sha256(output).hexdigest(), "input_files": input_files or [], "runner":"HARNESS_COMMAND_API_R9"
+        "output_path":out_rel, "output_sha256":hashlib.sha256(output).hexdigest(), "input_files": input_files or [], "runner":"HARNESS_COMMAND_API_R10"
     }
+    if verifier_result is not None:
+        obj["verifier_result"] = verifier_result
+    return obj
 
 
 def signed_attestation(seed: bytes, *, root: Path, attestation_id: str, key_id: str, principal: str, purpose: str, subject: str, prerequisite_event: str, evidence_paths: list[str]) -> dict:
@@ -159,6 +162,11 @@ class ActiveFixture:
                 "requirement_ids":["REQ-IMPLEMENT","REQ-FAILURE"],
                 "class":"ATOMICITY", "semantic_tags":["transaction"],
                 "partitions":["success","rejection","failure_atomicity"],
+                "partition_oracles":{
+                    "success":[{"oracle_id":"O-TX-SUCCESS","statement":"Successful transaction commits atomically."}],
+                    "rejection":[{"oracle_id":"O-TX-REJECT","statement":"Rejected transaction leaves state unchanged."}],
+                    "failure_atomicity":[{"oracle_id":"O-TX-FAIL","statement":"Injected persistence failure leaves state coherent."}]
+                },
                 "required_evidence":["VERIFIER_TEST","FAULT_INJECTION"], "verifier_owned":True
             },
             {
@@ -166,6 +174,11 @@ class ActiveFixture:
                 "requirement_ids":["REQ-IMPLEMENT","REQ-PERSIST","REQ-FAILURE"],
                 "class":"PERSISTENCE", "semantic_tags":["persistence"],
                 "partitions":["restart","write_failure","replace_failure"],
+                "partition_oracles":{
+                    "restart":[{"oracle_id":"O-P-RESTART","statement":"State survives restart."}],
+                    "write_failure":[{"oracle_id":"O-P-WRITE","statement":"Write failure preserves coherent state."}],
+                    "replace_failure":[{"oracle_id":"O-P-REPLACE","statement":"Replace failure preserves coherent state."}]
+                },
                 "required_evidence":["VERIFIER_TEST","FAULT_INJECTION"], "verifier_owned":True
             }],
             "completion_rule":"Every predicate partition has durable verifier-owned machine evidence."
@@ -219,22 +232,37 @@ class ActiveFixture:
         verifier_script = root / "evidence/verifier/adversarial_cases.py"
         verifier_script.parent.mkdir(parents=True, exist_ok=True)
         verifier_script.write_text("# verifier-owned adversarial fixture\n", encoding="utf-8")
-        verifier_out = root / "evidence/raw/verifier.log"; verifier_out.write_bytes(b"VERIFIER OK\n")
+        runtime_rows = [
+            {"test_id":"adversarial_cases.FixtureVerifier.test_success","case_id":"V-SUCCESS","partitions":["success"],"oracle_ids":["O-TX-SUCCESS"],"observed_oracle_ids":["O-TX-SUCCESS"],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_reject","case_id":"V-REJECT","partitions":["rejection"],"oracle_ids":["O-TX-REJECT"],"observed_oracle_ids":["O-TX-REJECT"],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_failure","case_id":"V-FAIL","partitions":["failure_atomicity"],"oracle_ids":["O-TX-FAIL"],"observed_oracle_ids":["O-TX-FAIL"],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_restart","case_id":"V-RESTART","partitions":["restart"],"oracle_ids":["O-P-RESTART"],"observed_oracle_ids":["O-P-RESTART"],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_write_failure","case_id":"V-WRITE-FAIL","partitions":["write_failure"],"oracle_ids":["O-P-WRITE"],"observed_oracle_ids":["O-P-WRITE"],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_replace_failure","case_id":"V-REPLACE-FAIL","partitions":["replace_failure"],"oracle_ids":["O-P-REPLACE"],"observed_oracle_ids":["O-P-REPLACE"],"status":"PASS"},
+        ]
+        verifier_result = {
+            "schema":"hybrid_harness.verifier_execution.v1", "start_dir":"evidence/verifier", "pattern":"test_*.py",
+            "tests":runtime_rows, "executed_test_ids":[r["test_id"] for r in runtime_rows],
+            "passed_test_ids":[r["test_id"] for r in runtime_rows], "failed_test_ids":[], "skipped_test_ids":[]
+        }
+        marker = ("HARNESS_VERIFIER_RESULT_JSON=" + json.dumps(verifier_result, sort_keys=True, separators=(",", ":")) + "\n").encode()
+        verifier_out = root / "evidence/raw/verifier.log"; verifier_out.write_bytes(marker)
         current_exec = run(root, "rev-parse", "HEAD")
         write_json(root / "evidence/receipts/verifier.json", receipt(
-            self.candidate, "verifier", "evidence/raw/verifier.log", b"VERIFIER OK\n",
-            execution_head=current_exec, input_files=[{"path":"evidence/verifier/adversarial_cases.py","sha256":sha(verifier_script)}]
+            self.candidate, "verifier", "evidence/raw/verifier.log", marker,
+            execution_head=current_exec, input_files=[{"path":"evidence/verifier/adversarial_cases.py","sha256":sha(verifier_script)}],
+            command=["python3","scripts/harness/verifier_runner.py","evidence/verifier","test_*.py"], verifier_result=verifier_result
         ))
         write_json(root / "evidence/verifier/verification-manifest.json", {
-            "schema":"hybrid_harness.verification_manifest.v1", "mission_id":"M1", "work_order_id":"WO1",
+            "schema":"hybrid_harness.verification_manifest.v2", "mission_id":"M1", "work_order_id":"WO1",
             "candidate_head":self.candidate, "actor_id":"verify-session", "git_email":"verify@example.test",
             "cases":[
-                {"case_id":"V-SUCCESS","kind":"PROPERTY","owner":"VERIFIER","partitions":["success"],"semantic_tags":["transaction"]},
-                {"case_id":"V-REJECT","kind":"ADVERSARIAL","owner":"VERIFIER","partitions":["rejection"],"semantic_tags":["transaction"]},
-                {"case_id":"V-FAIL","kind":"FAULT_INJECTION","owner":"VERIFIER","partitions":["failure_atomicity"],"semantic_tags":["transaction"]},
-                {"case_id":"V-RESTART","kind":"PROPERTY","owner":"VERIFIER","partitions":["restart"],"semantic_tags":["persistence"]},
-                {"case_id":"V-WRITE-FAIL","kind":"FAULT_INJECTION","owner":"VERIFIER","partitions":["write_failure"],"semantic_tags":["persistence"]},
-                {"case_id":"V-REPLACE-FAIL","kind":"FAULT_INJECTION","owner":"VERIFIER","partitions":["replace_failure"],"semantic_tags":["persistence"]}
+                {"case_id":"V-SUCCESS","kind":"PROPERTY","owner":"VERIFIER","partitions":["success"],"semantic_tags":["transaction"],"test_ids":["adversarial_cases.FixtureVerifier.test_success"],"oracle_ids":["O-TX-SUCCESS"]},
+                {"case_id":"V-REJECT","kind":"ADVERSARIAL","owner":"VERIFIER","partitions":["rejection"],"semantic_tags":["transaction"],"test_ids":["adversarial_cases.FixtureVerifier.test_reject"],"oracle_ids":["O-TX-REJECT"]},
+                {"case_id":"V-FAIL","kind":"FAULT_INJECTION","owner":"VERIFIER","partitions":["failure_atomicity"],"semantic_tags":["transaction"],"test_ids":["adversarial_cases.FixtureVerifier.test_failure"],"oracle_ids":["O-TX-FAIL"]},
+                {"case_id":"V-RESTART","kind":"PROPERTY","owner":"VERIFIER","partitions":["restart"],"semantic_tags":["persistence"],"test_ids":["adversarial_cases.FixtureVerifier.test_restart"],"oracle_ids":["O-P-RESTART"]},
+                {"case_id":"V-WRITE-FAIL","kind":"FAULT_INJECTION","owner":"VERIFIER","partitions":["write_failure"],"semantic_tags":["persistence"],"test_ids":["adversarial_cases.FixtureVerifier.test_write_failure"],"oracle_ids":["O-P-WRITE"]},
+                {"case_id":"V-REPLACE-FAIL","kind":"FAULT_INJECTION","owner":"VERIFIER","partitions":["replace_failure"],"semantic_tags":["persistence"],"test_ids":["adversarial_cases.FixtureVerifier.test_replace_failure"],"oracle_ids":["O-P-REPLACE"]}
             ],
             "predicate_coverage":[{
                 "predicate_id":"P-TX-ATOMIC", "case_ids":["V-SUCCESS","V-REJECT","V-FAIL"],

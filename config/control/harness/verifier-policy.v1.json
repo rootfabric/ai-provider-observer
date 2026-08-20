@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.verifier_policy.v1",
-  "revision": "HYBRID-HARNESS-R9",
+  "revision": "HYBRID-HARNESS-R10",
   "principles": {
     "verifier_must_not_reuse_implementer_assertions_as_only_evidence": true,
     "predicate_coverage_is_machine_checked": true,
@@ -9,7 +9,11 @@
     "verifier_manifest_is_append_only": true,
     "test_case_ids_are_durable": true,
     "every_requirement_must_reach_machine_evidence": true,
-    "verifier_must_cover_requirement_required_partitions": true
+    "verifier_must_cover_requirement_required_partitions": true,
+    "covered_partitions_must_be_backed_by_referenced_cases": true,
+    "case_ids_must_bind_exact_runtime_pass_test_ids": true,
+    "verifier_receipt_must_capture_exact_runtime_test_ids": true,
+    "case_oracles_must_match_contract_and_be_runtime_observed": true
   },
   "artifact_root": "evidence/verifier",
   "manifest": "evidence/verifier/verification-manifest.json",
@@ -27,7 +31,10 @@
     "case_id",
     "kind",
     "partitions",
-    "semantic_tags"
+    "semantic_tags",
+    "owner",
+    "test_ids",
+    "oracle_ids"
   ],
   "coverage_required_fields": [
     "predicate_id",
@@ -35,5 +42,6 @@
     "receipt_refs",
     "covered_partitions"
   ],
-  "medium_plus_min_adversarial_cases": 1
+  "medium_plus_min_adversarial_cases": 1,
+  "manifest_schema": "hybrid_harness.verification_manifest.v2"
 }

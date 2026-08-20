@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.semantic_risk_policy.v1",
-  "revision": "HYBRID-HARNESS-R9",
+  "revision": "HYBRID-HARNESS-R10",
   "rule": "Semantic risk floor is machine-owned, but R7 normative Requirement Traceability is the complete requirement source. Tags only add risk/partition obligations.",
   "tags": {
     "persistence": {

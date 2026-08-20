@@ -599,6 +599,7 @@ def validate_active(root: Path, *, require_completion: bool = False) -> list[Act
             findings.append(_f(err.split(":", 1)[0], err))
 
     verifier_receipts = _list(em.get("verifier_receipts"))
+    verifier_receipt_objects: dict[str, dict[str, Any]] = {}
     for rel in verifier_receipts:
         if not isinstance(rel, str):
             findings.append(_f("VERIFIER_RECEIPT_REF_INVALID", repr(rel)))
@@ -609,10 +610,18 @@ def validate_active(root: Path, *, require_completion: bool = False) -> list[Act
             vr = load(root / rel)
         except (StrictJSONError, OSError):
             vr = {}
+        if isinstance(vr, dict):
+            verifier_receipt_objects[rel] = vr
         inputs = _list(_dict(vr).get("input_files"))
         verifier_inputs = [i.get("path") for i in inputs if isinstance(i, dict) and isinstance(i.get("path"), str) and i.get("path").startswith("evidence/verifier/")]
         if not verifier_inputs:
             findings.append(_f("VERIFIER_RECEIPT_INPUT_MISSING", rel))
+        verifier_result = _dict(vr).get("verifier_result")
+        if not isinstance(verifier_result, dict) or not isinstance(verifier_result.get("passed_test_ids"), list):
+            findings.append(_f("VERIFIER_RECEIPT_EXECUTION_PROOF_MISSING", rel))
+        command = _dict(vr).get("command")
+        if not isinstance(command, list) or len(command) < 2 or command[1] != "scripts/harness/verifier_runner.py":
+            findings.append(_f("VERIFIER_RECEIPT_RUNNER_COMMAND_INVALID", f"{rel}:{command}"))
 
     verifier_rel = "evidence/verifier/verification-manifest.json"
     verifier_manifest: dict[str, Any] = {}
@@ -639,7 +648,7 @@ def validate_active(root: Path, *, require_completion: bool = False) -> list[Act
         if isinstance(manifest_email, str) and isinstance(impl_email, str) and manifest_email.lower() == impl_email.lower():
             findings.append(_f("VERIFIER_MANIFEST_NOT_DISTINCT", manifest_email))
         medium_plus = RISK_ORDER.get(risk, 3) >= RISK_ORDER["MEDIUM"]
-        for err in coverage_errors(acceptance, verifier_manifest, em, medium_plus=medium_plus):
+        for err in coverage_errors(acceptance, verifier_manifest, em, medium_plus=medium_plus, receipt_objects=verifier_receipt_objects):
             code, _, detail = err.partition(":")
             findings.append(_f(code, detail or err))
         for err in requirement_coverage_errors(requirements_manifest, acceptance, verifier_manifest):

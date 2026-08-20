@@ -212,6 +212,20 @@ def run(source_root: Path) -> tuple[bool, list[str]]:
         p.write_text(p.read_text(encoding="utf-8") + "\nfrom selftest import run as run_selftest\n", encoding="utf-8")
     mutations.append(("bad-r9-selftest-isolation", break_r9_test_isolation, "R9_SELFTEST_NOT_ISOLATED"))
 
+    def weaken_r10_case_coverage(r: Path):
+        p = r / "config/control/harness/harness-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["principles"]["verifier_partition_coverage_is_case_derived"] = False; write_json(p, j)
+    mutations.append(("bad-r10-case-derived-coverage", weaken_r10_case_coverage, "R10_SEMANTIC_PROOF_GUARDS_MISSING"))
+
+    def weaken_r10_verifier_runtime(r: Path):
+        p = r / "config/control/harness/verifier-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["principles"]["case_ids_must_bind_exact_runtime_pass_test_ids"] = False; write_json(p, j)
+    mutations.append(("bad-r10-runtime-test-binding", weaken_r10_verifier_runtime, "R10_VERIFIER_POLICY_WEAKENED"))
+
+    def remove_r10_runner(r: Path):
+        (r / "scripts/harness/verifier_runner.py").unlink()
+    mutations.append(("bad-r10-missing-verifier-runner", remove_r10_runner, "REQUIRED_FILE_MISSING"))
+
     for name, mutate, expected in mutations:
         ok, detail = run_mutation(source_root, name, mutate, expected)
         out.append(f"{name}: {'PASS' if ok else 'FAIL'}")

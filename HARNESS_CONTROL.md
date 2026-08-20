@@ -1,104 +1,88 @@
-# Harness Control — Hybrid R9
+# Harness Control — Hybrid R10
 
 Canonical mutable state: `config/control/project-state.v1.json`.
 
-## Жизненный цикл
+## Lifecycle
 
 ```text
-immutable Mission Specification
+Mission Specification
   ↓
 Requirement Manifest + Acceptance Contract + Work Order
   ↓
-implementation branch → frozen candidate → machine receipts
+implementation branch → frozen candidate → product machine receipts
   ↓
-REVIEW_REQUEST
+REVIEW_REQUEST → signed external REVIEW_PASS
   ↓
-causally-bound signed external REVIEW_PASS
+verifier-owned tests through base-owned verifier runner
   ↓
-verifier-owned adversarial/property/fault evidence
+case-derived partition coverage + runtime oracle proof
   ↓
-Director pre-integration
+Director pre-integration → signed integration authorization
   ↓
-content-addressed external integration authorization
+pinned integration → post-integration validation
   ↓
-pinned integration
-  ↓
-per-commit closure trajectory proof
-  ↓
-post-integration validation
-  ↓
-portable clean-clone validation
-  ↓
-Director final / derived MISSION_COMPLETE
+portable clean-clone proof → Director final → derived MISSION_COMPLETE
 ```
 
-## R8 portable Git truth (retained in R9)
+## Retained R8/R9 invariants
 
-Harness не доверяет локальным history overlays. Все Git proof operations выполняются с `GIT_NO_REPLACE_OBJECTS=1`. Если существуют `refs/replace/*`, mission completion fail-closed.
+- `git replace` refs are forbidden and all Git proof disables replacement objects.
+- immutable evidence means no mutate→revert history laundering.
+- closure/source policy is checked commit-by-commit.
+- consumer events bind exact attestation SHA-256 + Git blob.
+- `issued_at_utc` must be causally consistent with prerequisite/consumer times.
+- final proof must reproduce in a normal clean clone.
+- `final-report` is machine-derived.
+- mutation selftest is a separate mandatory gate.
 
-Immutable evidence — это свойство истории, а не совпадение first/final bytes. `A → B → A` считается mutation и не может восстановить immutability.
+## R10 semantic verifier protocol
 
-Closure policy применяется к **каждому commit** в разрешённой траектории. Запрещённый файл нельзя добавить, использовать и затем удалить перед final HEAD.
+R10 does not trust manifest prose such as `covered_partitions` by itself.
 
-## R8 exact consumer binding (retained in R9)
-
-Для внешней attestation consumer event должен содержать:
+For every acceptance predicate partition:
 
 ```text
-attestation
-attestation_sha256
-attestation_git_blob
+base-owned Acceptance Contract partition_oracle
+  ↓
+Verifier Manifest CASE-* partition + oracle_id + exact test_id
+  ↓
+base-owned verifier_runner executes that exact test
+  ↓
+runtime PASS record contains same case/partition/oracle metadata
+  ↓
+VerifierTestCase.assert_oracle* records successful oracle observation
+  ↓
+durable verifier receipt binds exact runtime result
 ```
 
-(поле в JSON называется `attestation_sha256`; пробел выше только визуальный.) Validator берёт attestation bytes из exact consumer commit, а не из финального HEAD.
+Completion fails if a partition is claimed but absent from referenced cases, if a test ID was not actually observed PASS, if runtime metadata differs from the manifest, or if a required oracle was not observed.
 
-## Portable clean clone
+### Verifier test API
+
+```python
+from verifier_api import VerifierTestCase, verifier_case
+
+class MyVerifierTests(VerifierTestCase):
+    @verifier_case(
+        "CASE-001",
+        partitions=["boundary"],
+        oracle_ids=["ORACLE-PRED-001-BOUNDARY"],
+    )
+    def test_boundary(self):
+        actual = ...
+        self.assert_oracle_equal(
+            "ORACLE-PRED-001-BOUNDARY",
+            actual,
+            expected,
+        )
+```
+
+Run verifier tests only through:
 
 ```bash
-./CONTROL_HARNESS.sh portable-check
+./CONTROL_HARNESS.sh verifier-run verifier-adversarial evidence/verifier 'test_*.py'
 ```
 
-Создаёт обычный `git clone --no-local` и повторяет canonical validation. Для `MISSION_COMPLETE` `validate-ready` включает этот gate автоматически.
+## Normative parser R10
 
-## Commands
-
-```bash
-./CONTROL_HARNESS.sh validate
-./CONTROL_HARNESS.sh validate-active
-./CONTROL_HARNESS.sh validate-ready
-./CONTROL_HARNESS.sh portable-check
-./CONTROL_HARNESS.sh selftest
-./CONTROL_HARNESS.sh report
-```
-
-
-## R9 temporal causal consistency
-
-Signed wall-clock metadata is supplemental, not authoritative over Git ancestry. Nevertheless it must not contradict causal order:
-
-```text
-prerequisite.recorded_at_utc <= attestation.issued_at_utc <= consumer.recorded_at_utc
-```
-
-A bounded clock skew of 120 seconds is allowed. Invalid/unparseable time claims fail closed.
-
-## R9 normative parser
-
-Markdown list continuation lines are folded into one logical bullet before normative sentence extraction. Physical line wrapping must not create standalone fragments or change a logical clause hash.
-
-## R9 test isolation and final report
-
-Fast unit discovery and mutation testing are separate gates:
-
-```bash
-python3 -m unittest discover -s tests -p 'test_*.py'
-./CONTROL_HARNESS.sh selftest
-```
-
-Final mission reporting is generated by:
-
-```bash
-./CONTROL_HARNESS.sh final-report
-```
-
-The command derives HEAD/branch, completion proof, readiness findings, portable status, selftest mutation count, discovered Python test counts, verifier manifest counts, requirement/predicate counts, event count and durable receipt exit codes.
+Both wrapped list items and ordinary wrapped prose paragraphs are folded into logical Markdown units before sentence extraction. Pure formatting line-wrap changes must not change logical clause text/hash.

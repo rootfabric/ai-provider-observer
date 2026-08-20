@@ -26,7 +26,19 @@ from gitproof import (
 )
 
 BASE_ENV_KEYS = ("PATH", "HOME", "LANG", "LC_ALL", "TZ", "SYSTEMROOT", "COMSPEC", "PATHEXT")
+VERIFIER_RESULT_MARKER = b"HARNESS_VERIFIER_RESULT_JSON="
 
+
+
+def parse_verifier_result(output: bytes) -> dict[str, Any] | None:
+    for raw in reversed(output.splitlines()):
+        if raw.startswith(VERIFIER_RESULT_MARKER):
+            try:
+                value = json.loads(raw[len(VERIFIER_RESULT_MARKER):].decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                return None
+            return value if isinstance(value, dict) else None
+    return None
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -99,7 +111,7 @@ def write_receipt(root: Path, receipt_id: str, command: list[str], env_overrides
     output = proc.stdout or b""
     output_path.write_bytes(output)
     receipt = {
-        "schema": "hybrid_harness.evidence_receipt.v4",
+        "schema": "hybrid_harness.evidence_receipt.v5",
         "receipt_id": receipt_id,
         "subject_head": subject,
         "execution_head": execution_head,
@@ -120,8 +132,11 @@ def write_receipt(root: Path, receipt_id: str, command: list[str], env_overrides
             {"path": rel, "sha256": sha256_file(root / rel)}
             for rel in input_paths if (root / rel).is_file()
         ],
-        "runner": "HARNESS_COMMAND_API_R9",
+        "runner": "HARNESS_COMMAND_API_R10",
     }
+    verifier_result = parse_verifier_result(output)
+    if verifier_result is not None:
+        receipt["verifier_result"] = verifier_result
     receipt_path.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     os.write(1, output)
     print(f"\nEVIDENCE_RECEIPT={receipt_path.relative_to(root)}")
@@ -149,7 +164,7 @@ def validate_receipt(root: Path, path: Path, expected_head: str) -> list[str]:
     if not isinstance(r, dict):
         return [f"EVIDENCE_RECEIPT_INVALID:{path}:object required"]
     errors.extend(_durable_path_errors(root, rel, "EVIDENCE_RECEIPT"))
-    if r.get("runner") != "HARNESS_COMMAND_API_R9":
+    if r.get("runner") != "HARNESS_COMMAND_API_R10":
         errors.append(f"EVIDENCE_RECEIPT_RUNNER_UNTRUSTED:{path}")
     if r.get("subject_head") != expected_head:
         errors.append(f"EVIDENCE_RECEIPT_STALE:{path}:{r.get('subject_head')}!={expected_head}")
@@ -191,6 +206,16 @@ def validate_receipt(root: Path, path: Path, expected_head: str) -> list[str]:
         actual = sha256_file(root / out_rel)
         if actual != r.get("output_sha256"):
             errors.append(f"EVIDENCE_OUTPUT_HASH_MISMATCH:{path}")
+        output_bytes = (root / out_rel).read_bytes()
+        parsed_verifier = parse_verifier_result(output_bytes)
+        stored_verifier = r.get("verifier_result")
+        if stored_verifier is not None or parsed_verifier is not None:
+            if not isinstance(stored_verifier, dict) or parsed_verifier != stored_verifier:
+                errors.append(f"VERIFIER_RECEIPT_RESULT_MISMATCH:{path}")
+            elif stored_verifier.get("schema") != "hybrid_harness.verifier_execution.v1":
+                errors.append(f"VERIFIER_RECEIPT_RESULT_SCHEMA_INVALID:{path}")
+            elif stored_verifier.get("failed_test_ids"):
+                errors.append(f"VERIFIER_RECEIPT_CONTAINS_FAILED_TESTS:{path}")
     return errors
 
 

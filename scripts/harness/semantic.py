@@ -110,6 +110,18 @@ def validate_contract_shape(contract: dict[str, Any], schema: dict[str, Any]) ->
         parts = predicate.get("partitions")
         if not isinstance(parts, list) or not all(isinstance(x, str) and x for x in parts):
             errors.append(f"ACCEPTANCE_PARTITIONS_INVALID:{pid}")
+            parts = []
+        partition_oracles = predicate.get("partition_oracles")
+        if not isinstance(partition_oracles, dict):
+            errors.append(f"ACCEPTANCE_PARTITION_ORACLES_INVALID:{pid}")
+            partition_oracles = {}
+        for part in parts:
+            rows = partition_oracles.get(part)
+            if not isinstance(rows, list) or not rows or not all(isinstance(x, dict) and isinstance(x.get("oracle_id"), str) and x.get("oracle_id") and isinstance(x.get("statement"), str) and x.get("statement") for x in rows):
+                errors.append(f"ACCEPTANCE_PARTITION_ORACLE_MISSING:{pid}:{part}")
+        extra_oracle_parts = set(partition_oracles) - set(parts)
+        for part in sorted(extra_oracle_parts):
+            errors.append(f"ACCEPTANCE_PARTITION_ORACLE_UNKNOWN_PARTITION:{pid}:{part}")
         modes = predicate.get("required_evidence")
         if not isinstance(modes, list) or not modes:
             errors.append(f"ACCEPTANCE_EVIDENCE_MODE_MISSING:{pid}")
@@ -159,14 +171,24 @@ def semantic_contract_errors(
 
 
 def coverage_errors(
-    contract: dict[str, Any], manifest: dict[str, Any], evidence_map: dict[str, Any], *, medium_plus: bool
+    contract: dict[str, Any], manifest: dict[str, Any], evidence_map: dict[str, Any], *,
+    medium_plus: bool, receipt_objects: dict[str, dict[str, Any]] | None = None
 ) -> list[str]:
+    """Validate R10 semantic proof from contract -> cases -> exact executed tests.
+
+    R9 trusted `covered_partitions` too much. R10 derives support from the
+    referenced cases and from the exact PASS test records captured by the
+    base-owned verifier runner.
+    """
     errors: list[str] = []
+    receipt_objects = receipt_objects or {}
     predicates = {p.get("predicate_id"): p for p in contract.get("predicates", []) if isinstance(p, dict) and isinstance(p.get("predicate_id"), str)}
     cases = {c.get("case_id"): c for c in manifest.get("cases", []) if isinstance(c, dict) and isinstance(c.get("case_id"), str)} if isinstance(manifest.get("cases"), list) else {}
+    if manifest.get("schema") != "hybrid_harness.verification_manifest.v2":
+        errors.append(f"VERIFIER_MANIFEST_SCHEMA_INVALID:{manifest.get('schema')}")
     coverage_entries = manifest.get("predicate_coverage")
     if not isinstance(coverage_entries, list):
-        return ["VERIFIER_PREDICATE_COVERAGE_MISSING"]
+        return errors + ["VERIFIER_PREDICATE_COVERAGE_MISSING"]
     coverage_by_pid: dict[str, dict[str, Any]] = {}
     for entry in coverage_entries:
         if not isinstance(entry, dict) or not isinstance(entry.get("predicate_id"), str):
@@ -178,6 +200,16 @@ def coverage_errors(
     verifier_receipts = set(evidence_map.get("verifier_receipts", []) or [])
     allowed_receipts = candidate_receipts | verifier_receipts
     adversarial_count = 0
+
+    # Runtime PASS records are trusted only when captured in referenced durable receipts.
+    runtime_by_receipt: dict[str, dict[str, dict[str, Any]]] = {}
+    for ref, receipt in receipt_objects.items():
+        vr = receipt.get("verifier_result") if isinstance(receipt, dict) else None
+        rows = vr.get("tests", []) if isinstance(vr, dict) else []
+        runtime_by_receipt[ref] = {
+            row.get("test_id"): row for row in rows
+            if isinstance(row, dict) and isinstance(row.get("test_id"), str) and row.get("status") == "PASS"
+        }
 
     for pid, predicate in predicates.items():
         entry = coverage_by_pid.get(pid)
@@ -192,13 +224,23 @@ def coverage_errors(
             continue
         if not isinstance(receipts, list) or not receipts:
             errors.append(f"PREDICATE_RECEIPTS_MISSING:{pid}")
-        for ref in receipts or []:
+            receipts = []
+        for ref in receipts:
             if ref not in allowed_receipts:
                 errors.append(f"PREDICATE_RECEIPT_NOT_IN_EVIDENCE_MAP:{pid}:{ref}")
+            if ref in verifier_receipts and ref not in receipt_objects:
+                errors.append(f"VERIFIER_RECEIPT_RESULT_MISSING:{pid}:{ref}")
+
         required_parts = set(predicate.get("partitions", [])) if isinstance(predicate.get("partitions"), list) else set()
-        missing_parts = required_parts - covered_parts
-        for part in sorted(missing_parts):
-            errors.append(f"PREDICATE_PARTITION_UNPROVEN:{pid}:{part}")
+        partition_oracles = predicate.get("partition_oracles") if isinstance(predicate.get("partition_oracles"), dict) else {}
+        expected_oracles_by_part = {
+            part: {row.get("oracle_id") for row in rows if isinstance(row, dict) and isinstance(row.get("oracle_id"), str)}
+            for part, rows in partition_oracles.items() if isinstance(rows, list)
+        }
+
+        case_union_parts: set[str] = set()
+        case_union_oracles: set[str] = set()
+        observed_oracles: set[str] = set()
         for cid in case_ids:
             case = cases.get(cid)
             if not case:
@@ -208,13 +250,63 @@ def coverage_errors(
             if kind in {"ADVERSARIAL", "FAULT_INJECTION", "PROPERTY"}:
                 adversarial_count += 1
             case_parts = set(case.get("partitions", [])) if isinstance(case.get("partitions"), list) else set()
+            case_oracles = set(case.get("oracle_ids", [])) if isinstance(case.get("oracle_ids"), list) else set()
+            test_ids = case.get("test_ids")
+            if not isinstance(test_ids, list) or not test_ids or not all(isinstance(x, str) and x for x in test_ids):
+                errors.append(f"VERIFIER_CASE_TEST_IDS_MISSING:{cid}")
+                test_ids = []
+            if not case_oracles:
+                errors.append(f"VERIFIER_CASE_ORACLES_MISSING:{cid}")
+            case_union_parts.update(case_parts)
+            case_union_oracles.update(case_oracles)
             if not case_parts & required_parts and required_parts:
                 errors.append(f"VERIFIER_CASE_NOT_MAPPED_TO_PARTITION:{pid}:{cid}")
+
+            for tid in test_ids:
+                matches: list[dict[str, Any]] = []
+                for ref in receipts:
+                    row = runtime_by_receipt.get(ref, {}).get(tid)
+                    if row is not None:
+                        matches.append(row)
+                if not matches:
+                    errors.append(f"VERIFIER_TEST_NOT_EXECUTED_PASS:{cid}:{tid}")
+                    continue
+                # All matching PASS observations must agree with manifest metadata.
+                for row in matches:
+                    if row.get("case_id") != cid:
+                        errors.append(f"VERIFIER_TEST_CASE_BINDING_MISMATCH:{cid}:{tid}:{row.get('case_id')}")
+                    runtime_parts = set(row.get("partitions", [])) if isinstance(row.get("partitions"), list) else set()
+                    runtime_oracles = set(row.get("oracle_ids", [])) if isinstance(row.get("oracle_ids"), list) else set()
+                    runtime_observed = set(row.get("observed_oracle_ids", [])) if isinstance(row.get("observed_oracle_ids"), list) else set()
+                    if runtime_parts != case_parts:
+                        errors.append(f"VERIFIER_TEST_PARTITION_BINDING_MISMATCH:{cid}:{tid}")
+                    if runtime_oracles != case_oracles:
+                        errors.append(f"VERIFIER_TEST_ORACLE_BINDING_MISMATCH:{cid}:{tid}")
+                    for oid in sorted(case_oracles - runtime_observed):
+                        errors.append(f"VERIFIER_ORACLE_NOT_OBSERVED:{cid}:{tid}:{oid}")
+                    observed_oracles.update(runtime_observed)
+
+        # R10: claimed coverage cannot exceed or substitute for case-backed coverage.
+        for part in sorted(covered_parts - case_union_parts):
+            errors.append(f"PREDICATE_PARTITION_OVERCLAIMED:{pid}:{part}")
+        for part in sorted(required_parts - case_union_parts):
+            errors.append(f"PREDICATE_PARTITION_NOT_BACKED_BY_CASE:{pid}:{part}")
+        for part in sorted(required_parts - covered_parts):
+            errors.append(f"PREDICATE_PARTITION_UNPROVEN:{pid}:{part}")
+        for part in sorted(covered_parts - required_parts):
+            errors.append(f"PREDICATE_COVERAGE_UNKNOWN_PARTITION:{pid}:{part}")
+
+        expected_oracles = set().union(*(expected_oracles_by_part.get(p, set()) for p in required_parts)) if required_parts else set()
+        for oid in sorted(expected_oracles - case_union_oracles):
+            errors.append(f"PREDICATE_ORACLE_NOT_BOUND_TO_CASE:{pid}:{oid}")
+        for oid in sorted(expected_oracles - observed_oracles):
+            errors.append(f"PREDICATE_ORACLE_NOT_OBSERVED:{pid}:{oid}")
+
         if predicate.get("verifier_owned") is True:
             verifier_case_ids = [cid for cid in case_ids if cases.get(cid, {}).get("owner") == "VERIFIER"]
             if not verifier_case_ids:
                 errors.append(f"VERIFIER_OWNED_EVIDENCE_MISSING:{pid}")
-            if not any(ref in verifier_receipts for ref in (receipts or [])):
+            if not any(ref in verifier_receipts for ref in receipts):
                 errors.append(f"VERIFIER_OWNED_RECEIPT_MISSING:{pid}")
 
     if medium_plus and adversarial_count < 1:

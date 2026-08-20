@@ -67,7 +67,7 @@
     "issued_at_must_not_postdate_consumer_beyond_skew": true,
     "issued_at_must_not_predate_prerequisite_beyond_skew": true
   },
-  "revision": "HYBRID-HARNESS-R9",
+  "revision": "HYBRID-HARNESS-R10",
   "semantic_assurance": {
     "acceptance_contract_required": true,
     "predicate_to_evidence_coverage_required": true,

@@ -71,6 +71,8 @@ def structural_findings(root: Path) -> list[Finding]:
         CONFIG / "verifier-policy.v1.json",
         CONFIG / "attempt-policy.v1.json",
         CONFIG / "requirements-manifest.schema.v1.json",
+        Path("scripts/harness/verifier_runner.py"),
+        Path("scripts/harness/verifier_api.py"),
     ]
     for rel in required:
         if not (root / rel).is_file():
@@ -168,6 +170,15 @@ def control_findings(root: Path) -> list[Finding]:
     }
     if any(principles.get(k) is not True for k in r9_guards):
         findings.append(_error("R9_HARDENING_GUARDS_MISSING", "R9 temporal/report/parser/test-isolation guards must all be enabled"))
+    r10_guards = {
+        "verifier_partition_coverage_is_case_derived",
+        "verifier_cases_bind_exact_executed_test_ids",
+        "verifier_receipts_capture_runtime_test_ids",
+        "semantic_oracles_are_contract_owned_and_runtime_observed",
+        "normative_prose_wrapping_does_not_create_fragment_clauses",
+    }
+    if any(principles.get(k) is not True for k in r10_guards):
+        findings.append(_error("R10_SEMANTIC_PROOF_GUARDS_MISSING", "R10 case-derived coverage/runtime-test/oracle/prose guards must all be enabled"))
 
     closure = policy.get("closure_tail", {})
     if closure.get("candidate_must_remain_ancestor") is not True or closure.get("product_change_after_candidate_invalidates_review") is not True or closure.get("closure_head_is_derived_from_git") is not True:
@@ -229,6 +240,16 @@ def control_findings(root: Path) -> list[Finding]:
     vp = verifier_policy.get("principles", {}) if isinstance(verifier_policy, dict) else {}
     if vp.get("predicate_coverage_is_machine_checked") is not True or vp.get("adversarial_cases_required_for_medium_plus") is not True or vp.get("verifier_manifest_is_append_only") is not True:
         findings.append(_error("VERIFIER_POLICY_WEAKENED", "R6 verifier coverage/adversarial/immutability guards must remain enabled"))
+    r10_vp = {
+        "covered_partitions_must_be_backed_by_referenced_cases",
+        "case_ids_must_bind_exact_runtime_pass_test_ids",
+        "verifier_receipt_must_capture_exact_runtime_test_ids",
+        "case_oracles_must_match_contract_and_be_runtime_observed",
+    }
+    if any(vp.get(k) is not True for k in r10_vp):
+        findings.append(_error("R10_VERIFIER_POLICY_WEAKENED", "R10 verifier runtime semantic-proof guards must remain enabled"))
+    if verifier_policy.get("manifest_schema") != "hybrid_harness.verification_manifest.v2":
+        findings.append(_error("R10_VERIFIER_MANIFEST_SCHEMA_GUARD_MISSING", "verification manifest v2 is required"))
 
     forbidden = set(review.get("review_context", {}).get("must_not_include", []))
     expected_forbidden = {"implementer_private_reasoning", "implementer_chat_history", "implementer_self_verdict"}

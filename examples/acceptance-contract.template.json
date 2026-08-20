@@ -8,12 +8,40 @@
     {
       "predicate_id": "PRED-001",
       "statement": "Replace with a machine-verifiable acceptance predicate.",
-      "requirement_ids": ["REQ-001"],
+      "requirement_ids": [
+        "REQ-001"
+      ],
       "class": "INVARIANT",
       "semantic_tags": [],
-      "partitions": ["normal", "boundary", "invalid"],
-      "required_evidence": ["VERIFIER_TEST"],
-      "verifier_owned": true
+      "partitions": [
+        "normal",
+        "boundary",
+        "invalid"
+      ],
+      "required_evidence": [
+        "VERIFIER_TEST"
+      ],
+      "verifier_owned": true,
+      "partition_oracles": {
+        "normal": [
+          {
+            "oracle_id": "ORACLE-PRED-001-NORMAL",
+            "statement": "Define the expected normal-path result before implementation."
+          }
+        ],
+        "boundary": [
+          {
+            "oracle_id": "ORACLE-PRED-001-BOUNDARY",
+            "statement": "Define the expected boundary result before implementation."
+          }
+        ],
+        "invalid": [
+          {
+            "oracle_id": "ORACLE-PRED-001-INVALID",
+            "statement": "Define the expected invalid-input result before implementation."
+          }
+        ]
+      }
     }
   ],
   "completion_rule": "Every predicate partition has durable verifier-owned machine evidence."

@@ -56,9 +56,9 @@ def _split_sentences(text: str) -> list[str]:
 def _markdown_units(specification_text: str) -> list[tuple[int, str, bool, bool]]:
     """Return logical Markdown units as (start_line, text, list_like, normative_section).
 
-    R8 parsed physical lines. A wrapped normative bullet could therefore produce
-    fragments such as ``Any`` as an independent clause. R9 folds indented
-    continuation lines into the bullet before semantic/normative scanning.
+    R10 folds both list-item continuations and ordinary prose paragraphs before
+    sentence segmentation. Physical Markdown wrapping therefore cannot create
+    or delete normative clauses.
     """
     out: list[tuple[int, str, bool, bool]] = []
     in_code = False
@@ -66,16 +66,18 @@ def _markdown_units(specification_text: str) -> list[tuple[int, str, bool, bool]
     pending_line: int | None = None
     pending_parts: list[str] = []
     pending_normative = False
+    pending_list_like = False
 
     def flush_pending() -> None:
-        nonlocal pending_line, pending_parts, pending_normative
+        nonlocal pending_line, pending_parts, pending_normative, pending_list_like
         if pending_line is not None and pending_parts:
             text = " ".join(part.strip() for part in pending_parts if part.strip()).strip()
             if text:
-                out.append((pending_line, text, True, pending_normative))
+                out.append((pending_line, text, pending_list_like, pending_normative))
         pending_line = None
         pending_parts = []
         pending_normative = False
+        pending_list_like = False
 
     for line_no, raw in enumerate(specification_text.splitlines(), start=1):
         stripped = raw.strip()
@@ -100,17 +102,26 @@ def _markdown_units(specification_text: str) -> list[tuple[int, str, bool, bool]
             pending_line = line_no
             pending_parts = [m.group(1).strip()]
             pending_normative = normative_section
+            pending_list_like = True
             continue
 
-        # Markdown continuation lines are indented under the current list item.
-        if pending_line is not None and raw[:1].isspace():
+        if pending_line is not None and pending_list_like and raw[:1].isspace():
             pending_parts.append(stripped)
+            continue
+
+        # A non-list line continues the current prose paragraph until a blank,
+        # heading, code fence or list item starts a new logical unit.
+        if pending_line is not None and not pending_list_like:
+            pending_parts.append(_clean_line(raw))
             continue
 
         flush_pending()
         cleaned = _clean_line(raw)
         if cleaned:
-            out.append((line_no, cleaned, False, normative_section))
+            pending_line = line_no
+            pending_parts = [cleaned]
+            pending_normative = normative_section
+            pending_list_like = False
 
     flush_pending()
     return out

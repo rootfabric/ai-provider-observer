@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.attempt_policy.v1",
-  "revision": "HYBRID-HARNESS-R9",
+  "revision": "HYBRID-HARNESS-R10",
   "principles": {
     "failed_attempts_are_superseded_not_rewritten": true,
     "attempt_id_required": true,

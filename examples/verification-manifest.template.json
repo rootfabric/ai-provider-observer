@@ -1,0 +1,29 @@
+{
+  "schema": "hybrid_harness.verification_manifest.v2",
+  "manifest_id": "VM-WO-001",
+  "mission_id": "MISSION-001",
+  "work_order_id": "WO-001",
+  "candidate_head": "REPLACE_WITH_EXACT_CANDIDATE_HEAD",
+  "actor_id": "verifier-001",
+  "git_email": "verifier@example.invalid",
+  "cases": [
+    {
+      "case_id": "CASE-V-001",
+      "kind": "ADVERSARIAL",
+      "owner": "VERIFIER",
+      "partitions": ["boundary"],
+      "semantic_tags": [],
+      "test_ids": ["test_verifier.ExampleVerifierTests.test_boundary_behavior"],
+      "oracle_ids": ["ORACLE-PRED-001-BOUNDARY"],
+      "description": "Exact executable verifier case for the boundary partition."
+    }
+  ],
+  "predicate_coverage": [
+    {
+      "predicate_id": "PRED-001",
+      "case_ids": ["CASE-V-001"],
+      "receipt_refs": ["evidence/receipts/verifier-adversarial.json"],
+      "covered_partitions": ["boundary"]
+    }
+  ]
+}

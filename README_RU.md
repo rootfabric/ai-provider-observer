@@ -1,23 +1,32 @@
-# Hybrid Harness R9 Hardening Template
+# Hybrid Harness R10 Semantic-Proof Template
 
-Чистая Git-болванка Hybrid Harness R9 для новой dogfood/test mission.
+Чистая Git-болванка Hybrid Harness R10 для новой dogfood/test mission.
 
-R9 сохраняет R8 portable/causal-history guarantees и добавляет hardening, найденный на h-8:
+R10 сохраняет R8/R9 guarantees (portable Git history, exact causal attestation binding, temporal consistency, machine final report) и закрывает h-99 false-positive semantic coverage:
 
-- temporal consistency для signed `issued_at_utc` относительно prerequisite/consumer events;
-- bullet-aware normative clause extraction, устойчивый к Markdown line wrapping;
-- полностью machine-generated `final-report`;
-- mutation selftest вынесен из обычного unittest discovery в отдельный gate.
+- `covered_partitions` больше не считается доказательством сам по себе: coverage выводится из partitions реально referenced verifier cases;
+- каждый verifier case обязан bind exact `test_ids`;
+- verifier tests запускаются через base-owned `scripts/harness/verifier_runner.py`;
+- durable verifier receipt содержит exact runtime PASS test IDs + case/partition/oracle metadata;
+- acceptance contract заранее определяет `partition_oracles` для каждого partition;
+- verifier test обязан успешно наблюдать соответствующие oracle IDs через `VerifierTestCase.assert_oracle*`;
+- обычные Markdown prose paragraphs теперь fold-ятся до sentence parsing так же, как wrapped bullets.
 
-Основные компоненты:
+Основные команды:
 
-- `scripts/harness/` — control/validation engine;
-- `config/control/harness/` — policies/schemas/rule registry;
-- `tests/` — быстрые unit/hardening/traceability regressions;
-- `./CONTROL_HARNESS.sh selftest` — отдельный mutation gate;
-- `./CONTROL_HARNESS.sh portable-check` — clean-clone proof;
-- `./CONTROL_HARNESS.sh final-report` — machine-derived финальный отчёт.
+```bash
+./CONTROL_HARNESS.sh validate
+./CONTROL_HARNESS.sh hygiene
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+./CONTROL_HARNESS.sh selftest
+./CONTROL_HARNESS.sh portable-check
+./CONTROL_HARNESS.sh final-report
+```
+
+Verifier evidence для активной mission запускайте через:
+
+```bash
+./CONTROL_HARNESS.sh verifier-run verifier-adversarial evidence/verifier 'test_*.py'
+```
 
 Начните с `START_HERE_RU.md`.
-
-Важно: R9 меняет normative clause extraction с physical-line на logical-bullet semantics. Не обновляйте незавершённый R8 attempt «на месте»: для уже dispatched mission используйте новый attempt/control base и пересоберите Requirement Manifest от R9 `requirements-scan`.

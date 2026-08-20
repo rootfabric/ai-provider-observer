@@ -380,7 +380,66 @@
       ],
       "retirement": "CONTROL_REVISION_REQUIRED",
       "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-CASE-DERIVED-COVERAGE-R10",
+      "class": "CONTROL_INVARIANT",
+      "source": "h-99 R9 false PASS over-claimed predicate partitions not present in referenced verifier cases",
+      "applies_when": "verifier predicate coverage",
+      "enforcement": "machine",
+      "enforced_by": [
+        "verifier-policy.v1.json",
+        "semantic.py",
+        "active_validation.py",
+        "test_r10_semantic_proof.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-RUNTIME-TEST-BINDING-R10",
+      "class": "SECURITY_INVARIANT",
+      "source": "h-99 manifest case labels were not bound to exact tests that actually executed and passed",
+      "applies_when": "verifier-owned machine evidence",
+      "enforcement": "machine",
+      "enforced_by": [
+        "verifier_runner.py",
+        "verifier_api.py",
+        "evidence.py",
+        "active_validation.py",
+        "semantic.py"
+      ],
+      "retirement": "SECURITY_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-SEMANTIC-ORACLE-R10",
+      "class": "CONTROL_INVARIANT",
+      "source": "h-99 payload_conflict_invalid_payload was named as covered without executing the required conflict oracle",
+      "applies_when": "acceptance predicate partition proof",
+      "enforcement": "machine",
+      "enforced_by": [
+        "acceptance-contract.schema.v1.json",
+        "verifier_api.py",
+        "verifier_runner.py",
+        "semantic.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-NORMATIVE-PARAGRAPH-PARSER-R10",
+      "class": "CONTROL_INVARIANT",
+      "source": "h-99 showed physical-line fragments still possible in ordinary normative prose outside Markdown bullets",
+      "applies_when": "mission specification normative extraction",
+      "enforcement": "machine",
+      "enforced_by": [
+        "requirements.py",
+        "test_r10_semantic_proof.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
     }
   ],
-  "revision": "HYBRID-HARNESS-R9"
+  "revision": "HYBRID-HARNESS-R10"
 }
