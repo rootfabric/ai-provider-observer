@@ -1,4 +1,4 @@
-# Hybrid Harness R8 — чистая болванка для новой тестовой задачи
+# Hybrid Harness R9 — чистая болванка для новой тестовой задачи
 
 Это **IDLE-шаблон**: активной mission, product code и acceptance evidence нет. Harness/control уже установлен и должен проходить baseline validation.
 
@@ -8,9 +8,10 @@
 ./CONTROL_HARNESS.sh status
 ./CONTROL_HARNESS.sh validate
 ./CONTROL_HARNESS.sh hygiene
-./CONTROL_HARNESS.sh selftest
 ./CONTROL_HARNESS.sh portable-check
-PYTHONPATH=tests:. python3 -m unittest discover -s tests -p 'test_*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+# mutation gate запускается ОТДЕЛЬНО:
+./CONTROL_HARNESS.sh selftest
 ```
 
 Ожидание: baseline Harness PASS, `active_mission=null`.
@@ -74,9 +75,10 @@ python3 tools/external_attestation.py keygen --private-out "$HOME/.hybrid-harnes
 ```bash
 ./CONTROL_HARNESS.sh validate-ready
 ./CONTROL_HARNESS.sh portable-check
+./CONTROL_HARNESS.sh final-report
 ```
 
-## R8 invariants, которые нельзя обходить
+## R8/R9 invariants, которые нельзя обходить
 
 - никаких `git replace` refs;
 - никакого amend/rebase/reset managed proof history;
@@ -84,3 +86,13 @@ python3 tools/external_attestation.py keygen --private-out "$HOME/.hybrid-harnes
 - closure/source paths проверяются commit-by-commit;
 - consumer event должен bind exact attestation SHA-256 + Git blob;
 - финальный proof должен воспроизводиться в обычном clean clone.
+
+
+## R9 hardening
+
+- `issued_at_utc` внешней подписи обязан лежать между временем prerequisite и consumer event с bounded skew 120 секунд; Git ancestry остаётся главным causal proof.
+- переносы строк внутри Markdown bullet сначала сворачиваются в один logical bullet, затем строятся normative clause IDs/hashes; форматирование не должно создавать fragment clauses.
+- итог миссии публикуйте через `./CONTROL_HARNESS.sh final-report`; не переписывайте test counts/HEADs вручную.
+- обычный `python3 -m unittest discover -s tests` не выполняет mutation selftest; `./CONTROL_HARNESS.sh selftest` является отдельным обязательным gate.
+
+> Миграция: R9 меняет identity логических normative clauses относительно R8 line-based parser. Для уже dispatched R8 mission не переписывайте manifest; создайте новый attempt/control base и повторно сформируйте traceability.

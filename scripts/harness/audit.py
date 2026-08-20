@@ -75,6 +75,18 @@ def structural_findings(root: Path) -> list[Finding]:
     for rel in required:
         if not (root / rel).is_file():
             findings.append(_error("REQUIRED_FILE_MISSING", rel.as_posix()))
+
+    # R9: these are executable architecture constraints, not prose-only intent.
+    control_src = root / "scripts/harness/control.py"
+    if control_src.is_file():
+        text = control_src.read_text(encoding="utf-8")
+        if re.search(r"^def cmd_final_report\(", text, re.MULTILINE) is None or '"final-report"' not in text:
+            findings.append(_error("R9_FINAL_REPORT_COMMAND_MISSING", "machine-derived final-report command is required"))
+    test_src = root / "tests/test_harness.py"
+    if test_src.is_file():
+        text = test_src.read_text(encoding="utf-8")
+        if "from selftest import" in text or "import selftest" in text or "run_selftest(" in text:
+            findings.append(_error("R9_SELFTEST_NOT_ISOLATED", "mutation selftest must not execute inside ordinary unittest discovery"))
     return findings
 
 
@@ -148,6 +160,14 @@ def control_findings(root: Path) -> list[Finding]:
     }
     if any(principles.get(k) is not True for k in r8_guards):
         findings.append(_error("R8_PORTABLE_CAUSAL_HISTORY_GUARDS_MISSING", "R8 portability/history/content-addressing guards must all be enabled"))
+    r9_guards = {
+        "attestation_wall_clock_claims_are_causally_consistent",
+        "normative_markdown_wrapping_does_not_create_fragment_clauses",
+        "final_report_values_are_machine_derived",
+        "mutation_selftest_is_separate_from_unit_test_discovery",
+    }
+    if any(principles.get(k) is not True for k in r9_guards):
+        findings.append(_error("R9_HARDENING_GUARDS_MISSING", "R9 temporal/report/parser/test-isolation guards must all be enabled"))
 
     closure = policy.get("closure_tail", {})
     if closure.get("candidate_must_remain_ancestor") is not True or closure.get("product_change_after_candidate_invalidates_review") is not True or closure.get("closure_head_is_derived_from_git") is not True:
@@ -182,6 +202,13 @@ def control_findings(root: Path) -> list[Finding]:
         findings.append(_error("CAUSAL_ATTESTATION_GUARD_MISSING", "external approvals must bind a prior event and exact pre-existing evidence digest"))
     if assurance.get("consumer_event_must_bind_attestation_sha256") is not True or assurance.get("consumer_event_must_bind_attestation_git_blob") is not True or assurance.get("attestation_history_must_be_immutable") is not True:
         findings.append(_error("R8_ATTESTATION_CONSUMER_BINDING_GUARD_MISSING", "consumer must bind exact immutable attestation bytes and Git blob"))
+    if (assurance.get("causal_wall_clock_consistency_required") is not True
+            or assurance.get("issued_at_must_not_postdate_consumer_beyond_skew") is not True
+            or assurance.get("issued_at_must_not_predate_prerequisite_beyond_skew") is not True
+            or not isinstance(assurance.get("max_clock_skew_seconds"), int)
+            or isinstance(assurance.get("max_clock_skew_seconds"), bool)
+            or not (0 <= assurance.get("max_clock_skew_seconds") <= 300)):
+        findings.append(_error("R9_TEMPORAL_CAUSAL_GUARD_MISSING", "signed issued_at and event recorded_at claims must respect prerequisite <= issuance <= consumer within bounded skew"))
     semantic = review.get("semantic_assurance", {})
     if semantic.get("acceptance_contract_required") is not True or semantic.get("predicate_to_evidence_coverage_required") is not True or semantic.get("medium_plus_adversarial_verification_required") is not True:
         findings.append(_error("SEMANTIC_REVIEW_ASSURANCE_GUARD_MISSING", "R6 acceptance contract and adversarial predicate coverage are mandatory"))

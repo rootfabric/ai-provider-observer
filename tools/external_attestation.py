@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""External trust-domain helper for Hybrid Harness R8.
+"""External trust-domain helper for Hybrid Harness R9.
 
 This utility intentionally lives outside the normal control command surface.
 Possession of a private seed is the trust boundary; do not place seeds in the

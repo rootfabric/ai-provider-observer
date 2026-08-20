@@ -1,4 +1,4 @@
-.PHONY: status validate validate-active validate-ready hygiene selftest report demo
+.PHONY: status validate validate-active validate-ready portable-check hygiene unit selftest report final-report demo
 status:
 	python3 scripts/harness/control.py status
 validate:
@@ -7,11 +7,17 @@ validate-active:
 	python3 scripts/harness/control.py validate-active
 validate-ready:
 	python3 scripts/harness/control.py validate-ready
+portable-check:
+	python3 scripts/harness/control.py portable-check
 hygiene:
 	python3 scripts/harness/control.py hygiene
+unit:
+	python3 -m unittest discover -s tests -p 'test_*.py'
 selftest:
 	python3 scripts/harness/control.py selftest
 report:
 	python3 scripts/harness/control.py report
+final-report:
+	python3 scripts/harness/control.py final-report
 demo:
 	python3 scripts/harness/control.py demo

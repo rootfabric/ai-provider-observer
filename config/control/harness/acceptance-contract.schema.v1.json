@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.acceptance_contract_schema.v1",
-  "revision": "HYBRID-HARNESS-R8",
+  "revision": "HYBRID-HARNESS-R9",
   "required": [
     "schema",
     "contract_id",

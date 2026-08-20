@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.verifier_policy.v1",
-  "revision": "HYBRID-HARNESS-R8",
+  "revision": "HYBRID-HARNESS-R9",
   "principles": {
     "verifier_must_not_reuse_implementer_assertions_as_only_evidence": true,
     "predicate_coverage_is_machine_checked": true,

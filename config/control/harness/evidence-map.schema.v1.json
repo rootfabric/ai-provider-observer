@@ -12,7 +12,7 @@
     "requirement_coverage"
   ],
   "candidate_receipts": {
-    "runner": "HARNESS_COMMAND_API_R8",
+    "runner": "HARNESS_COMMAND_API_R9",
     "subject_must_equal_candidate_head": true,
     "exit_code_must_be_zero": true,
     "output_hash_must_match": true,
@@ -34,7 +34,7 @@
     "lineage"
   ],
   "note": "R6 derives Git lineage itself and additionally requires verifier predicate coverage. Evidence maps reference proofs but do not self-author ancestry facts.",
-  "revision": "HYBRID-HARNESS-R8",
+  "revision": "HYBRID-HARNESS-R9",
   "verifier_receipts": {
     "required": true,
     "subject_must_equal_candidate_head": true,

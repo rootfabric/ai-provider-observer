@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.trust_providers.v1",
-  "revision": "HYBRID-HARNESS-R8",
+  "revision": "HYBRID-HARNESS-R9",
   "rule": "Trust roots must exist in the Work Order base commit. Mission branches may consume but never create or broaden their own trust.",
   "providers": {
     "PROJECT_EXTERNAL_REVIEW": {

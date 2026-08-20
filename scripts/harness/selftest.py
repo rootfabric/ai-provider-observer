@@ -192,6 +192,26 @@ def run(source_root: Path) -> tuple[bool, list[str]]:
         j = json.loads(p.read_text(encoding="utf-8")); j["assurance"]["consumer_event_must_bind_attestation_sha256"] = False; write_json(p, j)
     mutations.append(("bad-r8-consumer-binding", weaken_r8_consumer_binding, "R8_ATTESTATION_CONSUMER_BINDING_GUARD_MISSING"))
 
+    def weaken_r9_temporal(r: Path):
+        p = r / "config/control/harness/review-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["assurance"]["causal_wall_clock_consistency_required"] = False; write_json(p, j)
+    mutations.append(("bad-r9-temporal-causality", weaken_r9_temporal, "R9_TEMPORAL_CAUSAL_GUARD_MISSING"))
+
+    def weaken_r9_parser(r: Path):
+        p = r / "config/control/harness/harness-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["principles"]["normative_markdown_wrapping_does_not_create_fragment_clauses"] = False; write_json(p, j)
+    mutations.append(("bad-r9-bullet-parser", weaken_r9_parser, "R9_HARDENING_GUARDS_MISSING"))
+
+    def break_r9_final_report(r: Path):
+        p = r / "scripts/harness/control.py"
+        p.write_text(p.read_text(encoding="utf-8").replace("def cmd_final_report", "def cmd_final_report_removed", 1), encoding="utf-8")
+    mutations.append(("bad-r9-final-report", break_r9_final_report, "R9_FINAL_REPORT_COMMAND_MISSING"))
+
+    def break_r9_test_isolation(r: Path):
+        p = r / "tests/test_harness.py"
+        p.write_text(p.read_text(encoding="utf-8") + "\nfrom selftest import run as run_selftest\n", encoding="utf-8")
+    mutations.append(("bad-r9-selftest-isolation", break_r9_test_isolation, "R9_SELFTEST_NOT_ISOLATED"))
+
     for name, mutate, expected in mutations:
         ok, detail = run_mutation(source_root, name, mutate, expected)
         out.append(f"{name}: {'PASS' if ok else 'FAIL'}")

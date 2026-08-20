@@ -120,7 +120,7 @@ def write_receipt(root: Path, receipt_id: str, command: list[str], env_overrides
             {"path": rel, "sha256": sha256_file(root / rel)}
             for rel in input_paths if (root / rel).is_file()
         ],
-        "runner": "HARNESS_COMMAND_API_R8",
+        "runner": "HARNESS_COMMAND_API_R9",
     }
     receipt_path.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     os.write(1, output)
@@ -149,7 +149,7 @@ def validate_receipt(root: Path, path: Path, expected_head: str) -> list[str]:
     if not isinstance(r, dict):
         return [f"EVIDENCE_RECEIPT_INVALID:{path}:object required"]
     errors.extend(_durable_path_errors(root, rel, "EVIDENCE_RECEIPT"))
-    if r.get("runner") != "HARNESS_COMMAND_API_R8":
+    if r.get("runner") != "HARNESS_COMMAND_API_R9":
         errors.append(f"EVIDENCE_RECEIPT_RUNNER_UNTRUSTED:{path}")
     if r.get("subject_head") != expected_head:
         errors.append(f"EVIDENCE_RECEIPT_STALE:{path}:{r.get('subject_head')}!={expected_head}")

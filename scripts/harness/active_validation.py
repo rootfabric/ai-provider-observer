@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import hashlib
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -72,6 +72,27 @@ def _parse_time(value: str) -> datetime | None:
         return None
 
 
+def _temporal_claim_findings(issued_raw: Any, prerequisite_raw: Any, consumer_raw: Any, max_clock_skew_seconds: int) -> list[ActiveFinding]:
+    findings: list[ActiveFinding] = []
+    issued = _parse_time(issued_raw) if isinstance(issued_raw, str) else None
+    prereq_time = _parse_time(prerequisite_raw) if isinstance(prerequisite_raw, str) else None
+    consumer_time = _parse_time(consumer_raw) if isinstance(consumer_raw, str) else None
+    if issued is None:
+        findings.append(_f("ATTESTATION_ISSUED_AT_INVALID", repr(issued_raw)))
+    if prereq_time is None:
+        findings.append(_f("ATTESTATION_PREREQUISITE_TIME_INVALID", repr(prerequisite_raw)))
+    if consumer_time is None:
+        findings.append(_f("ATTESTATION_CONSUMER_TIME_INVALID", repr(consumer_raw)))
+    skew = timedelta(seconds=max(0, int(max_clock_skew_seconds)))
+    if issued is not None and prereq_time is not None and issued + skew < prereq_time:
+        findings.append(_f("ATTESTATION_ISSUED_BEFORE_PREREQUISITE_TIME", f"prerequisite={prereq_time.isoformat()} issued={issued.isoformat()} skew_seconds={max_clock_skew_seconds}"))
+    if issued is not None and consumer_time is not None and issued - skew > consumer_time:
+        findings.append(_f("ATTESTATION_ISSUED_AFTER_CONSUMER_TIME", f"issued={issued.isoformat()} consumer={consumer_time.isoformat()} skew_seconds={max_clock_skew_seconds}"))
+    if prereq_time is not None and consumer_time is not None and prereq_time - skew > consumer_time:
+        findings.append(_f("ATTESTATION_CONSUMER_BEFORE_PREREQUISITE_TIME", f"prerequisite={prereq_time.isoformat()} consumer={consumer_time.isoformat()} skew_seconds={max_clock_skew_seconds}"))
+    return findings
+
+
 def _risk_floor_from_contract(wo: dict[str, Any]) -> str:
     required = {x for x in _list(wo.get("required_evidence")) if isinstance(x, str)}
     handoff = _dict(wo.get("handoff"))
@@ -117,6 +138,8 @@ def _verify_attestation_path(
     expected_evidence_paths: list[str] | None = None,
     consumer_commit: str | None = None,
     consumer_binding: dict[str, Any] | None = None,
+    consumer_recorded_at_utc: Any = None,
+    max_clock_skew_seconds: int = 120,
 ) -> None:
     if not isinstance(rel, str) or not rel.startswith("evidence/attestations/") or not rel.endswith(".json"):
         findings.append(_f("EXTERNAL_ATTESTATION_REF_INVALID", repr(rel)))
@@ -176,6 +199,19 @@ def _verify_attestation_path(
         prereq_hash = hashlib.sha256(prereq_bytes).hexdigest() if prereq_bytes is not None else None
         if att.get("prerequisite_event_sha256") != prereq_hash:
             findings.append(_f("ATTESTATION_PREREQUISITE_HASH_MISMATCH", f"expected={prereq_hash} got={att.get('prerequisite_event_sha256')}"))
+
+        # R9 temporal consistency. Git ancestry remains the durable causal proof,
+        # but signed/event wall-clock claims may not contradict that causal order.
+        prereq_raw = None
+        if prereq_bytes is not None:
+            try:
+                prereq_obj = loads(prereq_bytes.decode("utf-8"), label=f"{att_parent}:{expected_prerequisite_event}")
+                prereq_raw = prereq_obj.get("recorded_at_utc") if isinstance(prereq_obj, dict) else None
+            except (UnicodeDecodeError, StrictJSONError):
+                prereq_raw = None
+        findings.extend(_temporal_claim_findings(
+            att.get("issued_at_utc"), prereq_raw, consumer_recorded_at_utc, max_clock_skew_seconds
+        ))
     if expected_evidence_paths is not None:
         expected = sorted(set(expected_evidence_paths))
         declared = sorted(set(att.get("evidence_paths", []))) if isinstance(att.get("evidence_paths"), list) else []
@@ -275,6 +311,23 @@ def validate_active(root: Path, *, require_completion: bool = False) -> list[Act
         return findings
     if dispatch_parent != base_sha:
         findings.append(_f("WORK_ORDER_BASE_SHA_NOT_DISPATCH_PARENT", f"base={base_sha} dispatch_parent={dispatch_parent}"))
+
+    # R9 wall-clock claims are supplemental consistency assertions. The policy
+    # is control-owned; Git ancestry remains the authoritative causal order.
+    attestation_clock_skew_seconds = 120
+    review_policy_path = root / "config/control/harness/review-policy.v1.json"
+    try:
+        rp = load(review_policy_path)
+        assurance_policy = _dict(rp.get("assurance")) if isinstance(rp, dict) else {}
+        if assurance_policy.get("causal_wall_clock_consistency_required") is not True:
+            findings.append(_f("R9_TEMPORAL_POLICY_INVALID", "causal_wall_clock_consistency_required must be true"))
+        configured_skew = assurance_policy.get("max_clock_skew_seconds")
+        if not isinstance(configured_skew, int) or isinstance(configured_skew, bool) or configured_skew < 0 or configured_skew > 300:
+            findings.append(_f("R9_TEMPORAL_POLICY_INVALID", f"max_clock_skew_seconds={configured_skew!r}"))
+        else:
+            attestation_clock_skew_seconds = configured_skew
+    except (StrictJSONError, OSError) as exc:
+        findings.append(_f("R9_TEMPORAL_POLICY_INVALID", str(exc)))
 
     specification_rel = wo.get("specification")
     specification_text = ""
@@ -676,6 +729,7 @@ def validate_active(root: Path, *, require_completion: bool = False) -> list[Act
             root, assurance.get("attestation"), base_sha=base_sha, purpose="REVIEW_PASS",
             subject_head=candidate, mission_id=str(mission_id), work_order_id=wo_id, findings=findings,
             expected_prerequisite_event=request_rel, expected_evidence_paths=review_evidence_paths, consumer_commit=review_commit, consumer_binding=assurance,
+            consumer_recorded_at_utc=review.get("recorded_at_utc"), max_clock_skew_seconds=attestation_clock_skew_seconds,
         )
 
     if integration_required:
@@ -743,6 +797,7 @@ def validate_active(root: Path, *, require_completion: bool = False) -> list[Act
                 root, auth.get("attestation"), base_sha=base_sha, purpose="INTEGRATION_APPROVE",
                 subject_head=candidate, mission_id=str(mission_id), work_order_id=wo_id, findings=findings,
                 expected_prerequisite_event=pre_rel, expected_evidence_paths=integration_evidence_paths, consumer_commit=auth_commit, consumer_binding=auth,
+                consumer_recorded_at_utc=integration_auth_event.get("recorded_at_utc"), max_clock_skew_seconds=attestation_clock_skew_seconds,
             )
         if integration_event.get("authorization_event_seq") != integration_auth_event.get("seq"):
             findings.append(_f("INTEGRATION_EVENT_AUTHORIZATION_LINK_MISMATCH", f"integration={integration_event.get('authorization_event_seq')} auth={integration_auth_event.get('seq')}"))

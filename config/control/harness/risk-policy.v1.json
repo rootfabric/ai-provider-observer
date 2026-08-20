@@ -32,7 +32,7 @@
       ]
     }
   },
-  "revision": "HYBRID-HARNESS-R8",
+  "revision": "HYBRID-HARNESS-R9",
   "machine_owned_floor_policy": "config/control/harness/semantic-risk-policy.v1.json",
   "rules": [
     "Declared risk may be higher than the machine semantic floor but never lower.",

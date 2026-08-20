@@ -35,6 +35,9 @@ _NORMATIVE_HEADINGS = (
 )
 
 
+_LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)]|\[[ xX]\])\s+(.*)$")
+
+
 def _clean_line(line: str) -> str:
     text = line.strip()
     text = re.sub(r"^[-*+]\s+", "", text)
@@ -44,31 +47,79 @@ def _clean_line(line: str) -> str:
 
 
 def _split_sentences(text: str) -> list[str]:
-    # Keep small deterministic segmentation; Markdown list items remain separate clauses.
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZА-ЯЁ0-9])", text)
+    # Deterministic sentence segmentation after Markdown list continuation
+    # lines have been folded into their logical bullet.
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZА-ЯЁ0-9`])", text)
     return [p.strip() for p in parts if p.strip()]
+
+
+def _markdown_units(specification_text: str) -> list[tuple[int, str, bool, bool]]:
+    """Return logical Markdown units as (start_line, text, list_like, normative_section).
+
+    R8 parsed physical lines. A wrapped normative bullet could therefore produce
+    fragments such as ``Any`` as an independent clause. R9 folds indented
+    continuation lines into the bullet before semantic/normative scanning.
+    """
+    out: list[tuple[int, str, bool, bool]] = []
+    in_code = False
+    normative_section = False
+    pending_line: int | None = None
+    pending_parts: list[str] = []
+    pending_normative = False
+
+    def flush_pending() -> None:
+        nonlocal pending_line, pending_parts, pending_normative
+        if pending_line is not None and pending_parts:
+            text = " ".join(part.strip() for part in pending_parts if part.strip()).strip()
+            if text:
+                out.append((pending_line, text, True, pending_normative))
+        pending_line = None
+        pending_parts = []
+        pending_normative = False
+
+    for line_no, raw in enumerate(specification_text.splitlines(), start=1):
+        stripped = raw.strip()
+        if stripped.startswith("```"):
+            flush_pending()
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        if not stripped:
+            flush_pending()
+            continue
+        if stripped.startswith("#"):
+            flush_pending()
+            heading = stripped.lstrip("#").strip().casefold()
+            normative_section = any(token in heading for token in _NORMATIVE_HEADINGS)
+            continue
+
+        m = _LIST_ITEM_RE.match(raw)
+        if m:
+            flush_pending()
+            pending_line = line_no
+            pending_parts = [m.group(1).strip()]
+            pending_normative = normative_section
+            continue
+
+        # Markdown continuation lines are indented under the current list item.
+        if pending_line is not None and raw[:1].isspace():
+            pending_parts.append(stripped)
+            continue
+
+        flush_pending()
+        cleaned = _clean_line(raw)
+        if cleaned:
+            out.append((line_no, cleaned, False, normative_section))
+
+    flush_pending()
+    return out
 
 
 def extract_normative_clauses(specification_text: str) -> list[NormativeClause]:
     clauses: list[NormativeClause] = []
-    in_code = False
-    normative_section = False
-    for line_no, raw in enumerate(specification_text.splitlines(), start=1):
-        stripped = raw.strip()
-        if stripped.startswith("```"):
-            in_code = not in_code
-            continue
-        if in_code or not stripped:
-            continue
-        if stripped.startswith("#"):
-            heading = stripped.lstrip("#").strip().casefold()
-            normative_section = any(token in heading for token in _NORMATIVE_HEADINGS)
-            continue
-        cleaned = _clean_line(raw)
-        if not cleaned:
-            continue
-        list_like = bool(re.match(r"^\s*(?:[-*+]|\d+[.)]|\[[ xX]\])\s+", raw))
-        for sentence in _split_sentences(cleaned):
+    for line_no, logical_text, list_like, normative_section in _markdown_units(specification_text):
+        for sentence in _split_sentences(logical_text):
             is_normative = bool(_NORMATIVE_RE.search(sentence) or _IMPERATIVE_RE.search(sentence))
             if normative_section and list_like:
                 is_normative = True
@@ -82,7 +133,6 @@ def extract_normative_clauses(specification_text: str) -> list[NormativeClause]:
                 sha256=digest,
             ))
     return clauses
-
 
 def _requirement_text(req: dict[str, Any], clause_map: dict[str, NormativeClause]) -> str:
     parts = [str(req.get("statement", ""))]

@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import hashlib
+import ast
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -63,7 +64,7 @@ def cmd_status() -> int:
     readiness = validate_active(ROOT, require_completion=True) if isinstance(state, dict) and state.get("active_mission") else []
     complete_claim = isinstance(state, dict) and (state.get("status") == "MISSION_COMPLETE" or (isinstance(state.get("active_mission"), dict) and state["active_mission"].get("complete") is True))
     completion_proven = bool(complete_claim and not readiness)
-    print("HYBRID HARNESS STATUS R8")
+    print("HYBRID HARNESS STATUS R9")
     print(f"status={state.get('status')}")
     print(f"active_checkpoint={state.get('active_checkpoint')}")
     print(f"active_epoch={state.get('active_epoch')}")
@@ -98,7 +99,7 @@ def cmd_semantic_scan(args: list[str]) -> int:
     text = path.read_text(encoding="utf-8")
     tags = infer_semantic_tags(policy, {"mission":{}}, {}, text)
     floor = risk_floor(policy, tags)
-    print("SEMANTIC SCAN R8")
+    print("SEMANTIC SCAN R9")
     print(f"specification={args[0]}")
     print(f"machine_risk_floor={floor}")
     for tag in sorted(tags):
@@ -118,7 +119,7 @@ def cmd_requirements_scan(args: list[str]) -> int:
         print(f"REQUIREMENTS_SCAN: FAIL missing {args[0]}", file=sys.stderr)
         return 2
     clauses = extract_normative_clauses(path.read_text(encoding="utf-8"))
-    print("REQUIREMENTS SCAN R8")
+    print("REQUIREMENTS SCAN R9")
     print(f"specification={args[0]}")
     print(f"normative_clause_count={len(clauses)}")
     for clause in clauses:
@@ -154,7 +155,7 @@ def cmd_requirements_check(args: list[str]) -> int:
         mission_id=str((wo.get("mission") or {}).get("mission_id")), work_order_id=wo_id,
         acceptance=acceptance, semantic_policy=semantic_policy,
     )
-    print("REQUIREMENTS CHECK R8")
+    print("REQUIREMENTS CHECK R9")
     print(f"work_order={wo_id}")
     print(f"normative_clause_count={len(clauses)}")
     print(f"requirement_count={len(manifest.get('requirements', [])) if isinstance(manifest, dict) else 0}")
@@ -206,7 +207,7 @@ def cmd_acceptance_check(args: list[str]) -> int:
     else:
         errors.append(f"REQUIREMENTS_MANIFEST_MISSING:{req_rel}")
     declared = wo.get("risk")
-    print("ACCEPTANCE CHECK R8")
+    print("ACCEPTANCE CHECK R9")
     print(f"work_order={wo_id}")
     print(f"semantic_tags={','.join(sorted(tags))}")
     print(f"machine_risk_floor={floor}")
@@ -419,7 +420,7 @@ def cmd_report() -> int:
                 semantic_summary = {"tags":sorted(tags),"machine_risk_floor":floor,"declared_risk":wo.get("risk"),"contract_errors":errs,"requirement_traceability":req_summary}
     payload = {
         "schema":"hybrid_harness.machine_report.v1",
-        "harness_revision":"HYBRID-HARNESS-R8",
+        "harness_revision":"HYBRID-HARNESS-R9",
         "semantic_assurance": semantic_summary,
         "head": git_head(ROOT) if (ROOT / ".git").exists() else None,
         "branch": git_branch(ROOT) if (ROOT / ".git").exists() else None,
@@ -438,6 +439,135 @@ def cmd_report() -> int:
     return 0 if not readiness else 1
 
 
+
+def _declared_unittest_method_count(start_dir: Path) -> int:
+    if not start_dir.is_dir():
+        return 0
+    count = 0
+    for path in sorted(start_dir.rglob("test_*.py")):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        except (OSError, SyntaxError):
+            return -1
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test_"):
+                count += 1
+    return count
+
+
+def cmd_final_report() -> int:
+    """Emit the final human-consumable summary entirely from machine state.
+
+    It intentionally distinguishes discovered test cases from durable receipt
+    results instead of allowing an agent to merge those concepts in prose.
+    """
+    from gitproof import head as git_head, branch as git_branch, replace_refs
+
+    state = strict_load(ROOT / "config/control/project-state.v1.json")
+    active = state.get("active_mission") if isinstance(state, dict) else None
+    readiness = validate_active(ROOT, require_completion=True) if isinstance(active, dict) else []
+    audit_findings = all_findings(ROOT)
+    audit_errors = [f for f in audit_findings if f.severity == "ERROR"]
+    portable_errors = portable_clone_validate(ROOT) if (ROOT / ".git").exists() else ["NOT_A_GIT_REPOSITORY"]
+    selftest_ok, selftest_lines = run_selftest(ROOT)
+    selftest_mutations = sum(1 for line in selftest_lines if line.startswith("bad-") and line.endswith(": PASS"))
+
+    events = sorted((ROOT / "evidence/events").glob("*.json")) if (ROOT / "evidence/events").is_dir() else []
+    receipts = sorted((ROOT / "evidence/receipts").glob("*.json")) if (ROOT / "evidence/receipts").is_dir() else []
+    receipt_rows = []
+    for path in receipts:
+        try:
+            obj = strict_load(path)
+        except Exception as exc:
+            receipt_rows.append((path.relative_to(ROOT).as_posix(), None, f"INVALID:{exc}"))
+            continue
+        if isinstance(obj, dict):
+            receipt_rows.append((path.relative_to(ROOT).as_posix(), obj.get("exit_code"), obj.get("receipt_id")))
+
+    mission_id = None
+    attempt_id = None
+    risk = None
+    normative_clause_count = 0
+    requirement_count = 0
+    predicate_count = 0
+    verifier_case_count = 0
+    verifier_predicate_coverage_count = 0
+    wo_id = state.get("active_work_order") if isinstance(state, dict) else None
+    if isinstance(wo_id, str):
+        wo_path = ROOT / f"config/control/missions/{wo_id}.json"
+        if wo_path.is_file():
+            wo = strict_load(wo_path)
+            if isinstance(wo, dict):
+                mission_id = (wo.get("mission") if isinstance(wo.get("mission"), dict) else {}).get("mission_id")
+                attempt_id = wo.get("attempt_id")
+                risk = wo.get("risk")
+                spec_rel = wo.get("specification")
+                req_rel = wo.get("requirements_manifest")
+                ac_rel = wo.get("acceptance_contract")
+                if isinstance(spec_rel, str) and (ROOT / spec_rel).is_file():
+                    normative_clause_count = len(extract_normative_clauses((ROOT / spec_rel).read_text(encoding="utf-8")))
+                if isinstance(req_rel, str) and (ROOT / req_rel).is_file():
+                    req = strict_load(ROOT / req_rel)
+                    if isinstance(req, dict) and isinstance(req.get("requirements"), list):
+                        requirement_count = len(req["requirements"])
+                if isinstance(ac_rel, str) and (ROOT / ac_rel).is_file():
+                    ac = strict_load(ROOT / ac_rel)
+                    if isinstance(ac, dict) and isinstance(ac.get("predicates"), list):
+                        predicate_count = len(ac["predicates"])
+
+    verifier_manifest = ROOT / "evidence/verifier/verification-manifest.json"
+    if verifier_manifest.is_file():
+        vm = strict_load(verifier_manifest)
+        if isinstance(vm, dict):
+            verifier_case_count = len(vm.get("cases", [])) if isinstance(vm.get("cases"), list) else 0
+            verifier_predicate_coverage_count = len(vm.get("predicate_coverage", [])) if isinstance(vm.get("predicate_coverage"), list) else 0
+
+    product_test_count = _declared_unittest_method_count(ROOT / "tests/product")
+    all_test_count = _declared_unittest_method_count(ROOT / "tests")
+    harness_test_count = all_test_count - product_test_count if all_test_count >= 0 and product_test_count >= 0 else -1
+    complete_claim = bool(isinstance(state, dict) and (state.get("status") == "MISSION_COMPLETE" or (isinstance(active, dict) and active.get("complete") is True)))
+    completion_proven = bool(complete_claim and not readiness and not audit_errors and not portable_errors and selftest_ok)
+
+    print("HYBRID HARNESS FINAL REPORT R9")
+    print(f"harness_revision=HYBRID-HARNESS-R9")
+    print(f"head={git_head(ROOT) if (ROOT / '.git').exists() else None}")
+    print(f"branch={git_branch(ROOT) if (ROOT / '.git').exists() else None}")
+    print(f"git_replace_ref_count={len(replace_refs(ROOT)) if (ROOT / '.git').exists() else -1}")
+    print(f"status={state.get('status') if isinstance(state, dict) else None}")
+    print(f"mission_id={mission_id}")
+    print(f"work_order_id={wo_id}")
+    print(f"attempt_id={attempt_id}")
+    print(f"risk={risk}")
+    print(f"completion_proven={str(completion_proven).lower()}")
+    print(f"readiness_finding_count={len(readiness)}")
+    print(f"audit_error_count={len(audit_errors)}")
+    print(f"portable_check={'PASS' if not portable_errors else 'FAIL'}")
+    print(f"selftest={'PASS' if selftest_ok else 'FAIL'}")
+    print(f"selftest_mutation_count={selftest_mutations}")
+    print(f"harness_unittest_methods_declared={harness_test_count}")
+    print(f"product_unittest_methods_declared={product_test_count}")
+    print(f"verifier_manifest_case_count={verifier_case_count}")
+    print(f"verifier_predicate_coverage_count={verifier_predicate_coverage_count}")
+    print(f"normative_clause_count={normative_clause_count}")
+    print(f"requirement_count={requirement_count}")
+    print(f"acceptance_predicate_count={predicate_count}")
+    print(f"event_count={len(events)}")
+    print(f"receipt_count={len(receipts)}")
+    for rel, exit_code, rid in receipt_rows:
+        print(f"receipt={rel}\treceipt_id={rid}\texit_code={exit_code}")
+    for f in readiness:
+        print(f"readiness_finding={f.code}\t{f.message}")
+    for f in audit_errors:
+        print(f"audit_error={f.code}\t{f.message}")
+    for err in portable_errors:
+        print(f"portable_error={err}")
+    if not selftest_ok:
+        for line in selftest_lines:
+            if line.endswith(": FAIL") or line.startswith("baseline must"):
+                print(f"selftest_error={line}")
+    print("FINAL_REPORT: " + ("PASS" if (not active or completion_proven) and not audit_errors and not portable_errors and selftest_ok else "FAIL"))
+    return 0 if (not active or completion_proven) and not audit_errors and not portable_errors and selftest_ok else 1
+
 def cmd_demo() -> int:
     rc1 = cmd_validate()
     rc2 = cmd_hygiene() if rc1 == 0 else 1
@@ -453,7 +583,7 @@ def main() -> int:
     simple = {
         "status": cmd_status, "validate": cmd_validate, "validate-active": cmd_validate_active,
         "validate-ready": cmd_validate_ready, "portable-check": cmd_portable_check, "hygiene": cmd_hygiene, "selftest": cmd_selftest,
-        "continuation-demo": cmd_continuation_demo, "freeze-candidate": cmd_freeze_candidate, "report": cmd_report, "demo": cmd_demo,
+        "continuation-demo": cmd_continuation_demo, "freeze-candidate": cmd_freeze_candidate, "report": cmd_report, "final-report": cmd_final_report, "demo": cmd_demo,
     }
     if cmd == "evidence-run": return cmd_evidence_run(args[1:])
     if cmd == "event-add": return cmd_event_add(args[1:])
@@ -462,7 +592,7 @@ def main() -> int:
     if cmd == "requirements-check": return cmd_requirements_check(args[1:])
     if cmd == "semantic-scan": return cmd_semantic_scan(args[1:])
     if cmd not in simple:
-        print("usage: control.py status|validate|validate-active|validate-ready|portable-check|semantic-scan|requirements-scan|requirements-check|acceptance-check|hygiene|selftest|continuation-demo|freeze-candidate|evidence-run|event-add|report|demo", file=sys.stderr)
+        print("usage: control.py status|validate|validate-active|validate-ready|portable-check|semantic-scan|requirements-scan|requirements-check|acceptance-check|hygiene|selftest|continuation-demo|freeze-candidate|evidence-run|event-add|report|final-report|demo", file=sys.stderr)
         return 2
     return simple[cmd]()
 

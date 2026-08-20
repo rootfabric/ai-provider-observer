@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.policy.v5",
-  "revision": "HYBRID-HARNESS-R8",
+  "revision": "HYBRID-HARNESS-R9",
   "canonical_branch": "main",
   "principles": {
     "git_is_durable_memory": true,
@@ -58,7 +58,11 @@
     "immutable_evidence_is_history_immutable": true,
     "closure_tail_is_checked_per_commit": true,
     "consumer_events_bind_exact_attestation_object": true,
-    "causal_references_are_content_addressed": true
+    "causal_references_are_content_addressed": true,
+    "attestation_wall_clock_claims_are_causally_consistent": true,
+    "normative_markdown_wrapping_does_not_create_fragment_clauses": true,
+    "final_report_values_are_machine_derived": true,
+    "mutation_selftest_is_separate_from_unit_test_discovery": true
   },
   "concurrency": {
     "runtime_mutation_lease_capacity": 1,

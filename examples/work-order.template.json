@@ -1,13 +1,36 @@
 {
-  "work_order_id": "WO-001",
   "schema": "hybrid_harness.work_order.v1",
-  "mission": {"mission_id": "MISSION-001"},
+  "work_order_id": "WO-001",
+  "attempt_id": "ATTEMPT-001-A",
   "risk": "MEDIUM",
+  "risk_reasons": ["Replace with machine/project risk reasons."],
+  "base_sha": "REPLACE_WITH_40_HEX_DISPATCH_PARENT",
+  "started_at_utc": "REPLACE_WITH_RFC3339_UTC",
   "branch": "feature/test-task",
   "implementer_actor_id": "implementer-001",
   "implementer_git_email": "implementer@example.invalid",
+  "allowed_paths": ["src/**", "tests/product/**", "evidence/**", "config/control/project-state.v1.json", "config/control/missions/**"],
+  "implementation_paths": ["src/**", "tests/product/**"],
+  "forbidden_paths": ["config/control/harness/**"],
+  "required_evidence": ["tests", "exact_head_review", "durable_review_pass", "verification"],
+  "stop_conditions": ["scope_expansion", "trust_root_missing"],
+  "mission": {
+    "mission_id": "MISSION-001",
+    "success_condition": "Replace with externally visible success condition."
+  },
   "specification": "config/control/specifications/MISSION-001.md",
   "requirements_manifest": "config/control/requirements/WO-001.json",
   "acceptance_contract": "config/control/acceptance/WO-001.json",
-  "implementation_scope": ["src/**", "tests/product/**"]
+  "handoff": {
+    "next_actor": "REVIEWER",
+    "next_action": "SIGNED_REVIEW",
+    "evidence_sink": "SIGNED_ATTESTATION",
+    "resume_condition": "PASS",
+    "on_success": "VERIFY",
+    "on_failure": "REPAIR"
+  },
+  "integration": {
+    "required": true,
+    "target_branch": "main"
+  }
 }

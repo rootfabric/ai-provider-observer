@@ -326,7 +326,61 @@
       ],
       "retirement": "CONTROL_REVISION_REQUIRED",
       "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-TEMPORAL-CAUSALITY-R9",
+      "class": "SECURITY_INVARIANT",
+      "source": "h-8 signed issued_at claims contradicted prerequisite/consumer event time",
+      "applies_when": "external review or integration attestation consumption",
+      "enforcement": "machine",
+      "enforced_by": [
+        "review-policy.v1.json",
+        "active_validation.py",
+        "test_r9_hardening.py"
+      ],
+      "retirement": "SECURITY_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-NORMATIVE-BULLET-PARSER-R9",
+      "class": "CONTROL_INVARIANT",
+      "source": "h-8 physical-line parser produced fragmented normative clauses under Markdown wrapping",
+      "applies_when": "mission specification normative extraction",
+      "enforcement": "machine",
+      "enforced_by": [
+        "requirements.py",
+        "test_r9_hardening.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-MACHINE-FINAL-REPORT-R9",
+      "class": "CONTROL_INVARIANT",
+      "source": "h-8 human summary drifted from machine selftest/ref facts",
+      "applies_when": "final mission reporting",
+      "enforcement": "machine",
+      "enforced_by": [
+        "control.py",
+        "harness-policy.v1.json"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-SELFTEST-ISOLATION-R9",
+      "class": "EFFICIENCY_INVARIANT",
+      "source": "h-8 mutation selftest was redundantly executed inside ordinary unittest discovery",
+      "applies_when": "harness regression execution",
+      "enforcement": "machine",
+      "enforced_by": [
+        "test_harness.py",
+        "selftest.py",
+        "harness-policy.v1.json"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
     }
   ],
-  "revision": "HYBRID-HARNESS-R8"
+  "revision": "HYBRID-HARNESS-R9"
 }

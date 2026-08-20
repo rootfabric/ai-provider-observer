@@ -61,9 +61,13 @@
     "pre_signed_approval_forbidden": true,
     "consumer_event_must_bind_attestation_sha256": true,
     "consumer_event_must_bind_attestation_git_blob": true,
-    "attestation_history_must_be_immutable": true
+    "attestation_history_must_be_immutable": true,
+    "causal_wall_clock_consistency_required": true,
+    "max_clock_skew_seconds": 120,
+    "issued_at_must_not_postdate_consumer_beyond_skew": true,
+    "issued_at_must_not_predate_prerequisite_beyond_skew": true
   },
-  "revision": "HYBRID-HARNESS-R8",
+  "revision": "HYBRID-HARNESS-R9",
   "semantic_assurance": {
     "acceptance_contract_required": true,
     "predicate_to_evidence_coverage_required": true,

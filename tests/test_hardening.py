@@ -47,7 +47,7 @@ def receipt(subject: str, rid: str, out_rel: str, output: bytes, *, execution_he
         "environment_mode":"SANITIZED_PLUS_DECLARED_OVERRIDES", "environment_overrides":{}, "base_environment":{},
         "resolved_executable":"python3", "python_version":sys.version.split()[0], "clean_subject_tree":True,
         "started_at_utc":now_utc(), "finished_at_utc":now_utc(), "exit_code":0,
-        "output_path":out_rel, "output_sha256":hashlib.sha256(output).hexdigest(), "input_files": input_files or [], "runner":"HARNESS_COMMAND_API_R8"
+        "output_path":out_rel, "output_sha256":hashlib.sha256(output).hexdigest(), "input_files": input_files or [], "runner":"HARNESS_COMMAND_API_R9"
     }
 
 
@@ -106,7 +106,7 @@ class ActiveFixture:
             "closure_tail":{"allowed_paths":closure},
             "integration":{"whitelists":{"LOCAL_SANDBOX_LOW_RISK":{"max_risk":"LOW"}}}
         })
-        for rel in ("semantic-risk-policy.v1.json", "acceptance-contract.schema.v1.json"):
+        for rel in ("semantic-risk-policy.v1.json", "acceptance-contract.schema.v1.json", "review-policy.v1.json"):
             write_json(root / f"config/control/harness/{rel}", json.loads((ROOT / f"config/control/harness/{rel}").read_text(encoding="utf-8")))
         write_json(root / "config/control/harness/trust-providers.v1.json", {
             "schema":"hybrid_harness.trust_providers.v1",

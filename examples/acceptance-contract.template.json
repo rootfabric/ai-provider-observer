@@ -1,13 +1,20 @@
 {
   "schema": "hybrid_harness.acceptance_contract.v1",
+  "contract_id": "AC-WO-001",
   "mission_id": "MISSION-001",
   "work_order_id": "WO-001",
+  "semantic_tags": [],
   "predicates": [
     {
       "predicate_id": "PRED-001",
-      "description": "Replace with a machine-verifiable acceptance predicate",
-      "required_partitions": ["normal", "boundary", "invalid"],
-      "required_evidence": ["VERIFIER_CASE"]
+      "statement": "Replace with a machine-verifiable acceptance predicate.",
+      "requirement_ids": ["REQ-001"],
+      "class": "INVARIANT",
+      "semantic_tags": [],
+      "partitions": ["normal", "boundary", "invalid"],
+      "required_evidence": ["VERIFIER_TEST"],
+      "verifier_owned": true
     }
-  ]
+  ],
+  "completion_rule": "Every predicate partition has durable verifier-owned machine evidence."
 }

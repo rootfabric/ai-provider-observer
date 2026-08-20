@@ -1,13 +1,19 @@
 {
   "schema": "hybrid_harness.requirements_manifest.v1",
+  "manifest_id": "RM-WO-001",
   "mission_id": "MISSION-001",
   "work_order_id": "WO-001",
   "specification": "config/control/specifications/MISSION-001.md",
+  "specification_sha256": "REPLACE_WITH_EXACT_SPEC_SHA256",
   "requirements": [
     {
       "requirement_id": "REQ-001",
-      "normative_clause_ids": ["CLAUSE-REPLACE-ME"],
-      "acceptance_predicates": ["PRED-001"]
+      "statement": "Replace with the exact logical normative requirement.",
+      "source_clause_ids": ["CLAUSE-LX-REPLACE-ME"],
+      "class": "INVARIANT",
+      "semantic_tags": [],
+      "required_partitions": ["normal", "boundary", "invalid"],
+      "predicate_ids": ["PRED-001"]
     }
   ]
 }
