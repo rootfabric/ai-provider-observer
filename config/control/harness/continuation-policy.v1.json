@@ -1,0 +1,59 @@
+{
+  "schema": "hybrid_harness.continuation_policy.v1",
+  "revision": "CONTINUATION-R2",
+  "principles": {
+    "global_mission_outlives_local_role": true,
+    "role_boundary_is_continuable": true,
+    "chat_only_role_result_is_not_durable": true,
+    "next_actor_and_next_action_required_when_mission_open": true,
+    "evidence_sink_required_for_review_handoff": true,
+    "on_success_and_on_failure_required_for_explicit_handoff": true,
+    "human_attention_only_for_real_human_decision": true,
+    "mission_complete_requires_machine_proof": true,
+    "declared_complete_without_proof_is_system_blocked": true
+  },
+  "review_evidence_sinks": [
+    "EXECUTION_LEDGER",
+    "GITHUB_PR_REVIEW"
+  ],
+  "forbidden_evidence_sinks": [
+    "CHAT"
+  ],
+  "default_handoff": {
+    "missing_or_stale_review": {
+      "class": "ROLE_BOUNDARY",
+      "next_actor": "REVIEWER",
+      "next_action": "PERSIST_FRESH_EXACT_HEAD_REVIEW"
+    },
+    "fresh_review_pass_evidence_stale": {
+      "class": "ROLE_BOUNDARY",
+      "next_actor": "IMPLEMENTER",
+      "next_action": "REFRESH_EVIDENCE_MAP_FROM_DURABLE_REVIEW"
+    },
+    "fresh_review_pass_evidence_fresh_predicates_incomplete": {
+      "class": "ROLE_BOUNDARY",
+      "next_actor": "VERIFIER",
+      "next_action": "VERIFY_REMAINING_PREDICATES"
+    },
+    "fresh_review_pass_evidence_fresh_predicates_complete": {
+      "class": "ROLE_BOUNDARY",
+      "next_actor": "DIRECTOR",
+      "next_action": "EVALUATE_CHECKPOINT_OR_INTEGRATION"
+    },
+    "blocking_human_attention": {
+      "class": "HUMAN_DECISION_REQUIRED",
+      "next_actor": "HUMAN",
+      "next_action": "RESOLVE_EXPLICIT_ATTENTION_ITEM"
+    },
+    "system_failure": {
+      "class": "SYSTEM_BLOCKED",
+      "next_actor": "IMPLEMENTER",
+      "next_action": "BUILD_REPAIR_MAP_AND_REPAIR"
+    },
+    "mission_complete": {
+      "class": "MISSION_COMPLETE",
+      "next_actor": null,
+      "next_action": null
+    }
+  }
+}

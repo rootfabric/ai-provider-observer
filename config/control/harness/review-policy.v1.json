@@ -1,0 +1,77 @@
+{
+  "schema": "hybrid_harness.review_policy.v6",
+  "verdicts": [
+    "PASS",
+    "FAIL",
+    "INSUFFICIENT_EVIDENCE"
+  ],
+  "exact_head_protocol": {
+    "reviewed_head_must_equal_evidence_head": true,
+    "reviewed_head_must_equal_tested_head": true,
+    "change_after_review_makes_review_stale": true
+  },
+  "role_separation": {
+    "implementer_and_reviewer_distinct": true,
+    "implementer_and_verifier_distinct_for_medium_plus": true,
+    "role_names_are_not_identity_proof": true,
+    "git_identity_is_provenance_not_external_trust": true
+  },
+  "review_context": {
+    "must_be_fresh": true,
+    "may_include": [
+      "work_order",
+      "design_brief",
+      "diff",
+      "evidence_map",
+      "raw_test_results",
+      "durable_decisions"
+    ],
+    "must_not_include": [
+      "implementer_private_reasoning",
+      "implementer_chat_history",
+      "implementer_self_verdict"
+    ]
+  },
+  "missing_proof": "INSUFFICIENT_EVIDENCE",
+  "durable_handoff": {
+    "review_request_must_name_evidence_sink": true,
+    "allowed_sinks": [
+      "EXECUTION_LEDGER",
+      "GITHUB_PR_REVIEW",
+      "SIGNED_ATTESTATION"
+    ],
+    "chat_is_authority": false,
+    "handoff_complete_only_after_durable_exact_head_result": true,
+    "reviewer_must_persist_own_result": true
+  },
+  "assurance": {
+    "classes": [
+      "SELF_DECLARED",
+      "SIMULATED_LOCAL",
+      "PROVENANCE_ONLY",
+      "EXTERNAL_VERIFIED"
+    ],
+    "medium_plus_completion_requires": "EXTERNAL_VERIFIED",
+    "external_verified_requires_signed_attestation": true,
+    "trusted_key_must_exist_at_work_order_base": true,
+    "self_authored_proof_ref_is_forbidden": true,
+    "note": "R7 requires base-trusted Ed25519 attestation plus Git-ancestry causal binding to a prior request/readiness event and exact evidence digest.",
+    "attestation_must_bind_prerequisite_event": true,
+    "attestation_must_bind_evidence_digest": true,
+    "pre_signed_approval_forbidden": true,
+    "consumer_event_must_bind_attestation_sha256": true,
+    "consumer_event_must_bind_attestation_git_blob": true,
+    "attestation_history_must_be_immutable": true
+  },
+  "revision": "HYBRID-HARNESS-R8",
+  "semantic_assurance": {
+    "acceptance_contract_required": true,
+    "predicate_to_evidence_coverage_required": true,
+    "medium_plus_adversarial_verification_required": true,
+    "implementer_test_suite_alone_is_insufficient_for_medium_plus": true,
+    "external_reviewer_receives_acceptance_contract": true,
+    "requirements_manifest_required": true,
+    "every_normative_clause_must_be_traced": true,
+    "every_requirement_must_reach_verifier_evidence": true
+  }
+}

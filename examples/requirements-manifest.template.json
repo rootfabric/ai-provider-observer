@@ -1,0 +1,13 @@
+{
+  "schema": "hybrid_harness.requirements_manifest.v1",
+  "mission_id": "MISSION-001",
+  "work_order_id": "WO-001",
+  "specification": "config/control/specifications/MISSION-001.md",
+  "requirements": [
+    {
+      "requirement_id": "REQ-001",
+      "normative_clause_ids": ["CLAUSE-REPLACE-ME"],
+      "acceptance_predicates": ["PRED-001"]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "hybrid_harness.verifier_policy.v1",
+  "revision": "HYBRID-HARNESS-R8",
+  "principles": {
+    "verifier_must_not_reuse_implementer_assertions_as_only_evidence": true,
+    "predicate_coverage_is_machine_checked": true,
+    "adversarial_cases_required_for_medium_plus": true,
+    "verifier_artifacts_are_evidence_not_product": true,
+    "verifier_manifest_is_append_only": true,
+    "test_case_ids_are_durable": true,
+    "every_requirement_must_reach_machine_evidence": true,
+    "verifier_must_cover_requirement_required_partitions": true
+  },
+  "artifact_root": "evidence/verifier",
+  "manifest": "evidence/verifier/verification-manifest.json",
+  "manifest_required_fields": [
+    "schema",
+    "mission_id",
+    "work_order_id",
+    "candidate_head",
+    "actor_id",
+    "git_email",
+    "cases",
+    "predicate_coverage"
+  ],
+  "case_required_fields": [
+    "case_id",
+    "kind",
+    "partitions",
+    "semantic_tags"
+  ],
+  "coverage_required_fields": [
+    "predicate_id",
+    "case_ids",
+    "receipt_refs",
+    "covered_partitions"
+  ],
+  "medium_plus_min_adversarial_cases": 1
+}

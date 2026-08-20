@@ -1,0 +1,34 @@
+{
+  "schema": "hybrid_harness.mission_policy.v1",
+  "revision": "HYBRID-HARNESS-R8",
+  "principles": {
+    "parent_mission_is_durable": true,
+    "complex_work_is_decomposed_into_bounded_work_orders": true,
+    "child_completion_does_not_imply_parent_completion": true,
+    "dependencies_are_explicit": true,
+    "integration_is_a_separate_proven_transition": true,
+    "context_size_is_not_used_as_project_memory": true,
+    "accepted_checkpoint_evidence_is_reusable_by_successors": true,
+    "acceptance_contracts_bound_each_child_work_order": true,
+    "semantic_risk_floor_applies_per_child": true
+  },
+  "decompose_when": [
+    "multiple independent ownership domains must mutate",
+    "a Work Order cannot state a finite acceptance predicate set",
+    "review requires unrelated expertise or trust domains",
+    "a failure would make rollback scope ambiguous",
+    "the task exceeds the current context budget",
+    "parallel read-only research can safely unblock later mutation"
+  ],
+  "child_work_order_contract": {
+    "bounded_scope_required": true,
+    "explicit_dependencies_required": true,
+    "explicit_acceptance_predicates_required": true,
+    "one_primary_mutation_owner_required": true,
+    "parent_mission_id_required_when_nested": true,
+    "specification_slice_required": true,
+    "acceptance_contract_required": true,
+    "machine_semantic_floor_required": true
+  },
+  "completion_rule": "A parent mission completes only after every required child checkpoint and integration predicate is durably proven; no child role may declare the parent complete by prose."
+}

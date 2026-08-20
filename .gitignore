@@ -1,0 +1,10 @@
+artifacts/
+__pycache__/
+*.pyc
+.env
+*.log
+!evidence/raw/*.log
+.DS_Store
+# External reviewer private keys must never enter the repository.
+*.private-key
+*.seed

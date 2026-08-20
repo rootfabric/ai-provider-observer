@@ -1,0 +1,15 @@
+{
+  "schema": "hybrid_harness.project_epoch_schema.v2",
+  "required": [
+    "epoch_id",
+    "base_sha",
+    "policy_revision",
+    "eligible_checkpoints",
+    "status"
+  ],
+  "rules": [
+    "Epoch is immutable.",
+    "Canonical main movement requires audit before continuation.",
+    "Active branch rewrite/amend/reset is a fail-closed history violation."
+  ]
+}

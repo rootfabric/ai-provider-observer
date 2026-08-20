@@ -1,0 +1,52 @@
+{
+  "schema": "hybrid_harness.acceptance_contract_schema.v1",
+  "revision": "HYBRID-HARNESS-R8",
+  "required": [
+    "schema",
+    "contract_id",
+    "mission_id",
+    "work_order_id",
+    "semantic_tags",
+    "predicates",
+    "completion_rule"
+  ],
+  "predicate_required": [
+    "predicate_id",
+    "statement",
+    "class",
+    "semantic_tags",
+    "partitions",
+    "required_evidence",
+    "verifier_owned",
+    "requirement_ids"
+  ],
+  "classes": [
+    "EXAMPLE",
+    "INVARIANT",
+    "CONSERVATION",
+    "ATOMICITY",
+    "IDEMPOTENCY",
+    "PERSISTENCE",
+    "VALIDATION",
+    "AUTHORIZATION",
+    "RECOVERY",
+    "PERFORMANCE"
+  ],
+  "required_evidence_modes": [
+    "IMPLEMENTER_TEST",
+    "VERIFIER_TEST",
+    "FAULT_INJECTION",
+    "PROPERTY_CHECK",
+    "STATIC_PROOF",
+    "EXTERNAL_REVIEW"
+  ],
+  "rules": [
+    "Acceptance Contract is introduced in the control-only dispatch commit and is immutable afterwards.",
+    "Every predicate must link bidirectionally to one or more Requirement IDs extracted from the immutable Mission Specification.",
+    "Every machine-inferred semantic tag must be declared and covered by at least one predicate.",
+    "Every machine-required domain partition for a semantic tag must be covered before completion.",
+    "Universal predicates require more than one partition and cannot be proven by a single happy-path example.",
+    "MEDIUM+ requires verifier-owned adversarial evidence and signed external review.",
+    "Predicate PASS is derived from predicate coverage; prose verdict alone is insufficient."
+  ]
+}

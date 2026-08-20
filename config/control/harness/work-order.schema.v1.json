@@ -1,0 +1,51 @@
+{
+  "schema": "hybrid_harness.work_order_schema.v7",
+  "required": [
+    "work_order_id",
+    "risk",
+    "base_sha",
+    "started_at_utc",
+    "branch",
+    "implementer_actor_id",
+    "implementer_git_email",
+    "allowed_paths",
+    "implementation_paths",
+    "forbidden_paths",
+    "required_evidence",
+    "stop_conditions",
+    "mission",
+    "handoff",
+    "risk_reasons",
+    "integration",
+    "acceptance_contract",
+    "attempt_id",
+    "specification",
+    "requirements_manifest"
+  ],
+  "mission_required": [
+    "mission_id",
+    "success_condition"
+  ],
+  "handoff_required": [
+    "next_actor",
+    "next_action",
+    "evidence_sink",
+    "resume_condition",
+    "on_success",
+    "on_failure"
+  ],
+  "rules": [
+    "Mission Specification must exist in base_sha before dispatch and remains immutable for the attempt.",
+    "Work Order and Acceptance Contract must be introduced by the same dedicated control-only dispatch commit.",
+    "Work Order, Requirements Manifest and Acceptance Contract must be introduced by the same dedicated control-only dispatch commit.",
+    "base_sha must equal dispatch parent.",
+    "Work Order and Acceptance Contract are immutable after dispatch.",
+    "Machine semantic risk policy may raise but never lower the risk floor.",
+    "implementation_paths define the reviewed product surface and all product-mutating commits must use implementer_git_email.",
+    "MEDIUM+ requires signed external review and verifier-owned adversarial predicate coverage.",
+    "Work Order may reference but never create its own merge whitelist or trust root.",
+    "attempt_id is immutable; failed attempts are superseded, not rewritten.",
+    "Every machine-extracted normative clause from the base-owned Mission Specification must map to a Requirement ID and acceptance predicate."
+  ],
+  "revision": "HYBRID-HARNESS-R8"
+}

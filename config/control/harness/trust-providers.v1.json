@@ -1,0 +1,19 @@
+{
+  "schema": "hybrid_harness.trust_providers.v1",
+  "revision": "HYBRID-HARNESS-R8",
+  "rule": "Trust roots must exist in the Work Order base commit. Mission branches may consume but never create or broaden their own trust.",
+  "providers": {
+    "PROJECT_EXTERNAL_REVIEW": {
+      "type": "ED25519_V1",
+      "enabled": true,
+      "keys": [],
+      "note": "Template: add reviewer/integrator PUBLIC keys on canonical main before mission dispatch. Keep private seeds outside the repository."
+    }
+  },
+  "attestation_purposes": [
+    "REVIEW_PASS",
+    "INTEGRATION_APPROVE",
+    "HUMAN_APPROVE",
+    "ARCHITECTURE_PROMOTE"
+  ]
+}

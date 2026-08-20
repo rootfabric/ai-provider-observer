@@ -1,0 +1,46 @@
+{
+  "schema": "hybrid_harness.external_attestation_schema.v1",
+  "signed_schema": "hybrid_harness.external_attestation.v2",
+  "required": [
+    "attestation_id",
+    "provider_id",
+    "key_id",
+    "principal",
+    "purpose",
+    "subject_head",
+    "mission_id",
+    "work_order_id",
+    "decision",
+    "issued_at_utc",
+    "prerequisite_event",
+    "prerequisite_event_sha256",
+    "evidence_paths",
+    "evidence_digest",
+    "signature_b64"
+  ],
+  "purposes": [
+    "REVIEW_PASS",
+    "INTEGRATION_APPROVE",
+    "HUMAN_APPROVE",
+    "ARCHITECTURE_PROMOTE"
+  ],
+  "signature": {
+    "algorithm": "Ed25519",
+    "payload": "canonical JSON of all attestation fields except signature_b64, UTF-8, sort_keys=true, compact separators, trailing newline",
+    "trust_resolution": "provider/key must exist in Work Order base_sha"
+  },
+  "rule": "External approval is valid only if signed by a base-trusted key, causally bound to prior evidence, history-immutable, and content-addressed by the exact consumer event bytes/blob.",
+  "revision": "HYBRID-HARNESS-R8",
+  "causal_binding": {
+    "attestation_add_commit_must_descend_from_prerequisite_event_commit": true,
+    "prerequisite_event_must_exist_in_parent_of_attestation_add_commit": true,
+    "evidence_digest_is_computed_from_exact_git_blobs_in_attestation_parent": true,
+    "consumer_event_may_share_attestation_add_commit": true
+  },
+  "consumer_binding": {
+    "event_requires_attestation_sha256": true,
+    "event_requires_attestation_git_blob": true,
+    "validator_reads_attestation_at_consumer_commit": true,
+    "final_head_bytes_cannot_substitute_for_consumer_bytes": true
+  }
+}

@@ -1,0 +1,332 @@
+{
+  "schema": "hybrid_harness.rule_registry.v3",
+  "rules": [
+    {
+      "id": "HC-GIT-001",
+      "class": "CONTROL_INVARIANT",
+      "source": "DWS Harness",
+      "applies_when": "all managed work",
+      "enforcement": "mixed",
+      "enforced_by": [
+        "AGENTS.md",
+        "harness-policy.v1.json"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "HC-SELF-ACCEPT-001",
+      "class": "CONTROL_INVARIANT",
+      "source": "DWS Harness",
+      "applies_when": "checkpoint acceptance",
+      "enforcement": "machine",
+      "enforced_by": [
+        "review-policy.v1.json",
+        "harness-policy.v1.json"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "HC-EXACT-HEAD-001",
+      "class": "CONTROL_INVARIANT",
+      "source": "DWS Harness",
+      "applies_when": "review and verification",
+      "enforcement": "machine",
+      "enforced_by": [
+        "review-policy.v1.json"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "HC-MUTATION-LEASE-001",
+      "class": "CONTROL_INVARIANT",
+      "source": "DWS scheduler model",
+      "applies_when": "runtime mutation",
+      "enforcement": "machine",
+      "enforced_by": [
+        "harness-policy.v1.json"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "HH-PROSE-001",
+      "class": "PROCESS_GUARD",
+      "source": "Harness_ru + DWS stale-prose finding",
+      "applies_when": "editing root control prose",
+      "enforcement": "machine",
+      "enforced_by": [
+        "instruction-hygiene-policy.v1.json",
+        "audit.py"
+      ],
+      "retirement": "WHEN_MUTABLE_PROSE_IS_STRUCTURALLY_IMPOSSIBLE",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "HH-RULE-LIFECYCLE-001",
+      "class": "PROCESS_GUARD",
+      "source": "Harness_ru rule passport",
+      "applies_when": "adding or changing Harness rules",
+      "enforcement": "machine",
+      "enforced_by": [
+        "rule-registry.v1.json",
+        "audit.py"
+      ],
+      "retirement": "WHEN_RULE_METADATA_IS_ENFORCED_BY_SCHEMA",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "HH-CONTEXT-001",
+      "class": "PROCESS_GUARD",
+      "source": "Harness_ru context budget",
+      "applies_when": "root instructions or routing change",
+      "enforcement": "machine",
+      "enforced_by": [
+        "context-routing.v1.json",
+        "audit.py"
+      ],
+      "retirement": "REPLACE_ONLY_WITH_STRONGER_CONTEXT_MEASUREMENT",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "HH-NEGATIVE-001",
+      "class": "CONTROL_INVARIANT",
+      "source": "Harness_ru negative fixtures",
+      "applies_when": "Harness validation changes",
+      "enforcement": "machine",
+      "enforced_by": [
+        "selftest.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-MISSION-CONTINUITY",
+      "class": "CONTROL_INVARIANT",
+      "source": "Observed role-boundary liveness failure",
+      "applies_when": "a parent mission is not complete",
+      "enforcement": "machine",
+      "enforced_by": "scripts/harness/continuation.py",
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-DURABLE-HANDOFF",
+      "class": "CONTROL_INVARIANT",
+      "source": "Chat-only reviewer PASS cannot be resumed safely",
+      "applies_when": "a role result gates another role",
+      "enforcement": "machine",
+      "enforced_by": "scripts/harness/continuation.py",
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "PROC-HUMAN-NOT-COURIER",
+      "class": "PROCESS_GUARD",
+      "source": "Humans should resolve exceptions, not ferry routine agent results",
+      "applies_when": "routine role handoff is possible",
+      "enforcement": "machine",
+      "enforced_by": "scripts/harness/continuation.py",
+      "retirement": "DIRECTOR_REVIEW_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-EXTERNAL-TRUST-R5",
+      "class": "SECURITY_INVARIANT",
+      "source": "R4 h-4 false-positive external proof",
+      "applies_when": "MEDIUM+ external review or canonical integration approval",
+      "enforcement": "machine",
+      "enforced_by": [
+        "trust-providers.v1.json",
+        "trust.py",
+        "active_validation.py"
+      ],
+      "retirement": "SECURITY_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-GIT-DURABLE-EVIDENCE-R5",
+      "class": "CONTROL_INVARIANT",
+      "source": "R4 receipt raw log missing from Git",
+      "applies_when": "mission acceptance",
+      "enforcement": "machine",
+      "enforced_by": [
+        "evidence.py",
+        "gitproof.py",
+        "active_validation.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-APPEND-ONLY-BLOB-R5",
+      "class": "CONTROL_INVARIANT",
+      "source": "R4 mutable role-event hash-chain weakness",
+      "applies_when": "role event exists",
+      "enforcement": "machine",
+      "enforced_by": [
+        "evidence.py",
+        "gitproof.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-INTEGRATION-LINEAGE-R5",
+      "class": "CONTROL_INVARIANT",
+      "source": "R4 canonical main amend after integration",
+      "applies_when": "integration required",
+      "enforcement": "machine",
+      "enforced_by": [
+        "active_validation.py",
+        "gitproof.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-SEMANTIC-RISK-R6",
+      "class": "CONTROL_INVARIANT",
+      "source": "R5 MiniLedger self-transfer false-positive",
+      "applies_when": "risk classification and acceptance dispatch",
+      "enforcement": "machine",
+      "enforced_by": [
+        "semantic-risk-policy.v1.json",
+        "semantic.py",
+        "active_validation.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-ACCEPTANCE-CONTRACT-R6",
+      "class": "CONTROL_INVARIANT",
+      "source": "R5 proved authentic but incomplete evidence",
+      "applies_when": "all mission acceptance",
+      "enforcement": "machine",
+      "enforced_by": [
+        "acceptance-contract.schema.v1.json",
+        "semantic.py",
+        "active_validation.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-PREDICATE-COVERAGE-R6",
+      "class": "CONTROL_INVARIANT",
+      "source": "Conservation predicate passed without same-entity partition",
+      "applies_when": "verification",
+      "enforcement": "machine",
+      "enforced_by": [
+        "verifier-policy.v1.json",
+        "semantic.py",
+        "active_validation.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-REQUIREMENT-TRACEABILITY-R7",
+      "class": "CONTROL_INVARIANT",
+      "source": "R6 h-6 negative-balance requirement omission",
+      "applies_when": "all mission dispatch and acceptance",
+      "enforcement": "machine",
+      "enforced_by": [
+        "requirements-manifest.schema.v1.json",
+        "requirements.py",
+        "active_validation.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-CAUSAL-ATTESTATION-R7",
+      "class": "SECURITY_INVARIANT",
+      "source": "R6 h-6 pre-signed review/integration approvals",
+      "applies_when": "external review or integration authorization",
+      "enforcement": "machine",
+      "enforced_by": [
+        "external-attestation.schema.v1.json",
+        "trust.py",
+        "active_validation.py"
+      ],
+      "retirement": "SECURITY_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-ATTEMPT-TRANSPARENCY-R7",
+      "class": "CONTROL_INVARIANT",
+      "source": "R6 h-6 rewritten completed attempt in reflog",
+      "applies_when": "managed active attempts",
+      "enforcement": "machine",
+      "enforced_by": [
+        "attempt-policy.v1.json",
+        "gitproof.py",
+        "active_validation.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-GIT-PORTABILITY-R8",
+      "class": "SECURITY_INVARIANT",
+      "source": "h-7 R7 false PASS depended on local refs/replace overlays",
+      "applies_when": "all Git proof and mission completion",
+      "enforcement": "machine",
+      "enforced_by": [
+        "harness-policy.v1.json",
+        "gitproof.py",
+        "active_validation.py",
+        "portable.py"
+      ],
+      "retirement": "SECURITY_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-HISTORY-IMMUTABILITY-R8",
+      "class": "CONTROL_INVARIANT",
+      "source": "h-7 mutate-use-revert evidence laundering",
+      "applies_when": "durable evidence and closure paths",
+      "enforcement": "machine",
+      "enforced_by": [
+        "gitproof.py",
+        "active_validation.py",
+        "evidence.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-CONSUMER-CONTENT-BINDING-R8",
+      "class": "SECURITY_INVARIANT",
+      "source": "h-7 consumer event did not bind exact attestation bytes",
+      "applies_when": "external review/integration attestation consumption",
+      "enforcement": "machine",
+      "enforced_by": [
+        "external-attestation.schema.v1.json",
+        "evidence.py",
+        "active_validation.py"
+      ],
+      "retirement": "SECURITY_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-CLOSURE-TRAJECTORY-R8",
+      "class": "CONTROL_INVARIANT",
+      "source": "h-7 forbidden closure files were added then reverted before final diff",
+      "applies_when": "candidate-to-source and integration-result-to-final closure",
+      "enforcement": "machine",
+      "enforced_by": [
+        "harness-policy.v1.json",
+        "gitproof.py",
+        "active_validation.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    }
+  ],
+  "revision": "HYBRID-HARNESS-R8"
+}

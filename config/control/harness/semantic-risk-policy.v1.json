@@ -1,0 +1,197 @@
+{
+  "schema": "hybrid_harness.semantic_risk_policy.v1",
+  "revision": "HYBRID-HARNESS-R8",
+  "rule": "Semantic risk floor is machine-owned, but R7 normative Requirement Traceability is the complete requirement source. Tags only add risk/partition obligations.",
+  "tags": {
+    "persistence": {
+      "min_risk": "MEDIUM",
+      "triggers": [
+        "persistent",
+        "persistence",
+        "persist",
+        "durable",
+        "restart",
+        "save/load",
+        "save load",
+        "хранен",
+        "сохран",
+        "перезапуск"
+      ],
+      "required_partitions": [
+        "restart",
+        "write_failure",
+        "replace_failure"
+      ]
+    },
+    "transaction": {
+      "min_risk": "MEDIUM",
+      "triggers": [
+        "transaction",
+        "transfer",
+        "atomic",
+        "ledger",
+        "транзак",
+        "перевод",
+        "атомар"
+      ],
+      "required_partitions": [
+        "success",
+        "rejection",
+        "failure_atomicity"
+      ]
+    },
+    "exactly_once": {
+      "min_risk": "MEDIUM",
+      "triggers": [
+        "exactly-once",
+        "exactly once",
+        "idempotent",
+        "idempotency",
+        "command_id",
+        "идемпот",
+        "ровно один раз"
+      ],
+      "required_partitions": [
+        "first_execution",
+        "exact_replay",
+        "payload_conflict",
+        "terminal_rejection_replay",
+        "payload_conflict_invalid_payload"
+      ]
+    },
+    "conservation": {
+      "min_risk": "MEDIUM",
+      "triggers": [
+        "conservation",
+        "sum of balances",
+        "total balance",
+        "money conserved",
+        "balance conserved",
+        "сумма баланс",
+        "сохранение суммы",
+        "не меняется при transfer"
+      ],
+      "required_partitions": [
+        "distinct_entities",
+        "same_entity",
+        "boundary_amount"
+      ]
+    },
+    "concurrency": {
+      "min_risk": "MEDIUM",
+      "triggers": [
+        "concurrent",
+        "concurrency",
+        "race",
+        "parallel write",
+        "конкурент",
+        "гонк"
+      ],
+      "required_partitions": [
+        "sequential",
+        "concurrent_contention"
+      ]
+    },
+    "authorization": {
+      "min_risk": "HIGH",
+      "triggers": [
+        "authorization",
+        "authority",
+        "permission",
+        "ownership transfer",
+        "авторизац",
+        "владел",
+        "полномоч"
+      ],
+      "required_partitions": [
+        "authorized",
+        "unauthorized",
+        "stale_authority"
+      ]
+    },
+    "security": {
+      "min_risk": "HIGH",
+      "triggers": [
+        "security",
+        "secret",
+        "credential",
+        "token",
+        "signature",
+        "authentication",
+        "безопасност",
+        "секрет",
+        "учетн"
+      ],
+      "required_partitions": [
+        "valid",
+        "invalid",
+        "tampered"
+      ]
+    },
+    "cross_server": {
+      "min_risk": "HIGH",
+      "triggers": [
+        "cross-server",
+        "cross server",
+        "multi-server",
+        "handoff",
+        "distributed authority",
+        "межсервер",
+        "бесшов",
+        "handoff"
+      ],
+      "required_partitions": [
+        "normal",
+        "retry",
+        "partial_failure",
+        "recovery"
+      ]
+    },
+    "safety_critical": {
+      "min_risk": "CRITICAL",
+      "triggers": [
+        "safety critical",
+        "life safety",
+        "medical device",
+        "аварийн",
+        "безопасность жизни"
+      ],
+      "required_partitions": [
+        "normal",
+        "boundary",
+        "failure",
+        "recovery"
+      ]
+    },
+    "non_negative_domain": {
+      "min_risk": "MEDIUM",
+      "triggers": [
+        "no account balance may become negative",
+        "must not be negative",
+        "cannot be negative",
+        "non-negative",
+        "nonnegative",
+        "не может быть отрицатель",
+        "не должен быть отрицатель",
+        "неотрицатель"
+      ],
+      "required_partitions": [
+        "positive_initial",
+        "zero_initial",
+        "negative_initial",
+        "operation_underflow",
+        "negative_persisted"
+      ]
+    }
+  },
+  "universal_predicate_classes": [
+    "INVARIANT",
+    "CONSERVATION",
+    "ATOMICITY",
+    "IDEMPOTENCY",
+    "AUTHORIZATION"
+  ],
+  "universal_min_partitions": 2,
+  "medium_plus_requires_external_review": true,
+  "medium_plus_requires_adversarial_verification": true
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "hybrid_harness.project_state.v8",
+  "canonical_branch": "main",
+  "state_revision": 1,
+  "active_checkpoint": null,
+  "active_epoch": null,
+  "active_work_order": null,
+  "active_mission": null,
+  "mutation_lease": null,
+  "status": "HARNESS_READY",
+  "note": "Clean Hybrid Harness R8 template. No mission has been dispatched. Configure base trust, commit it on main, then create specification/requirements/acceptance/work order for the test mission."
+}

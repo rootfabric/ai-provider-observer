@@ -1,0 +1,111 @@
+{
+  "schema": "hybrid_harness.policy.v5",
+  "revision": "HYBRID-HARNESS-R8",
+  "canonical_branch": "main",
+  "principles": {
+    "git_is_durable_memory": true,
+    "chat_not_required_for_resume": true,
+    "human_is_not_routine_role_result_courier": true,
+    "main_owns_policy_and_project_state": true,
+    "branches_report_execution_facts": true,
+    "events_append_only": true,
+    "derived_status_rebuildable": true,
+    "implementer_cannot_self_accept": true,
+    "missing_evidence_fails_closed": true,
+    "mission_remains_open_across_role_boundaries": true,
+    "routine_role_boundary_is_not_human_blocker": true,
+    "checkpoint_is_control_unit": true,
+    "evidence_package_is_review_unit": true,
+    "exception_is_human_attention_unit": true,
+    "exact_tested_heads_required": true,
+    "completion_is_derived_not_declared": true,
+    "active_mission_evidence_is_semantically_validated": true,
+    "closure_tail_may_not_change_product": true,
+    "test_evidence_must_be_machine_receipted": true,
+    "work_order_must_precede_product_mutation": true,
+    "work_order_is_immutable_after_dispatch": true,
+    "implementation_must_not_begin_on_canonical_branch": true,
+    "completion_requires_released_mutation_lease": true,
+    "evidence_receipt_requires_clean_subject_tree": true,
+    "evidence_receipt_environment_is_declared": true,
+    "completion_requires_clean_worktree": true,
+    "completion_evidence_must_be_tracked_at_head": true,
+    "evidence_events_are_blob_immutable_after_add": true,
+    "external_trust_must_predate_dispatch": true,
+    "external_claims_require_cryptographic_verification": true,
+    "canonical_integration_lineage_is_machine_proven": true,
+    "derived_lineage_is_not_self_authored": true,
+    "all_product_mutating_commits_match_declared_implementer_identity": true,
+    "semantic_risk_floor_is_machine_owned": true,
+    "acceptance_contract_must_precede_implementation": true,
+    "acceptance_contract_is_immutable_after_dispatch": true,
+    "predicate_coverage_is_machine_checked": true,
+    "medium_plus_requires_adversarial_verifier_evidence": true,
+    "implementer_tests_are_not_sufficient_acceptance_for_medium_plus": true,
+    "final_report_is_machine_generated": true,
+    "abandoned_attempts_are_superseded_not_rewritten": true,
+    "mission_specification_must_predate_dispatch": true,
+    "semantic_inference_reads_base_specification": true,
+    "normative_requirement_traceability_is_mandatory": true,
+    "semantic_tags_supplement_but_do_not_replace_requirements": true,
+    "external_attestations_are_causally_bound_to_prior_evidence": true,
+    "attestation_evidence_digest_is_verified": true,
+    "same_attempt_id_may_not_be_reused_after_abort": true,
+    "managed_branch_rewrites_are_rejected_when_observable": true,
+    "git_replace_refs_are_forbidden": true,
+    "git_proofs_disable_replace_objects": true,
+    "portable_clean_clone_validation_is_mandatory": true,
+    "immutable_evidence_is_history_immutable": true,
+    "closure_tail_is_checked_per_commit": true,
+    "consumer_events_bind_exact_attestation_object": true,
+    "causal_references_are_content_addressed": true
+  },
+  "concurrency": {
+    "runtime_mutation_lease_capacity": 1,
+    "read_only_review_may_parallelize": true,
+    "read_only_verification_may_parallelize": true,
+    "conflicting_mutations_forbidden": true
+  },
+  "autonomy": {
+    "default_ceiling": "INTEGRATE_CANDIDATE",
+    "architecture_promotion_requires_human": true,
+    "canonical_merge_requires_durable_authorization": true
+  },
+  "handoff_classes": [
+    "ROLE_BOUNDARY",
+    "EXTERNAL_WAIT",
+    "HUMAN_DECISION_REQUIRED",
+    "SYSTEM_BLOCKED",
+    "MISSION_COMPLETE"
+  ],
+  "closure_tail": {
+    "allowed_paths": [
+      "evidence/**",
+      "config/control/project-state.v1.json",
+      "config/control/missions/**",
+      "config/control/requirements/**"
+    ],
+    "candidate_must_remain_ancestor": true,
+    "product_change_after_candidate_invalidates_review": true,
+    "closure_head_is_derived_from_git": true,
+    "per_commit_validation_required": true,
+    "revert_does_not_erase_violation": true
+  },
+  "integration": {
+    "self_authored_work_order_whitelist_forbidden": true,
+    "resulting_head_must_remain_ancestor_of_final": true,
+    "post_integration_validation_required": true,
+    "whitelists": {
+      "LOCAL_SANDBOX_LOW_RISK": {
+        "max_risk": "LOW",
+        "description": "Template-only LOW-risk automatic integration. MEDIUM+ requires signed external authorization."
+      }
+    }
+  },
+  "portability": {
+    "replace_refs_forbidden": true,
+    "git_no_replace_objects_required": true,
+    "clean_clone_validate_ready_required": true,
+    "clone_must_not_depend_on_reflog_or_local_git_metadata": true
+  }
+}

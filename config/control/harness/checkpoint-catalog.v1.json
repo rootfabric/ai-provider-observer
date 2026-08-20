@@ -1,0 +1,14 @@
+{
+  "schema": "hybrid_harness.checkpoint_catalog.v1",
+  "checkpoints": [
+    {
+      "id": "TEMPLATE_BASELINE_READY",
+      "kind": "CONTROL",
+      "acceptance": [
+        "validate_pass",
+        "hygiene_pass",
+        "selftest_pass"
+      ]
+    }
+  ]
+}

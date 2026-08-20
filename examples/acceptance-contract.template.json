@@ -1,0 +1,13 @@
+{
+  "schema": "hybrid_harness.acceptance_contract.v1",
+  "mission_id": "MISSION-001",
+  "work_order_id": "WO-001",
+  "predicates": [
+    {
+      "predicate_id": "PRED-001",
+      "description": "Replace with a machine-verifiable acceptance predicate",
+      "required_partitions": ["normal", "boundary", "invalid"],
+      "required_evidence": ["VERIFIER_CASE"]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "hybrid_harness.requirements_manifest_schema.v1",
+  "revision": "HYBRID-HARNESS-R8",
+  "required": [
+    "schema",
+    "manifest_id",
+    "mission_id",
+    "work_order_id",
+    "specification",
+    "specification_sha256",
+    "requirements"
+  ],
+  "requirement_required": [
+    "requirement_id",
+    "statement",
+    "source_clause_ids",
+    "class",
+    "semantic_tags",
+    "required_partitions",
+    "predicate_ids"
+  ],
+  "principles": [
+    "Mission Specification is the normative source of truth.",
+    "Machine-extracted normative clauses may not disappear during planning.",
+    "Every normative clause maps to at least one durable requirement ID.",
+    "Every requirement maps bidirectionally to acceptance predicates.",
+    "Every requirement reaches verifier evidence through predicate coverage before completion.",
+    "Semantic tags generate extra partitions but do not define the complete requirement set."
+  ]
+}

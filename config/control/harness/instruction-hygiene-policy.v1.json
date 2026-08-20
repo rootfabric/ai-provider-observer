@@ -1,0 +1,40 @@
+{
+  "schema": "hybrid_harness.instruction_hygiene_policy.v2",
+  "revision": "HH-R1",
+  "protected_rule_classes": [
+    "SAFETY_INVARIANT",
+    "SECURITY_INVARIANT",
+    "CONTROL_INVARIANT",
+    "ARCHITECTURE_INVARIANT"
+  ],
+  "retirable_rule_classes": [
+    "PROCESS_GUARD",
+    "EMPIRICAL_WORKAROUND"
+  ],
+  "never_auto_delete_rules": true,
+  "machine_enforcement_displaces_detailed_prose": true,
+  "retirement_requires_review": true,
+  "root_files_scanned_for_mutable_state": [
+    "AGENTS.md",
+    "HARNESS_CONTROL.md",
+    "PROJECT_CONTROL.md"
+  ],
+  "forbidden_mutable_prose_patterns": [
+    "(?i)current checkpoint\\s*[:=]",
+    "(?i)current harness gate",
+    "(?i)active epoch\\s*[:=]",
+    "(?i)registry generation\\s*[:=]\\s*[0-9]+"
+  ],
+  "budgets": {
+    "root_router_max_lines": 150,
+    "root_router_max_bytes": 18000,
+    "always_context_max_estimated_tokens": 5000,
+    "conditional_route_max_estimated_tokens": 9000
+  },
+  "triggers": {
+    "accepted_checkpoints_interval": 10,
+    "on_context_budget_exceeded": true,
+    "on_prose_machine_drift": true,
+    "before_new_snapshot": true
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "work_order_id": "WO-001",
+  "schema": "hybrid_harness.work_order.v1",
+  "mission": {"mission_id": "MISSION-001"},
+  "risk": "MEDIUM",
+  "branch": "feature/test-task",
+  "implementer_actor_id": "implementer-001",
+  "implementer_git_email": "implementer@example.invalid",
+  "specification": "config/control/specifications/MISSION-001.md",
+  "requirements_manifest": "config/control/requirements/WO-001.json",
+  "acceptance_contract": "config/control/acceptance/WO-001.json",
+  "implementation_scope": ["src/**", "tests/product/**"]
+}

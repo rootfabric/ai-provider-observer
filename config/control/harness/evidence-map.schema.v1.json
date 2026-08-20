@@ -1,0 +1,55 @@
+{
+  "schema": "hybrid_harness.evidence_map_schema.v5",
+  "required_for_completion": [
+    "candidate_head",
+    "tested_head",
+    "reviewed_head",
+    "candidate_receipts",
+    "post_integration_receipts",
+    "unverified_items",
+    "verifier_receipts",
+    "predicate_coverage",
+    "requirement_coverage"
+  ],
+  "candidate_receipts": {
+    "runner": "HARNESS_COMMAND_API_R8",
+    "subject_must_equal_candidate_head": true,
+    "exit_code_must_be_zero": true,
+    "output_hash_must_match": true,
+    "receipt_and_output_must_be_tracked": true
+  },
+  "post_integration_receipts": {
+    "required_when_integration_required": true,
+    "subject_must_equal_integration_resulting_head": true,
+    "receipt_and_output_must_be_tracked": true
+  },
+  "events": {
+    "directory": "evidence/events",
+    "hash_chained": true,
+    "one_append_event_per_commit": true,
+    "blob_immutable_after_first_add": true,
+    "candidate_subject_common_to_mission_events": true
+  },
+  "forbidden_derived_claims": [
+    "lineage"
+  ],
+  "note": "R6 derives Git lineage itself and additionally requires verifier predicate coverage. Evidence maps reference proofs but do not self-author ancestry facts.",
+  "revision": "HYBRID-HARNESS-R8",
+  "verifier_receipts": {
+    "required": true,
+    "subject_must_equal_candidate_head": true,
+    "execution_may_be_closure_only_after_candidate": true,
+    "input_files_must_be_hashed_and_git_durable": true
+  },
+  "predicate_coverage": {
+    "acceptance_contract_is_source_of_truth": true,
+    "all_predicates_require_coverage": true,
+    "all_declared_partitions_require_coverage": true,
+    "medium_plus_requires_verifier_owned_adversarial_case": true
+  },
+  "requirement_coverage": {
+    "requirements_manifest_is_source_of_truth": true,
+    "all_normative_requirements_must_reach_predicates": true,
+    "all_requirement_predicates_must_reach_verifier_coverage": true
+  }
+}

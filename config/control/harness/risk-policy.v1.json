@@ -1,0 +1,42 @@
+{
+  "schema": "hybrid_harness.risk_policy.v2",
+  "levels": {
+    "LOW": {
+      "roles": [
+        "IMPLEMENTER",
+        "VERIFIER"
+      ]
+    },
+    "MEDIUM": {
+      "roles": [
+        "IMPLEMENTER",
+        "REVIEWER",
+        "VERIFIER"
+      ]
+    },
+    "HIGH": {
+      "roles": [
+        "IMPLEMENTER",
+        "REVIEWER",
+        "VERIFIER",
+        "DIRECTOR"
+      ]
+    },
+    "CRITICAL": {
+      "roles": [
+        "IMPLEMENTER",
+        "REVIEWER",
+        "VERIFIER",
+        "DIRECTOR",
+        "HUMAN"
+      ]
+    }
+  },
+  "revision": "HYBRID-HARNESS-R8",
+  "machine_owned_floor_policy": "config/control/harness/semantic-risk-policy.v1.json",
+  "rules": [
+    "Declared risk may be higher than the machine semantic floor but never lower.",
+    "Persistence, transactions, exactly-once, conservation, and concurrency imply at least MEDIUM.",
+    "Authorization/security/cross-server authority imply at least HIGH unless a stronger tag sets CRITICAL."
+  ]
+}
