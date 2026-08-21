@@ -65,9 +65,17 @@
     "causal_wall_clock_consistency_required": true,
     "max_clock_skew_seconds": 120,
     "issued_at_must_not_postdate_consumer_beyond_skew": true,
-    "issued_at_must_not_predate_prerequisite_beyond_skew": true
+    "issued_at_must_not_predate_prerequisite_beyond_skew": true,
+    "key_custody_metadata_required": true,
+    "review_and_integration_custody_domains_must_be_distinct": true,
+    "allowed_external_custody_classes": [
+      "SEPARATE_AGENT",
+      "REMOTE_SIGNER",
+      "HARDWARE"
+    ],
+    "local_seed_possession_is_not_independence_proof": true
   },
-  "revision": "HYBRID-HARNESS-R10",
+  "revision": "HYBRID-HARNESS-R11",
   "semantic_assurance": {
     "acceptance_contract_required": true,
     "predicate_to_evidence_coverage_required": true,

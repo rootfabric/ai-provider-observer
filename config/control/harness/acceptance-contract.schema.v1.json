@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.acceptance_contract_schema.v1",
-  "revision": "HYBRID-HARNESS-R10",
+  "revision": "HYBRID-HARNESS-R11",
   "required": [
     "schema",
     "contract_id",
@@ -49,6 +49,12 @@
     "Universal predicates require more than one partition and cannot be proven by a single happy-path example.",
     "MEDIUM+ requires verifier-owned adversarial evidence and signed external review.",
     "Predicate PASS is derived from predicate coverage; prose verdict alone is insufficient.",
-    "Every predicate partition owns one or more pre-implementation oracle IDs/statements; verifier cases must bind and observe those exact oracles at runtime."
+    "Every predicate partition owns one or more pre-implementation oracle IDs/statements; verifier cases must bind and observe those exact oracles at runtime.",
+    "Every oracle declares observation_kind. raises-oracles also declare expected_exception; runtime structured observation must match the pre-dispatch oracle contract."
+  ],
+  "oracle_observation_kinds": [
+    "equal",
+    "raises",
+    "unchanged"
   ]
 }

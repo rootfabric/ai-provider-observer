@@ -1,13 +1,9 @@
 # Project Control
 
-Этот seed не содержит project-specific architecture. Добавляйте architecture/ownership/domain policies как main-owned machine contracts до dispatch.
+Harness revision: **HYBRID-HARNESS-R11**
 
-Базовые invariants:
-- Git — durable memory; clean clone должен воспроизводить acceptance;
-- Mission Specification — immutable normative source;
-- normative clauses не могут исчезать между specification и verification;
-- control/trust/semantic policy разрешается из immutable `base_sha`;
-- external approval должен быть cryptographically valid **и causally bound**;
-- critical gates fail closed;
-- integration имеет отдельную доказуемую lineage;
-- child completion не закрывает parent mission автоматически.
+Template state: `HARNESS_READY`; active mission отсутствует.
+
+Source of truth: Git + `config/control/` + durable evidence.
+
+Primary R11 additions: structured oracle proof, safe attempt retry, derived effective status, durable resume, external custody metadata.

@@ -47,7 +47,7 @@ def receipt(subject: str, rid: str, out_rel: str, output: bytes, *, execution_he
         "environment_mode":"SANITIZED_PLUS_DECLARED_OVERRIDES", "environment_overrides":{}, "base_environment":{},
         "resolved_executable":"python3", "python_version":sys.version.split()[0], "clean_subject_tree":True,
         "started_at_utc":now_utc(), "finished_at_utc":now_utc(), "exit_code":0,
-        "output_path":out_rel, "output_sha256":hashlib.sha256(output).hexdigest(), "input_files": input_files or [], "runner":"HARNESS_COMMAND_API_R10"
+        "output_path":out_rel, "output_sha256":hashlib.sha256(output).hexdigest(), "input_files": input_files or [], "runner":"HARNESS_COMMAND_API_R11"
     }
     if verifier_result is not None:
         obj["verifier_result"] = verifier_result
@@ -66,6 +66,7 @@ def signed_attestation(seed: bytes, *, root: Path, attestation_id: str, key_id: 
         "provider_id":"TEST_EXTERNAL",
         "key_id":key_id,
         "principal":principal,
+        "custody_id":"custody-review" if purpose == "REVIEW_PASS" else "custody-integration",
         "purpose":purpose,
         "subject_head":subject,
         "mission_id":"M1",
@@ -117,8 +118,8 @@ class ActiveFixture:
                 "TEST_EXTERNAL":{
                     "type":"ED25519_V1", "enabled":True,
                     "keys":[
-                        {"key_id":"review-key","principal":"external-reviewer","public_key_b64":base64.b64encode(public_key_from_seed(self.REVIEW_SEED)).decode(),"allowed_purposes":["REVIEW_PASS"]},
-                        {"key_id":"integration-key","principal":"external-integrator","public_key_b64":base64.b64encode(public_key_from_seed(self.INTEGRATION_SEED)).decode(),"allowed_purposes":["INTEGRATION_APPROVE"]}
+                        {"key_id":"review-key","principal":"external-reviewer","custody_id":"custody-review","custody_class":"SEPARATE_AGENT","public_key_b64":base64.b64encode(public_key_from_seed(self.REVIEW_SEED)).decode(),"allowed_purposes":["REVIEW_PASS"]},
+                        {"key_id":"integration-key","principal":"external-integrator","custody_id":"custody-integration","custody_class":"SEPARATE_AGENT","public_key_b64":base64.b64encode(public_key_from_seed(self.INTEGRATION_SEED)).decode(),"allowed_purposes":["INTEGRATION_APPROVE"]}
                     ]
                 }
             }
@@ -163,9 +164,9 @@ class ActiveFixture:
                 "class":"ATOMICITY", "semantic_tags":["transaction"],
                 "partitions":["success","rejection","failure_atomicity"],
                 "partition_oracles":{
-                    "success":[{"oracle_id":"O-TX-SUCCESS","statement":"Successful transaction commits atomically."}],
-                    "rejection":[{"oracle_id":"O-TX-REJECT","statement":"Rejected transaction leaves state unchanged."}],
-                    "failure_atomicity":[{"oracle_id":"O-TX-FAIL","statement":"Injected persistence failure leaves state coherent."}]
+                    "success":[{"oracle_id":"O-TX-SUCCESS","statement":"Successful transaction commits atomically.","observation_kind":"equal"}],
+                    "rejection":[{"oracle_id":"O-TX-REJECT","statement":"Rejected transaction leaves state unchanged.","observation_kind":"equal"}],
+                    "failure_atomicity":[{"oracle_id":"O-TX-FAIL","statement":"Injected persistence failure leaves state coherent.","observation_kind":"equal"}]
                 },
                 "required_evidence":["VERIFIER_TEST","FAULT_INJECTION"], "verifier_owned":True
             },
@@ -175,9 +176,9 @@ class ActiveFixture:
                 "class":"PERSISTENCE", "semantic_tags":["persistence"],
                 "partitions":["restart","write_failure","replace_failure"],
                 "partition_oracles":{
-                    "restart":[{"oracle_id":"O-P-RESTART","statement":"State survives restart."}],
-                    "write_failure":[{"oracle_id":"O-P-WRITE","statement":"Write failure preserves coherent state."}],
-                    "replace_failure":[{"oracle_id":"O-P-REPLACE","statement":"Replace failure preserves coherent state."}]
+                    "restart":[{"oracle_id":"O-P-RESTART","statement":"State survives restart.","observation_kind":"equal"}],
+                    "write_failure":[{"oracle_id":"O-P-WRITE","statement":"Write failure preserves coherent state.","observation_kind":"equal"}],
+                    "replace_failure":[{"oracle_id":"O-P-REPLACE","statement":"Replace failure preserves coherent state.","observation_kind":"equal"}]
                 },
                 "required_evidence":["VERIFIER_TEST","FAULT_INJECTION"], "verifier_owned":True
             }],
@@ -233,17 +234,17 @@ class ActiveFixture:
         verifier_script.parent.mkdir(parents=True, exist_ok=True)
         verifier_script.write_text("# verifier-owned adversarial fixture\n", encoding="utf-8")
         runtime_rows = [
-            {"test_id":"adversarial_cases.FixtureVerifier.test_success","case_id":"V-SUCCESS","partitions":["success"],"oracle_ids":["O-TX-SUCCESS"],"observed_oracle_ids":["O-TX-SUCCESS"],"status":"PASS"},
-            {"test_id":"adversarial_cases.FixtureVerifier.test_reject","case_id":"V-REJECT","partitions":["rejection"],"oracle_ids":["O-TX-REJECT"],"observed_oracle_ids":["O-TX-REJECT"],"status":"PASS"},
-            {"test_id":"adversarial_cases.FixtureVerifier.test_failure","case_id":"V-FAIL","partitions":["failure_atomicity"],"oracle_ids":["O-TX-FAIL"],"observed_oracle_ids":["O-TX-FAIL"],"status":"PASS"},
-            {"test_id":"adversarial_cases.FixtureVerifier.test_restart","case_id":"V-RESTART","partitions":["restart"],"oracle_ids":["O-P-RESTART"],"observed_oracle_ids":["O-P-RESTART"],"status":"PASS"},
-            {"test_id":"adversarial_cases.FixtureVerifier.test_write_failure","case_id":"V-WRITE-FAIL","partitions":["write_failure"],"oracle_ids":["O-P-WRITE"],"observed_oracle_ids":["O-P-WRITE"],"status":"PASS"},
-            {"test_id":"adversarial_cases.FixtureVerifier.test_replace_failure","case_id":"V-REPLACE-FAIL","partitions":["replace_failure"],"oracle_ids":["O-P-REPLACE"],"observed_oracle_ids":["O-P-REPLACE"],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_success","case_id":"V-SUCCESS","partitions":["success"],"oracle_ids":["O-TX-SUCCESS"],"observed_oracle_ids":["O-TX-SUCCESS"],"oracle_observations":[{"oracle_id":"O-TX-SUCCESS","kind":"equal","matched":True,"actual":{"type":"str","repr":"ok","sha256":"x"},"expected":{"type":"str","repr":"ok","sha256":"x"}}],"oracle_quality_findings":[],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_reject","case_id":"V-REJECT","partitions":["rejection"],"oracle_ids":["O-TX-REJECT"],"observed_oracle_ids":["O-TX-REJECT"],"oracle_observations":[{"oracle_id":"O-TX-REJECT","kind":"equal","matched":True,"actual":{"type":"str","repr":"ok","sha256":"x"},"expected":{"type":"str","repr":"ok","sha256":"x"}}],"oracle_quality_findings":[],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_failure","case_id":"V-FAIL","partitions":["failure_atomicity"],"oracle_ids":["O-TX-FAIL"],"observed_oracle_ids":["O-TX-FAIL"],"oracle_observations":[{"oracle_id":"O-TX-FAIL","kind":"equal","matched":True,"actual":{"type":"str","repr":"ok","sha256":"x"},"expected":{"type":"str","repr":"ok","sha256":"x"}}],"oracle_quality_findings":[],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_restart","case_id":"V-RESTART","partitions":["restart"],"oracle_ids":["O-P-RESTART"],"observed_oracle_ids":["O-P-RESTART"],"oracle_observations":[{"oracle_id":"O-P-RESTART","kind":"equal","matched":True,"actual":{"type":"str","repr":"ok","sha256":"x"},"expected":{"type":"str","repr":"ok","sha256":"x"}}],"oracle_quality_findings":[],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_write_failure","case_id":"V-WRITE-FAIL","partitions":["write_failure"],"oracle_ids":["O-P-WRITE"],"observed_oracle_ids":["O-P-WRITE"],"oracle_observations":[{"oracle_id":"O-P-WRITE","kind":"equal","matched":True,"actual":{"type":"str","repr":"ok","sha256":"x"},"expected":{"type":"str","repr":"ok","sha256":"x"}}],"oracle_quality_findings":[],"status":"PASS"},
+            {"test_id":"adversarial_cases.FixtureVerifier.test_replace_failure","case_id":"V-REPLACE-FAIL","partitions":["replace_failure"],"oracle_ids":["O-P-REPLACE"],"observed_oracle_ids":["O-P-REPLACE"],"oracle_observations":[{"oracle_id":"O-P-REPLACE","kind":"equal","matched":True,"actual":{"type":"str","repr":"ok","sha256":"x"},"expected":{"type":"str","repr":"ok","sha256":"x"}}],"oracle_quality_findings":[],"status":"PASS"},
         ]
         verifier_result = {
-            "schema":"hybrid_harness.verifier_execution.v1", "start_dir":"evidence/verifier", "pattern":"test_*.py",
+            "schema":"hybrid_harness.verifier_execution.v2", "start_dir":"evidence/verifier", "pattern":"test_*.py",
             "tests":runtime_rows, "executed_test_ids":[r["test_id"] for r in runtime_rows],
-            "passed_test_ids":[r["test_id"] for r in runtime_rows], "failed_test_ids":[], "skipped_test_ids":[]
+            "passed_test_ids":[r["test_id"] for r in runtime_rows], "failed_test_ids":[], "skipped_test_ids":[], "oracle_quality_findings":[]
         }
         marker = ("HARNESS_VERIFIER_RESULT_JSON=" + json.dumps(verifier_result, sort_keys=True, separators=(",", ":")) + "\n").encode()
         verifier_out = root / "evidence/raw/verifier.log"; verifier_out.write_bytes(marker)

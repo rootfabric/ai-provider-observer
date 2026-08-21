@@ -1,11 +1,11 @@
-# Hybrid Harness R10 — чистая болванка для новой тестовой задачи
+# Hybrid Harness R11 — старт новой тестовой mission
 
-Это IDLE-шаблон: активной mission и product evidence нет.
+Это IDLE-шаблон: product/evidence mission отсутствуют.
 
-## 1. Проверка после распаковки
+## 1. После распаковки
 
 ```bash
-./CONTROL_HARNESS.sh status
+./CONTROL_HARNESS.sh resume NEW_SESSION
 ./CONTROL_HARNESS.sh validate
 ./CONTROL_HARNESS.sh hygiene
 ./CONTROL_HARNESS.sh portable-check
@@ -13,29 +13,58 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
 ./CONTROL_HARNESS.sh selftest
 ```
 
-Ожидание: `HARNESS_READY`, `active_mission=null`, все baseline gates PASS.
+Ожидание: `effective_status=HARNESS_READY`, baseline gates PASS.
+
+**Каждая новая/возобновлённая агентская сессия сначала выполняет `resume`.** Если предыдущая сессия завершилась timeout:
+
+```bash
+./CONTROL_HARNESS.sh resume TIMEOUT
+```
+
+`TIMEOUT` — только runtime diagnostic. Следующий actor/action выводится из durable state. Не просите человека писать «продолжай» для routine boundary.
 
 ## 2. External trust до dispatch
 
-Private seeds храните вне Git:
+Private keys не должны находиться в Git и не должны контролироваться implementer session. `keygen` автоматически запрещён после появления active mission.
 
-```bash
-python3 tools/external_attestation.py keygen --private-out "$HOME/.hybrid-harness-test/reviewer.seed"
-python3 tools/external_attestation.py keygen --private-out "$HOME/.hybrid-harness-test/integrator.seed"
+В `config/control/harness/trust-providers.v1.json` каждый MEDIUM+ key добавляйте на `main` **до dispatch** с полями:
+
+```json
+{
+  "key_id": "review-key-001",
+  "principal": "external-reviewer@example.invalid",
+  "custody_id": "review-custody-001",
+  "custody_class": "SEPARATE_AGENT",
+  "public_key_b64": "...",
+  "allowed_purposes": ["REVIEW_PASS"]
+}
 ```
 
-Public keys внесите в `config/control/harness/trust-providers.v1.json` и commit на `main` до Work Order dispatch.
+Допустимые external custody classes: `SEPARATE_AGENT`, `REMOTE_SIGNER`, `HARDWARE`. Review и integration должны использовать разные `custody_id`.
 
-## 3. Опишите mission до product implementation
+Важно: metadata усиливает structural proof, но local Git repo сам по себе не может доказать физическое владение private key. Для настоящей независимости private key должен быть недоступен implementer process.
 
-Используйте `examples/` и создайте:
+## 3. Mission до implementation
+
+Создайте из `examples/`:
 
 - `config/control/specifications/MISSION-001.md`
 - `config/control/requirements/WO-001.json`
 - `config/control/acceptance/WO-001.json`
 - `config/control/missions/WO-001.json`
 
-Каждый acceptance predicate обязан иметь `partition_oracles`: expected oracle ID + statement для каждого partition.
+Для каждого partition заранее задайте oracle с `observation_kind`:
+
+```json
+{
+  "oracle_id": "ORACLE-PRED-001-INVALID",
+  "statement": "Invalid operation raises ValidationError and does not mutate state.",
+  "observation_kind": "raises",
+  "expected_exception": "ValidationError"
+}
+```
+
+Поддерживаются `equal`, `raises`, `unchanged`.
 
 Проверьте control plane:
 
@@ -45,45 +74,49 @@ Public keys внесите в `config/control/harness/trust-providers.v1.json` �
 ./CONTROL_HARNESS.sh acceptance-check WO-001
 ```
 
-Только после durable dispatch начинайте implementation в отдельной feature branch.
+После durable control-only dispatch переходите в feature branch.
 
-## 4. Product evidence
+## 4. Если attempt не удался
 
-- код: `src/`
-- implementer tests: `tests/product/`
-- machine product receipts: `./CONTROL_HARNESS.sh evidence-run ...`
-- immutable events: `./CONTROL_HARNESS.sh event-add ...`
-
-Перед review:
+**Не используйте `reset --hard`, amend, rebase, delete/recreate branch.** Commit-ните полезную failure evidence, вернитесь на clean canonical `main` и выполните:
 
 ```bash
-./CONTROL_HARNESS.sh freeze-candidate
-./CONTROL_HARNESS.sh validate-active
-./CONTROL_HARNESS.sh report
+./CONTROL_HARNESS.sh attempt-retry WO-002 ATTEMPT-001-B feature/test-b "candidate failed verifier"
 ```
 
-## 5. R10 verifier evidence
+R11 автоматически:
 
-Verifier tests кладите в `evidence/verifier/` и наследуйте от `VerifierTestCase`.
-Каждый test method связывайте decorator `@verifier_case(...)` с durable CASE ID, partitions и oracle IDs из Acceptance Contract.
+1. пишет `SUPERSEDED` record старого attempt;
+2. сохраняет старую branch/history;
+3. копирует immutable specification/requirements/acceptance в новый Work Order binding;
+4. создаёт control-only dispatch commit с `base_sha=dispatch parent`;
+5. создаёт и переключает на новую feature branch.
 
-Пример: `examples/verifier-test.template.py`.
+## 5. Verifier evidence R11
 
-Запускайте verifier только base-owned runner:
+Verifier tests наследуют `VerifierTestCase`, используют `@verifier_case(...)` и только structured oracle assertions:
+
+```python
+self.assert_oracle_equal(oracle_id, actual, expected)
+self.assert_oracle_raises(oracle_id, ExpectedError, operation, *args)
+self.assert_oracle_unchanged(oracle_id, before, after)
+```
+
+Запрещено:
+
+```python
+self.assert_oracle(oracle_id, True)
+self.assert_oracle_equal(oracle_id, 1, 1)
+self.assert_oracle_equal(oracle_id, snapshot, snapshot)
+```
+
+Runner:
 
 ```bash
 ./CONTROL_HARNESS.sh verifier-run verifier-adversarial evidence/verifier 'test_*.py'
 ```
 
-Этот command создаёт durable receipt с exact runtime PASS test IDs и observed oracle IDs. Затем создайте `verification-manifest.json` по `examples/verification-manifest.template.json`.
-
-R10 fail-closed если:
-
-- `covered_partitions` содержит partition, которого нет в referenced cases;
-- required partition отсутствует в union referenced cases;
-- manifest `test_id` не был реально выполнен и PASS;
-- runtime case/partition/oracle metadata отличается от manifest;
-- required contract oracle не был успешно observed тестом.
+Receipt содержит exact PASS test IDs, case/partition binding, structured oracle observations и oracle-quality findings.
 
 ## 6. Final gates
 
@@ -94,4 +127,4 @@ R10 fail-closed если:
 ./CONTROL_HARNESS.sh final-report
 ```
 
-Не переписывайте machine-derived counts/HEAD вручную: canonical итог — `final-report`.
+Доверяйте `effective_status` и `completion_proven`, а не вручную записанному `project_state.status`. Canonical итог — machine `final-report`.

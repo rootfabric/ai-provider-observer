@@ -808,6 +808,19 @@ def validate_active(root: Path, *, require_completion: bool = False) -> list[Act
                 expected_prerequisite_event=pre_rel, expected_evidence_paths=integration_evidence_paths, consumer_commit=auth_commit, consumer_binding=auth,
                 consumer_recorded_at_utc=integration_auth_event.get("recorded_at_utc"), max_clock_skew_seconds=attestation_clock_skew_seconds,
             )
+            # R11: review and integration must not merely use different key IDs;
+            # they must claim distinct base-trusted external custody domains.
+            integration_att_ref = auth.get("attestation")
+            if isinstance(review_att_ref, str) and isinstance(integration_att_ref, str):
+                try:
+                    review_att = load(root / review_att_ref)
+                    integration_att = load(root / integration_att_ref)
+                except Exception:
+                    review_att = integration_att = None
+                if isinstance(review_att, dict) and isinstance(integration_att, dict):
+                    rc = review_att.get("custody_id"); ic = integration_att.get("custody_id")
+                    if isinstance(rc, str) and rc and rc == ic:
+                        findings.append(_f("EXTERNAL_CUSTODY_DOMAIN_REUSED", f"review/integration custody_id={rc}"))
         if integration_event.get("authorization_event_seq") != integration_auth_event.get("seq"):
             findings.append(_f("INTEGRATION_EVENT_AUTHORIZATION_LINK_MISMATCH", f"integration={integration_event.get('authorization_event_seq')} auth={integration_auth_event.get('seq')}"))
 

@@ -1,13 +1,14 @@
 {
   "schema": "hybrid_harness.attempt_policy.v1",
-  "revision": "HYBRID-HARNESS-R10",
+  "revision": "HYBRID-HARNESS-R11",
   "principles": {
     "failed_attempts_are_superseded_not_rewritten": true,
     "attempt_id_required": true,
     "attempt_history_is_append_only_when_remote_audit_sink_exists": true,
     "local_reflog_is_diagnostic_not_durable_authority": true,
     "observable_managed_branch_rewrite_blocks_completion": true,
-    "same_attempt_id_may_not_be_reused_by_multiple_surviving_work_orders": true
+    "same_attempt_id_may_not_be_reused_by_multiple_surviving_work_orders": true,
+    "routine_retry_command_creates_superseding_attempt_without_reset": true
   },
   "states": [
     "ACTIVE",
@@ -16,5 +17,6 @@
     "COMPLETE"
   ],
   "rewrite_response": "Record ATTEMPT_ABORTED/SUPERSEDED and create a new attempt_id. Do not reset/amend/rebase a managed attempt.",
-  "durable_limit": "Without a protected remote audit ref, a local-only Harness cannot prove deletion of abandoned commits after a fresh clone."
+  "durable_limit": "Without a protected remote audit ref, a local-only Harness cannot prove deletion of abandoned commits after a fresh clone.",
+  "retry_command": "./CONTROL_HARNESS.sh attempt-retry NEW_WORK_ORDER_ID NEW_ATTEMPT_ID NEW_BRANCH REASON"
 }

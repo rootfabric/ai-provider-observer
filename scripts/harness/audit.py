@@ -179,6 +179,16 @@ def control_findings(root: Path) -> list[Finding]:
     }
     if any(principles.get(k) is not True for k in r10_guards):
         findings.append(_error("R10_SEMANTIC_PROOF_GUARDS_MISSING", "R10 case-derived coverage/runtime-test/oracle/prose guards must all be enabled"))
+    r11_guards = {
+        "structured_oracle_observations_required",
+        "trivial_oracle_assertions_are_rejected",
+        "effective_status_is_machine_derived",
+        "routine_retry_is_supersede_plus_new_attempt_not_history_rewrite",
+        "session_resume_is_derived_from_durable_state",
+        "external_trust_keys_declare_distinct_custody_domains",
+    }
+    if any(principles.get(k) is not True for k in r11_guards):
+        findings.append(_error("R11_EFFICIENCY_INTEGRITY_GUARDS_MISSING", "R11 structured-oracle/retry/resume/derived-state/custody guards must all be enabled"))
 
     closure = policy.get("closure_tail", {})
     if closure.get("candidate_must_remain_ancestor") is not True or closure.get("product_change_after_candidate_invalidates_review") is not True or closure.get("closure_head_is_derived_from_git") is not True:
@@ -220,6 +230,11 @@ def control_findings(root: Path) -> list[Finding]:
             or isinstance(assurance.get("max_clock_skew_seconds"), bool)
             or not (0 <= assurance.get("max_clock_skew_seconds") <= 300)):
         findings.append(_error("R9_TEMPORAL_CAUSAL_GUARD_MISSING", "signed issued_at and event recorded_at claims must respect prerequisite <= issuance <= consumer within bounded skew"))
+    if (assurance.get("key_custody_metadata_required") is not True
+            or assurance.get("review_and_integration_custody_domains_must_be_distinct") is not True
+            or assurance.get("local_seed_possession_is_not_independence_proof") is not True
+            or not {"SEPARATE_AGENT", "REMOTE_SIGNER", "HARDWARE"}.issubset(set(assurance.get("allowed_external_custody_classes", [])))):
+        findings.append(_error("R11_EXTERNAL_CUSTODY_GUARD_MISSING", "external review/integration keys must declare distinct external custody domains; local key possession alone is not independence proof"))
     semantic = review.get("semantic_assurance", {})
     if semantic.get("acceptance_contract_required") is not True or semantic.get("predicate_to_evidence_coverage_required") is not True or semantic.get("medium_plus_adversarial_verification_required") is not True:
         findings.append(_error("SEMANTIC_REVIEW_ASSURANCE_GUARD_MISSING", "R6 acceptance contract and adversarial predicate coverage are mandatory"))
@@ -248,6 +263,14 @@ def control_findings(root: Path) -> list[Finding]:
     }
     if any(vp.get(k) is not True for k in r10_vp):
         findings.append(_error("R10_VERIFIER_POLICY_WEAKENED", "R10 verifier runtime semantic-proof guards must remain enabled"))
+    r11_vp = {
+        "generic_boolean_oracle_assertions_are_forbidden",
+        "oracle_observations_are_structured",
+        "trivial_same_expression_or_constant_oracles_are_rejected",
+        "oracle_observation_kind_must_match_contract",
+    }
+    if any(vp.get(k) is not True for k in r11_vp) or verifier_policy.get("execution_schema") != "hybrid_harness.verifier_execution.v2":
+        findings.append(_error("R11_VERIFIER_ORACLE_POLICY_WEAKENED", "R11 structured runtime oracle evidence and execution schema v2 are required"))
     if verifier_policy.get("manifest_schema") != "hybrid_harness.verification_manifest.v2":
         findings.append(_error("R10_VERIFIER_MANIFEST_SCHEMA_GUARD_MISSING", "verification manifest v2 is required"))
 

@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.policy.v5",
-  "revision": "HYBRID-HARNESS-R10",
+  "revision": "HYBRID-HARNESS-R11",
   "canonical_branch": "main",
   "principles": {
     "git_is_durable_memory": true,
@@ -67,7 +67,13 @@
     "verifier_cases_bind_exact_executed_test_ids": true,
     "verifier_receipts_capture_runtime_test_ids": true,
     "semantic_oracles_are_contract_owned_and_runtime_observed": true,
-    "normative_prose_wrapping_does_not_create_fragment_clauses": true
+    "normative_prose_wrapping_does_not_create_fragment_clauses": true,
+    "structured_oracle_observations_required": true,
+    "trivial_oracle_assertions_are_rejected": true,
+    "effective_status_is_machine_derived": true,
+    "routine_retry_is_supersede_plus_new_attempt_not_history_rewrite": true,
+    "session_resume_is_derived_from_durable_state": true,
+    "external_trust_keys_declare_distinct_custody_domains": true
   },
   "concurrency": {
     "runtime_mutation_lease_capacity": 1,

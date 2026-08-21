@@ -439,7 +439,79 @@
       ],
       "retirement": "CONTROL_REVISION_REQUIRED",
       "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-STRUCTURED-ORACLE-R11",
+      "class": "SECURITY_INVARIANT",
+      "source": "h-10 used assert_oracle(..., True) and structurally observed oracle IDs without proving semantic observations",
+      "applies_when": "verifier-owned oracle evidence",
+      "enforcement": "machine",
+      "enforced_by": [
+        "verifier_api.py",
+        "verifier_runner.py",
+        "semantic.py",
+        "test_r11_efficiency.py"
+      ],
+      "retirement": "SECURITY_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-SAFE-ATTEMPT-RETRY-R11",
+      "class": "EFFICIENCY_INVARIANT",
+      "source": "h-10 repeatedly reset/deleted/recreated branches instead of superseding failed attempts",
+      "applies_when": "routine failed attempt retry",
+      "enforcement": "machine",
+      "enforced_by": [
+        "control.py",
+        "attempt-policy.v1.json",
+        "test_r11_efficiency.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-DERIVED-EFFECTIVE-STATUS-R11",
+      "class": "CONTROL_INVARIANT",
+      "source": "h-10 declared MISSION_COMPLETE while completion_proven=false and validation failed",
+      "applies_when": "status/reporting",
+      "enforcement": "machine",
+      "enforced_by": [
+        "control.py",
+        "harness-policy.v1.json",
+        "test_r11_efficiency.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-DURABLE-RESUME-R11",
+      "class": "EFFICIENCY_INVARIANT",
+      "source": "h-10 runtime TIMEOUT was confused with a Harness role boundary and required manual chat continuation",
+      "applies_when": "new session/runtime resume",
+      "enforcement": "machine",
+      "enforced_by": [
+        "control.py",
+        "AGENTS.md",
+        "test_r11_efficiency.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-EXTERNAL-CUSTODY-R11",
+      "class": "SECURITY_INVARIANT",
+      "source": "h-10 same implementation session generated and possessed reviewer/integrator private keys despite distinct role labels",
+      "applies_when": "MEDIUM+ external review/integration authorization",
+      "enforcement": "machine",
+      "enforced_by": [
+        "trust.py",
+        "review-policy.v1.json",
+        "active_validation.py",
+        "external_attestation.py"
+      ],
+      "retirement": "SECURITY_REVISION_REQUIRED",
+      "prose_mode": "router_only"
     }
   ],
-  "revision": "HYBRID-HARNESS-R10"
+  "revision": "HYBRID-HARNESS-R11"
 }

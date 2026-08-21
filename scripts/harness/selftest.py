@@ -226,6 +226,26 @@ def run(source_root: Path) -> tuple[bool, list[str]]:
         (r / "scripts/harness/verifier_runner.py").unlink()
     mutations.append(("bad-r10-missing-verifier-runner", remove_r10_runner, "REQUIRED_FILE_MISSING"))
 
+    def weaken_r11_structured_oracle(r: Path):
+        p = r / "config/control/harness/harness-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["principles"]["structured_oracle_observations_required"] = False; write_json(p, j)
+    mutations.append(("bad-r11-structured-oracle", weaken_r11_structured_oracle, "R11_EFFICIENCY_INTEGRITY_GUARDS_MISSING"))
+
+    def weaken_r11_verifier_oracle_policy(r: Path):
+        p = r / "config/control/harness/verifier-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["principles"]["generic_boolean_oracle_assertions_are_forbidden"] = False; write_json(p, j)
+    mutations.append(("bad-r11-verifier-oracle-policy", weaken_r11_verifier_oracle_policy, "R11_VERIFIER_ORACLE_POLICY_WEAKENED"))
+
+    def weaken_r11_custody(r: Path):
+        p = r / "config/control/harness/review-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["assurance"]["review_and_integration_custody_domains_must_be_distinct"] = False; write_json(p, j)
+    mutations.append(("bad-r11-external-custody", weaken_r11_custody, "R11_EXTERNAL_CUSTODY_GUARD_MISSING"))
+
+    def weaken_r11_retry(r: Path):
+        p = r / "config/control/harness/harness-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["principles"]["routine_retry_is_supersede_plus_new_attempt_not_history_rewrite"] = False; write_json(p, j)
+    mutations.append(("bad-r11-retry-policy", weaken_r11_retry, "R11_EFFICIENCY_INTEGRITY_GUARDS_MISSING"))
+
     for name, mutate, expected in mutations:
         ok, detail = run_mutation(source_root, name, mutate, expected)
         out.append(f"{name}: {'PASS' if ok else 'FAIL'}")

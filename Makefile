@@ -1,6 +1,8 @@
-.PHONY: status validate validate-active validate-ready portable-check hygiene unit selftest report final-report demo
+.PHONY: status resume validate validate-active validate-ready portable-check hygiene unit selftest report final-report demo
 status:
 	python3 scripts/harness/control.py status
+resume:
+	python3 scripts/harness/control.py resume
 validate:
 	python3 scripts/harness/control.py validate
 validate-active:

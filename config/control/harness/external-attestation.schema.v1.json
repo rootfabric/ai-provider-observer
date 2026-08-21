@@ -6,6 +6,7 @@
     "provider_id",
     "key_id",
     "principal",
+    "custody_id",
     "purpose",
     "subject_head",
     "mission_id",
@@ -29,8 +30,8 @@
     "payload": "canonical JSON of all attestation fields except signature_b64, UTF-8, sort_keys=true, compact separators, trailing newline",
     "trust_resolution": "provider/key must exist in Work Order base_sha"
   },
-  "rule": "External approval is valid only if signed by a base-trusted key, causally bound to prior evidence, history-immutable, and content-addressed by the exact consumer event bytes/blob.",
-  "revision": "HYBRID-HARNESS-R10",
+  "rule": "External approval is valid only if signed by a base-trusted external-custody key, causally bound to prior evidence, history-immutable, content-addressed by the exact consumer event, and role-custody separation is preserved.",
+  "revision": "HYBRID-HARNESS-R11",
   "causal_binding": {
     "attestation_add_commit_must_descend_from_prerequisite_event_commit": true,
     "prerequisite_event_must_exist_in_parent_of_attestation_add_commit": true,

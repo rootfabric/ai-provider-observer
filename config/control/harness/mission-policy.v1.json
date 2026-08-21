@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.mission_policy.v1",
-  "revision": "HYBRID-HARNESS-R10",
+  "revision": "HYBRID-HARNESS-R11",
   "principles": {
     "parent_mission_is_durable": true,
     "complex_work_is_decomposed_into_bounded_work_orders": true,

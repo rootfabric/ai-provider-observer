@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.trust_providers.v1",
-  "revision": "HYBRID-HARNESS-R10",
+  "revision": "HYBRID-HARNESS-R11",
   "rule": "Trust roots must exist in the Work Order base commit. Mission branches may consume but never create or broaden their own trust.",
   "providers": {
     "PROJECT_EXTERNAL_REVIEW": {
@@ -15,5 +15,6 @@
     "INTEGRATION_APPROVE",
     "HUMAN_APPROVE",
     "ARCHITECTURE_PROMOTE"
-  ]
+  ],
+  "custody_rule": "Every key used for MEDIUM+ review/integration declares custody_id and custody_class. Review and integration must use distinct external custody domains. This is structural evidence; a local-only repository still cannot prove physical key custody."
 }

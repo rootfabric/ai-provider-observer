@@ -115,10 +115,21 @@ def validate_contract_shape(contract: dict[str, Any], schema: dict[str, Any]) ->
         if not isinstance(partition_oracles, dict):
             errors.append(f"ACCEPTANCE_PARTITION_ORACLES_INVALID:{pid}")
             partition_oracles = {}
+        allowed_observation_kinds = set(schema.get("oracle_observation_kinds", ["equal", "raises", "unchanged"]))
         for part in parts:
             rows = partition_oracles.get(part)
-            if not isinstance(rows, list) or not rows or not all(isinstance(x, dict) and isinstance(x.get("oracle_id"), str) and x.get("oracle_id") and isinstance(x.get("statement"), str) and x.get("statement") for x in rows):
+            if not isinstance(rows, list) or not rows:
                 errors.append(f"ACCEPTANCE_PARTITION_ORACLE_MISSING:{pid}:{part}")
+                continue
+            for row in rows:
+                if not isinstance(row, dict) or not isinstance(row.get("oracle_id"), str) or not row.get("oracle_id") or not isinstance(row.get("statement"), str) or not row.get("statement"):
+                    errors.append(f"ACCEPTANCE_PARTITION_ORACLE_MISSING:{pid}:{part}")
+                    continue
+                kind = row.get("observation_kind")
+                if kind not in allowed_observation_kinds:
+                    errors.append(f"ACCEPTANCE_ORACLE_OBSERVATION_KIND_INVALID:{pid}:{part}:{row.get('oracle_id')}:{kind}")
+                if kind == "raises" and (not isinstance(row.get("expected_exception"), str) or not row.get("expected_exception")):
+                    errors.append(f"ACCEPTANCE_ORACLE_EXPECTED_EXCEPTION_MISSING:{pid}:{part}:{row.get('oracle_id')}")
         extra_oracle_parts = set(partition_oracles) - set(parts)
         for part in sorted(extra_oracle_parts):
             errors.append(f"ACCEPTANCE_PARTITION_ORACLE_UNKNOWN_PARTITION:{pid}:{part}")
@@ -205,6 +216,11 @@ def coverage_errors(
     runtime_by_receipt: dict[str, dict[str, dict[str, Any]]] = {}
     for ref, receipt in receipt_objects.items():
         vr = receipt.get("verifier_result") if isinstance(receipt, dict) else None
+        if isinstance(vr, dict) and vr.get("schema") != "hybrid_harness.verifier_execution.v2":
+            errors.append(f"VERIFIER_EXECUTION_SCHEMA_INVALID:{ref}:{vr.get('schema')}")
+        if isinstance(vr, dict):
+            for finding in vr.get("oracle_quality_findings", []) if isinstance(vr.get("oracle_quality_findings"), list) else []:
+                errors.append(f"VERIFIER_ORACLE_QUALITY_FINDING:{ref}:{finding}")
         rows = vr.get("tests", []) if isinstance(vr, dict) else []
         runtime_by_receipt[ref] = {
             row.get("test_id"): row for row in rows
@@ -236,6 +252,11 @@ def coverage_errors(
         expected_oracles_by_part = {
             part: {row.get("oracle_id") for row in rows if isinstance(row, dict) and isinstance(row.get("oracle_id"), str)}
             for part, rows in partition_oracles.items() if isinstance(rows, list)
+        }
+        oracle_specs = {
+            row.get("oracle_id"): row
+            for rows in partition_oracles.values() if isinstance(rows, list)
+            for row in rows if isinstance(row, dict) and isinstance(row.get("oracle_id"), str)
         }
 
         case_union_parts: set[str] = set()
@@ -278,12 +299,32 @@ def coverage_errors(
                     runtime_parts = set(row.get("partitions", [])) if isinstance(row.get("partitions"), list) else set()
                     runtime_oracles = set(row.get("oracle_ids", [])) if isinstance(row.get("oracle_ids"), list) else set()
                     runtime_observed = set(row.get("observed_oracle_ids", [])) if isinstance(row.get("observed_oracle_ids"), list) else set()
+                    observations = row.get("oracle_observations", []) if isinstance(row.get("oracle_observations"), list) else []
+                    observation_by_id = {o.get("oracle_id"): o for o in observations if isinstance(o, dict) and isinstance(o.get("oracle_id"), str)}
+                    quality = row.get("oracle_quality_findings", []) if isinstance(row.get("oracle_quality_findings"), list) else []
+                    for q in quality:
+                        errors.append(f"VERIFIER_ORACLE_QUALITY_FINDING:{cid}:{tid}:{q}")
                     if runtime_parts != case_parts:
                         errors.append(f"VERIFIER_TEST_PARTITION_BINDING_MISMATCH:{cid}:{tid}")
                     if runtime_oracles != case_oracles:
                         errors.append(f"VERIFIER_TEST_ORACLE_BINDING_MISMATCH:{cid}:{tid}")
                     for oid in sorted(case_oracles - runtime_observed):
                         errors.append(f"VERIFIER_ORACLE_NOT_OBSERVED:{cid}:{tid}:{oid}")
+                    for oid in sorted(case_oracles & runtime_observed):
+                        obs = observation_by_id.get(oid)
+                        if not isinstance(obs, dict):
+                            errors.append(f"VERIFIER_ORACLE_OBSERVATION_MISSING:{cid}:{tid}:{oid}")
+                            continue
+                        spec = oracle_specs.get(oid, {})
+                        expected_kind = spec.get("observation_kind") if isinstance(spec, dict) else None
+                        if expected_kind and obs.get("kind") != expected_kind:
+                            errors.append(f"VERIFIER_ORACLE_KIND_MISMATCH:{cid}:{tid}:{oid}:{obs.get('kind')}!={expected_kind}")
+                        if obs.get("matched") is not True:
+                            errors.append(f"VERIFIER_ORACLE_NOT_MATCHED:{cid}:{tid}:{oid}")
+                        if expected_kind == "raises":
+                            expected_exc = spec.get("expected_exception")
+                            if obs.get("expected_exception") != expected_exc or obs.get("observed_exception") != expected_exc:
+                                errors.append(f"VERIFIER_ORACLE_EXCEPTION_MISMATCH:{cid}:{tid}:{oid}")
                     observed_oracles.update(runtime_observed)
 
         # R10: claimed coverage cannot exceed or substitute for case-backed coverage.

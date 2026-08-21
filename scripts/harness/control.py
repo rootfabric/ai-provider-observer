@@ -5,6 +5,9 @@ import os
 import sys
 import hashlib
 import ast
+import copy
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -58,14 +61,38 @@ def _next_from_findings(findings):
     return {"handoff_class":"SYSTEM_BLOCKED","next_actor":"DIRECTOR","next_action":"RECONCILE_ACCEPTANCE_FINDINGS"}
 
 
+def _effective_status(state: dict, readiness, active_errors=None) -> str:
+    active = state.get("active_mission") if isinstance(state, dict) else None
+    declared = state.get("status") if isinstance(state, dict) else None
+    if not isinstance(active, dict):
+        return str(declared or "HARNESS_READY")
+    complete_claim = declared == "MISSION_COMPLETE" or active.get("complete") is True
+    if complete_claim and not readiness:
+        return "MISSION_COMPLETE"
+    if complete_claim and readiness:
+        return "INVALID_COMPLETION"
+    if readiness:
+        nxt = _next_from_findings(readiness)
+        return "SYSTEM_BLOCKED" if nxt.get("handoff_class") == "SYSTEM_BLOCKED" else "MISSION_ACTIVE"
+    if active_errors:
+        return "SYSTEM_BLOCKED"
+    return "MISSION_ACTIVE"
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
 def cmd_status() -> int:
     state = strict_load(ROOT / "config/control/project-state.v1.json")
     active_errors = validate_active(ROOT)
     readiness = validate_active(ROOT, require_completion=True) if isinstance(state, dict) and state.get("active_mission") else []
     complete_claim = isinstance(state, dict) and (state.get("status") == "MISSION_COMPLETE" or (isinstance(state.get("active_mission"), dict) and state["active_mission"].get("complete") is True))
     completion_proven = bool(complete_claim and not readiness)
-    print("HYBRID HARNESS STATUS R10")
-    print(f"status={state.get('status')}")
+    effective = _effective_status(state, readiness, active_errors)
+    print("HYBRID HARNESS STATUS R11")
+    print(f"declared_status={state.get('status')}")
+    print(f"effective_status={effective}")
     print(f"active_checkpoint={state.get('active_checkpoint')}")
     print(f"active_epoch={state.get('active_epoch')}")
     print(f"active_work_order={state.get('active_work_order')}")
@@ -87,6 +114,121 @@ def cmd_status() -> int:
     return 0
 
 
+def cmd_resume(args: list[str]) -> int:
+    """Re-enter a mission from durable state after timeout/new session without chat reconstruction."""
+    runtime_reason = args[0] if args else "UNSPECIFIED"
+    state = strict_load(ROOT / "config/control/project-state.v1.json")
+    active = state.get("active_mission") if isinstance(state, dict) else None
+    readiness = validate_active(ROOT, require_completion=True) if isinstance(active, dict) else []
+    active_errors = validate_active(ROOT)
+    effective = _effective_status(state, readiness, active_errors)
+    print("HYBRID HARNESS RESUME R11")
+    print(f"runtime_termination_reason={runtime_reason}")
+    print("runtime_reason_is_diagnostic_only=true")
+    print(f"declared_status={state.get('status') if isinstance(state, dict) else None}")
+    print(f"effective_status={effective}")
+    if not isinstance(active, dict):
+        print("resume_action=DISPATCH_OR_SELECT_MISSION")
+        print("RESUME: PASS")
+        return 0
+    nxt = {"handoff_class":"MISSION_COMPLETE","next_actor":None,"next_action":None} if effective == "MISSION_COMPLETE" else _next_from_findings(readiness)
+    print("continuation=" + json.dumps(nxt, ensure_ascii=False, sort_keys=True))
+    if nxt.get("handoff_class") == "ROLE_BOUNDARY":
+        print("human_courier_required=false")
+        print("resume_action=ROUTE_TO_DECLARED_ROLE_AND_CONTINUE")
+    elif nxt.get("handoff_class") == "SYSTEM_BLOCKED":
+        print("resume_action=REPAIR_DURABLE_FINDINGS_WITHOUT_HISTORY_REWRITE")
+    elif nxt.get("handoff_class") == "MISSION_COMPLETE":
+        print("resume_action=NONE")
+    print(f"readiness_findings={len(readiness)}")
+    print("RESUME: PASS")
+    return 0
+
+
+def cmd_attempt_retry(args: list[str]) -> int:
+    """Supersede a failed attempt and dispatch a fresh attempt without reset/rebase.
+
+    Safe automation is intentionally bounded: run on clean canonical main after
+    committing any failure evidence from the old attempt. The old branch is kept.
+    """
+    if len(args) < 4:
+        print("usage: attempt-retry NEW_WORK_ORDER_ID NEW_ATTEMPT_ID NEW_BRANCH REASON", file=sys.stderr)
+        return 2
+    new_wo_id, new_attempt_id, new_branch = args[:3]
+    reason = " ".join(args[3:]).strip()
+    from gitproof import head as git_head, branch as git_branch, worktree_changed_paths, git
+    state_path = ROOT / "config/control/project-state.v1.json"
+    state = strict_load(state_path)
+    if not isinstance(state, dict) or not isinstance(state.get("active_work_order"), str):
+        print("ATTEMPT_RETRY: FAIL no active_work_order", file=sys.stderr); return 2
+    canonical = str(state.get("canonical_branch") or "main")
+    if git_branch(ROOT) != canonical:
+        print(f"ATTEMPT_RETRY: FAIL switch to canonical branch {canonical} without reset; old attempt branch must remain intact", file=sys.stderr); return 2
+    dirty = worktree_changed_paths(ROOT)
+    if dirty:
+        print("ATTEMPT_RETRY: FAIL clean worktree required; commit failure evidence first: " + ",".join(dirty[:12]), file=sys.stderr); return 2
+    if git(ROOT, "show-ref", "--verify", f"refs/heads/{new_branch}", check=False):
+        print(f"ATTEMPT_RETRY: FAIL branch already exists {new_branch}", file=sys.stderr); return 2
+    old_wo_id = state["active_work_order"]
+    old_path = ROOT / f"config/control/missions/{old_wo_id}.json"
+    if not old_path.is_file():
+        print(f"ATTEMPT_RETRY: FAIL missing {old_path.relative_to(ROOT)}", file=sys.stderr); return 2
+    old = strict_load(old_path)
+    if not isinstance(old, dict):
+        print("ATTEMPT_RETRY: FAIL invalid old work order", file=sys.stderr); return 2
+    old_attempt = old.get("attempt_id")
+    if not isinstance(old_attempt, str) or not old_attempt:
+        print("ATTEMPT_RETRY: FAIL old attempt_id missing", file=sys.stderr); return 2
+    if new_attempt_id == old_attempt or (ROOT / f"config/control/missions/{new_wo_id}.json").exists():
+        print("ATTEMPT_RETRY: FAIL new IDs must be unique", file=sys.stderr); return 2
+    req_old = ROOT / str(old.get("requirements_manifest")); ac_old = ROOT / str(old.get("acceptance_contract"))
+    if not req_old.is_file() or not ac_old.is_file():
+        print("ATTEMPT_RETRY: FAIL immutable requirements/acceptance source missing", file=sys.stderr); return 2
+    base = git_head(ROOT)
+    mission = old.get("mission") if isinstance(old.get("mission"), dict) else {}
+    mission_id = mission.get("mission_id")
+    attempts_dir = ROOT / "config/control/missions/attempts"; attempts_dir.mkdir(parents=True, exist_ok=True)
+    supersede_path = attempts_dir / f"{old_attempt}.json"
+    if supersede_path.exists():
+        print(f"ATTEMPT_RETRY: FAIL attempt record already exists {supersede_path.relative_to(ROOT)}", file=sys.stderr); return 2
+    failed_head = git(ROOT, "rev-parse", str(old.get("branch")), check=False).strip() or None
+    supersede = {
+        "schema":"hybrid_harness.attempt_record.v1", "attempt_id":old_attempt, "work_order_id":old_wo_id,
+        "mission_id":mission_id, "state":"SUPERSEDED", "reason":reason, "failed_head":failed_head,
+        "superseded_at_utc":_utc_now(), "superseded_by_attempt_id":new_attempt_id, "superseded_by_work_order_id":new_wo_id,
+        "rule":"Old branch/history remains intact; no reset/amend/rebase is part of retry."
+    }
+    supersede_path.write_text(json.dumps(supersede, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+    req = copy.deepcopy(strict_load(req_old)); ac = copy.deepcopy(strict_load(ac_old)); new = copy.deepcopy(old)
+    req_rel = f"config/control/requirements/{new_wo_id}.json"; ac_rel = f"config/control/acceptance/{new_wo_id}.json"; wo_rel=f"config/control/missions/{new_wo_id}.json"
+    req["manifest_id"] = f"RM-{new_wo_id}"; req["work_order_id"] = new_wo_id
+    ac["contract_id"] = f"AC-{new_wo_id}"; ac["work_order_id"] = new_wo_id
+    new.update({"work_order_id":new_wo_id, "attempt_id":new_attempt_id, "base_sha":base, "started_at_utc":_utc_now(), "branch":new_branch, "requirements_manifest":req_rel, "acceptance_contract":ac_rel, "supersedes_work_order_id":old_wo_id})
+    (ROOT/req_rel).write_text(json.dumps(req, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+    (ROOT/ac_rel).write_text(json.dumps(ac, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+    (ROOT/wo_rel).write_text(json.dumps(new, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+    state["state_revision"] = int(state.get("state_revision", 0)) + 1
+    state["active_work_order"] = new_wo_id; state["active_checkpoint"] = new_wo_id; state["active_epoch"] = mission_id
+    state["active_mission"] = {"mission_id":mission_id, "candidate_head":None, "complete":False}
+    state["mutation_lease"] = None; state["status"] = "MISSION_ACTIVE"
+    state["note"] = f"Fresh attempt {new_attempt_id}; supersedes {old_attempt}. Old history preserved."
+    state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+    paths=[str(supersede_path.relative_to(ROOT)), req_rel, ac_rel, wo_rel, "config/control/project-state.v1.json"]
+    subprocess.run(["git","-C",str(ROOT),"add","--",*paths], check=True)
+    subprocess.run(["git","-C",str(ROOT),"commit","-m",f"control(harness): supersede {old_attempt} and dispatch {new_attempt_id}"], check=True)
+    dispatch = git_head(ROOT)
+    subprocess.run(["git","-C",str(ROOT),"switch","-c",new_branch], check=True)
+    print(f"ATTEMPT_SUPERSEDED={old_attempt}")
+    print(f"ATTEMPT_DISPATCHED={new_attempt_id}")
+    print(f"WORK_ORDER={new_wo_id}")
+    print(f"DISPATCH_PARENT={base}")
+    print(f"DISPATCH_COMMIT={dispatch}")
+    print(f"BRANCH={new_branch}")
+    print("ATTEMPT_RETRY: PASS")
+    return 0
+
+
+
 def cmd_semantic_scan(args: list[str]) -> int:
     if len(args) != 1:
         print("usage: semantic-scan SPECIFICATION_PATH", file=sys.stderr)
@@ -99,7 +241,7 @@ def cmd_semantic_scan(args: list[str]) -> int:
     text = path.read_text(encoding="utf-8")
     tags = infer_semantic_tags(policy, {"mission":{}}, {}, text)
     floor = risk_floor(policy, tags)
-    print("SEMANTIC SCAN R10")
+    print("SEMANTIC SCAN R11")
     print(f"specification={args[0]}")
     print(f"machine_risk_floor={floor}")
     for tag in sorted(tags):
@@ -119,7 +261,7 @@ def cmd_requirements_scan(args: list[str]) -> int:
         print(f"REQUIREMENTS_SCAN: FAIL missing {args[0]}", file=sys.stderr)
         return 2
     clauses = extract_normative_clauses(path.read_text(encoding="utf-8"))
-    print("REQUIREMENTS SCAN R10")
+    print("REQUIREMENTS SCAN R11")
     print(f"specification={args[0]}")
     print(f"normative_clause_count={len(clauses)}")
     for clause in clauses:
@@ -155,7 +297,7 @@ def cmd_requirements_check(args: list[str]) -> int:
         mission_id=str((wo.get("mission") or {}).get("mission_id")), work_order_id=wo_id,
         acceptance=acceptance, semantic_policy=semantic_policy,
     )
-    print("REQUIREMENTS CHECK R10")
+    print("REQUIREMENTS CHECK R11")
     print(f"work_order={wo_id}")
     print(f"normative_clause_count={len(clauses)}")
     print(f"requirement_count={len(manifest.get('requirements', [])) if isinstance(manifest, dict) else 0}")
@@ -207,7 +349,7 @@ def cmd_acceptance_check(args: list[str]) -> int:
     else:
         errors.append(f"REQUIREMENTS_MANIFEST_MISSING:{req_rel}")
     declared = wo.get("risk")
-    print("ACCEPTANCE CHECK R10")
+    print("ACCEPTANCE CHECK R11")
     print(f"work_order={wo_id}")
     print(f"semantic_tags={','.join(sorted(tags))}")
     print(f"machine_risk_floor={floor}")
@@ -420,11 +562,12 @@ def cmd_report() -> int:
                 semantic_summary = {"tags":sorted(tags),"machine_risk_floor":floor,"declared_risk":wo.get("risk"),"contract_errors":errs,"requirement_traceability":req_summary}
     payload = {
         "schema":"hybrid_harness.machine_report.v1",
-        "harness_revision":"HYBRID-HARNESS-R10",
+        "harness_revision":"HYBRID-HARNESS-R11",
         "semantic_assurance": semantic_summary,
         "head": git_head(ROOT) if (ROOT / ".git").exists() else None,
         "branch": git_branch(ROOT) if (ROOT / ".git").exists() else None,
-        "status": state.get("status") if isinstance(state, dict) else None,
+        "declared_status": state.get("status") if isinstance(state, dict) else None,
+        "effective_status": _effective_status(state, readiness),
         "active_mission": state.get("active_mission") if isinstance(state, dict) else None,
         "active_work_order": state.get("active_work_order") if isinstance(state, dict) else None,
         "mutation_lease": state.get("mutation_lease") if isinstance(state, dict) else None,
@@ -537,12 +680,13 @@ def cmd_final_report() -> int:
     complete_claim = bool(isinstance(state, dict) and (state.get("status") == "MISSION_COMPLETE" or (isinstance(active, dict) and active.get("complete") is True)))
     completion_proven = bool(complete_claim and not readiness and not audit_errors and not portable_errors and selftest_ok)
 
-    print("HYBRID HARNESS FINAL REPORT R10")
-    print(f"harness_revision=HYBRID-HARNESS-R10")
+    print("HYBRID HARNESS FINAL REPORT R11")
+    print(f"harness_revision=HYBRID-HARNESS-R11")
     print(f"head={git_head(ROOT) if (ROOT / '.git').exists() else None}")
     print(f"branch={git_branch(ROOT) if (ROOT / '.git').exists() else None}")
     print(f"git_replace_ref_count={len(replace_refs(ROOT)) if (ROOT / '.git').exists() else -1}")
-    print(f"status={state.get('status') if isinstance(state, dict) else None}")
+    print(f"declared_status={state.get('status') if isinstance(state, dict) else None}")
+    print(f"effective_status={_effective_status(state, readiness)}")
     print(f"mission_id={mission_id}")
     print(f"work_order_id={wo_id}")
     print(f"attempt_id={attempt_id}")
@@ -579,7 +723,7 @@ def cmd_final_report() -> int:
     return 0 if (not active or completion_proven) and not audit_errors and not portable_errors and selftest_ok else 1
 
 def cmd_verifier_run(args: list[str]) -> int:
-    """Run verifier-owned tests through the base-owned R10 semantic runner.
+    """Run verifier-owned tests through the base-owned R11 semantic runner.
 
     The resulting receipt contains the exact PASS test IDs plus runtime case /
     partition / oracle observations used by completion validation.
@@ -631,6 +775,8 @@ def main() -> int:
         "validate-ready": cmd_validate_ready, "portable-check": cmd_portable_check, "hygiene": cmd_hygiene, "selftest": cmd_selftest,
         "continuation-demo": cmd_continuation_demo, "freeze-candidate": cmd_freeze_candidate, "report": cmd_report, "final-report": cmd_final_report, "demo": cmd_demo,
     }
+    if cmd == "resume": return cmd_resume(args[1:])
+    if cmd == "attempt-retry": return cmd_attempt_retry(args[1:])
     if cmd == "evidence-run": return cmd_evidence_run(args[1:])
     if cmd == "verifier-run": return cmd_verifier_run(args[1:])
     if cmd == "event-add": return cmd_event_add(args[1:])
@@ -639,7 +785,7 @@ def main() -> int:
     if cmd == "requirements-check": return cmd_requirements_check(args[1:])
     if cmd == "semantic-scan": return cmd_semantic_scan(args[1:])
     if cmd not in simple:
-        print("usage: control.py status|validate|validate-active|validate-ready|portable-check|semantic-scan|requirements-scan|requirements-check|acceptance-check|hygiene|selftest|continuation-demo|freeze-candidate|evidence-run|verifier-run|event-add|report|final-report|demo", file=sys.stderr)
+        print("usage: control.py status|resume|attempt-retry|validate|validate-active|validate-ready|portable-check|semantic-scan|requirements-scan|requirements-check|acceptance-check|hygiene|selftest|continuation-demo|freeze-candidate|evidence-run|verifier-run|event-add|report|final-report|demo", file=sys.stderr)
         return 2
     return simple[cmd]()
 

@@ -16,5 +16,13 @@ class ExampleVerifierTests(VerifierTestCase):
         oracle_ids=["ORACLE-PRED-001-BOUNDARY"],
     )
     def test_boundary_behavior(self) -> None:
-        actual = 2 + 2  # replace with real verifier-owned observation
-        self.assert_oracle_equal("ORACLE-PRED-001-BOUNDARY", actual, 4)
+        # Observe the real SUT. Do not replace this with assert_oracle(..., True)
+        # or assert_oracle_equal(..., 1, 1): R11 rejects trivial oracle evidence.
+        actual = 2 + 2  # replace with verifier-owned SUT observation
+        expected = 4
+        self.assert_oracle_equal("ORACLE-PRED-001-BOUNDARY", actual, expected)
+
+    # For an exception contract use:
+    # self.assert_oracle_raises("ORACLE-X", ExpectedError, sut.operation, arg)
+    # For no-mutation/state preservation use:
+    # self.assert_oracle_unchanged("ORACLE-Y", before_snapshot, after_snapshot)

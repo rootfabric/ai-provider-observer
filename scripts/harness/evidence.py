@@ -132,7 +132,7 @@ def write_receipt(root: Path, receipt_id: str, command: list[str], env_overrides
             {"path": rel, "sha256": sha256_file(root / rel)}
             for rel in input_paths if (root / rel).is_file()
         ],
-        "runner": "HARNESS_COMMAND_API_R10",
+        "runner": "HARNESS_COMMAND_API_R11",
     }
     verifier_result = parse_verifier_result(output)
     if verifier_result is not None:
@@ -164,7 +164,7 @@ def validate_receipt(root: Path, path: Path, expected_head: str) -> list[str]:
     if not isinstance(r, dict):
         return [f"EVIDENCE_RECEIPT_INVALID:{path}:object required"]
     errors.extend(_durable_path_errors(root, rel, "EVIDENCE_RECEIPT"))
-    if r.get("runner") != "HARNESS_COMMAND_API_R10":
+    if r.get("runner") != "HARNESS_COMMAND_API_R11":
         errors.append(f"EVIDENCE_RECEIPT_RUNNER_UNTRUSTED:{path}")
     if r.get("subject_head") != expected_head:
         errors.append(f"EVIDENCE_RECEIPT_STALE:{path}:{r.get('subject_head')}!={expected_head}")
@@ -212,7 +212,7 @@ def validate_receipt(root: Path, path: Path, expected_head: str) -> list[str]:
         if stored_verifier is not None or parsed_verifier is not None:
             if not isinstance(stored_verifier, dict) or parsed_verifier != stored_verifier:
                 errors.append(f"VERIFIER_RECEIPT_RESULT_MISMATCH:{path}")
-            elif stored_verifier.get("schema") != "hybrid_harness.verifier_execution.v1":
+            elif stored_verifier.get("schema") != "hybrid_harness.verifier_execution.v2":
                 errors.append(f"VERIFIER_RECEIPT_RESULT_SCHEMA_INVALID:{path}")
             elif stored_verifier.get("failed_test_ids"):
                 errors.append(f"VERIFIER_RECEIPT_CONTAINS_FAILED_TESTS:{path}")

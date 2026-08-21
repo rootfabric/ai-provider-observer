@@ -60,7 +60,7 @@ def verify_attestation(
 ) -> list[TrustError]:
     errors: list[TrustError] = []
     required = {
-        "schema", "attestation_id", "provider_id", "key_id", "principal",
+        "schema", "attestation_id", "provider_id", "key_id", "principal", "custody_id",
         "purpose", "subject_head", "mission_id", "work_order_id", "decision",
         "issued_at_utc", "prerequisite_event", "prerequisite_event_sha256",
         "evidence_paths", "evidence_digest", "signature_b64"
@@ -107,6 +107,15 @@ def verify_attestation(
         return errors
     if key.get("principal") != attestation.get("principal"):
         errors.append(TrustError("ATTESTATION_PRINCIPAL_MISMATCH", f"key={key.get('principal')} attestation={attestation.get('principal')}"))
+    custody_id = key.get("custody_id")
+    custody_class = key.get("custody_class")
+    allowed_custody = {"SEPARATE_AGENT", "REMOTE_SIGNER", "HARDWARE"}
+    if not isinstance(custody_id, str) or not custody_id:
+        errors.append(TrustError("ATTESTATION_CUSTODY_NOT_DECLARED", str(attestation.get("key_id"))))
+    elif attestation.get("custody_id") != custody_id:
+        errors.append(TrustError("ATTESTATION_CUSTODY_MISMATCH", f"key={custody_id} attestation={attestation.get('custody_id')}"))
+    if custody_class not in allowed_custody:
+        errors.append(TrustError("ATTESTATION_CUSTODY_CLASS_NOT_EXTERNAL", str(custody_class)))
     purposes = key.get("allowed_purposes") if isinstance(key.get("allowed_purposes"), list) else []
     if purpose not in purposes:
         errors.append(TrustError("ATTESTATION_PURPOSE_NOT_ALLOWED_FOR_KEY", purpose))

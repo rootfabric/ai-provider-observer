@@ -26,19 +26,22 @@
         "normal": [
           {
             "oracle_id": "ORACLE-PRED-001-NORMAL",
-            "statement": "Define the expected normal-path result before implementation."
+            "statement": "Define the expected normal-path result before implementation.",
+            "observation_kind": "equal"
           }
         ],
         "boundary": [
           {
             "oracle_id": "ORACLE-PRED-001-BOUNDARY",
-            "statement": "Define the expected boundary result before implementation."
+            "statement": "Define the expected boundary result before implementation.",
+            "observation_kind": "equal"
           }
         ],
         "invalid": [
           {
             "oracle_id": "ORACLE-PRED-001-INVALID",
-            "statement": "Define the expected invalid-input result before implementation."
+            "statement": "Define the expected invalid-input result before implementation.",
+            "observation_kind": "equal"
           }
         ]
       }

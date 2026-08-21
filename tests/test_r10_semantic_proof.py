@@ -23,8 +23,8 @@ def contract() -> dict:
             "semantic_tags": ["exactly_once"],
             "partitions": ["payload_conflict", "payload_conflict_invalid_payload"],
             "partition_oracles": {
-                "payload_conflict": [{"oracle_id": "O-CONFLICT", "statement": "Changed payload for an existing command conflicts and does not mutate state."}],
-                "payload_conflict_invalid_payload": [{"oracle_id": "O-CONFLICT-INVALID", "statement": "Changed invalid payload for an existing command still conflicts and does not mutate state."}],
+                "payload_conflict": [{"oracle_id": "O-CONFLICT", "statement": "Changed payload for an existing command conflicts and does not mutate state.", "observation_kind": "equal"}],
+                "payload_conflict_invalid_payload": [{"oracle_id": "O-CONFLICT-INVALID", "statement": "Changed invalid payload for an existing command still conflicts and does not mutate state.", "observation_kind": "equal"}],
             },
             "required_evidence": ["VERIFIER_TEST"],
             "verifier_owned": True,
@@ -34,19 +34,21 @@ def contract() -> dict:
 
 
 def runtime_row(test_id: str, case_id: str, parts: list[str], oracles: list[str], observed: list[str] | None = None) -> dict:
+    observed_ids = oracles if observed is None else observed
     return {
         "test_id": test_id, "case_id": case_id, "partitions": parts,
-        "oracle_ids": oracles, "observed_oracle_ids": oracles if observed is None else observed,
-        "status": "PASS",
+        "oracle_ids": oracles, "observed_oracle_ids": observed_ids,
+        "oracle_observations": [{"oracle_id": oid, "kind":"equal", "matched":True, "actual":{"type":"int","repr":"1","sha256":"x"}, "expected":{"type":"int","repr":"1","sha256":"x"}} for oid in observed_ids],
+        "oracle_quality_findings": [], "status": "PASS",
     }
 
 
 def receipt(rows: list[dict]) -> dict:
     tids = [r["test_id"] for r in rows]
     return {"verifier_result": {
-        "schema": "hybrid_harness.verifier_execution.v1",
+        "schema": "hybrid_harness.verifier_execution.v2",
         "tests": rows, "executed_test_ids": tids, "passed_test_ids": tids,
-        "failed_test_ids": [], "skipped_test_ids": [],
+        "failed_test_ids": [], "skipped_test_ids": [], "oracle_quality_findings": [],
     }}
 
 

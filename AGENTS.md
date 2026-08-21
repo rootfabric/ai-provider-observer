@@ -1,34 +1,24 @@
-# Agent Router
+# Agent Router — Hybrid Harness R11
 
-Этот файл — короткий router. Он не хранит mutable project state и не является roadmap.
+## На каждом старте/возобновлении
 
-## Всегда
+1. Выполни `./CONTROL_HARNESS.sh resume [RUNTIME_REASON]`.
+2. Прочитай только active Work Order + route из `context-routing.v1.json`.
+3. Перед mutation выполни `validate`.
+4. Routine `ROLE_BOUNDARY` не является human blocker: сохраняй durable evidence и маршрутизируй следующую роль без использования человека как courier.
 
-1. Прочитай `config/control/project-state.v1.json`.
-2. Подгрузи только нужный route из `config/control/harness/context-routing.v1.json`.
-3. Перед изменениями выполни `./CONTROL_HARNESS.sh validate`.
-4. До implementation зафиксируй immutable Mission Specification и пройди `requirements-scan`, `requirements-check`, `acceptance-check`.
-5. Если mission открыта, завершение локальной роли не означает завершение mission.
+## Инварианты
 
-## Жёсткие инварианты
-
-- Git/declared verified sink — durable memory; чат не authority.
-- Implementer не принимает собственную работу; missing evidence не превращается в PASS.
-- Work Order + Requirements Manifest + Acceptance Contract создаются control-only dispatch commit до product mutation.
-- Каждый machine-extracted normative clause должен идти `REQ → predicate → partition → verifier case → receipt`.
-- Semantic tags добавляют risk/partitions, но не заменяют Requirement Traceability.
+- Git/control evidence — durable memory; chat не authority.
+- `effective_status` derived; declared `MISSION_COMPLETE` без proof = `INVALID_COMPLETION`.
+- Mission Specification предшествует dispatch; `REQ → predicate → partition → CASE → exact test_id → structured oracle observation → receipt`.
+- `assert_oracle(..., True)` и очевидные no-op oracle assertions запрещены.
+- MEDIUM+ reviewer/integrator используют base-trusted keys с разными external `custody_id`; private keys недоступны implementer session.
+- Failed attempt не переписывается. Используй `attempt-retry`; старые branch/commits остаются.
 - Reviewed candidate exact/fresh; post-candidate product mutation инвалидирует review.
-- MEDIUM+ external review требует base-trusted Ed25519 attestation, причинно связанный с уже durable request/evidence digest.
-- Pre-signed review/integration approval запрещён.
-- Evidence receipt/raw output/events должны быть durable в Git; старый event не редактируется.
-- Integration authorization предшествует merge; resulting head проверяется после merge.
-- Managed attempt не переписывается reset/amend/rebase; failure оформляется новым ABORTED/SUPERSEDED attempt.
-- Runtime mutation требует единственной конфликтующей mutation lease.
+- External approval causal, immutable, content-addressed и temporal-consistent.
+- Missing evidence fails closed.
 
-## Масштабирование
+## Stop classes
 
-Большую задачу не растягивать в один prompt/Work Order. Director сохраняет parent mission и создаёт bounded child Work Orders с dependencies, Requirement IDs и acceptance predicates.
-
-## Stop semantics
-
-Допустимы только: `ROLE_BOUNDARY`, `EXTERNAL_WAIT`, `HUMAN_DECISION_REQUIRED`, `SYSTEM_BLOCKED`, `MISSION_COMPLETE`. Для открытой mission всегда сохраняются next actor/action/resume condition.
+Только: `ROLE_BOUNDARY`, `EXTERNAL_WAIT`, `HUMAN_DECISION_REQUIRED`, `SYSTEM_BLOCKED`, `MISSION_COMPLETE`. Runtime `TIMEOUT`/interrupt — не stop class Harness; после них запускай `resume`.

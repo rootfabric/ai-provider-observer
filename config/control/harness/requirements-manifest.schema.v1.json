@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.requirements_manifest_schema.v1",
-  "revision": "HYBRID-HARNESS-R10",
+  "revision": "HYBRID-HARNESS-R11",
   "required": [
     "schema",
     "manifest_id",

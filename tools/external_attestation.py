@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""External trust-domain helper for Hybrid Harness R9.
+"""External trust-domain helper for Hybrid Harness R11.
 
 This utility intentionally lives outside the normal control command surface.
 Possession of a private seed is the trust boundary; do not place seeds in the
@@ -30,6 +30,14 @@ def seed_bytes(path: Path) -> bytes:
 
 
 def keygen(private_out: Path) -> int:
+    state_path = ROOT / "config/control/project-state.v1.json"
+    if state_path.is_file():
+        try:
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+        except Exception:
+            state = {}
+        if isinstance(state, dict) and state.get("active_mission"):
+            raise SystemExit("KEYGEN_FORBIDDEN_DURING_ACTIVE_MISSION:bootstrap external custody before dispatch")
     resolved = private_out.resolve()
     try:
         resolved.relative_to(ROOT.resolve())
