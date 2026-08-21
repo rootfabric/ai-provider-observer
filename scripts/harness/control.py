@@ -25,9 +25,38 @@ from requirements import extract_normative_clauses, validate_requirements_manife
 from portable import portable_clone_validate
 
 
-def print_findings(findings):
+def _verbose_output() -> bool:
+    return os.environ.get("HARNESS_VERBOSE", "").strip().lower() in {"1", "true", "yes", "full"}
+
+
+def _compact_finding_rows(findings, limit: int = 8):
+    """Return bounded, de-duplicated finding rows for agent-facing output.
+
+    Full findings remain machine-computed and are available with HARNESS_VERBOSE=1.
+    """
+    counts: dict[str, int] = {}
+    first = {}
     for f in findings:
-        print(f"{f.severity} {f.code}: {f.message}")
+        counts[f.code] = counts.get(f.code, 0) + 1
+        first.setdefault(f.code, f)
+    rows = []
+    for code in list(first)[:limit]:
+        f = first[code]
+        rows.append((f, counts[code]))
+    return rows, max(0, len(first) - len(rows))
+
+
+def print_findings(findings, *, limit: int = 8):
+    if _verbose_output():
+        for f in findings:
+            print(f"{f.severity} {f.code}: {f.message}")
+        return
+    rows, omitted = _compact_finding_rows(findings, limit)
+    for f, count in rows:
+        suffix = f" x{count}" if count > 1 else ""
+        print(f"{f.severity} {f.code}{suffix}: {f.message}")
+    if omitted:
+        print(f"FINDING_CODES_OMITTED={omitted} (set HARNESS_VERBOSE=1 for full detail)")
 
 
 def _next_from_findings(findings):
@@ -90,7 +119,7 @@ def cmd_status() -> int:
     complete_claim = isinstance(state, dict) and (state.get("status") == "MISSION_COMPLETE" or (isinstance(state.get("active_mission"), dict) and state["active_mission"].get("complete") is True))
     completion_proven = bool(complete_claim and not readiness)
     effective = _effective_status(state, readiness, active_errors)
-    print("HYBRID HARNESS STATUS R11")
+    print("HYBRID HARNESS STATUS R12")
     print(f"declared_status={state.get('status')}")
     print(f"effective_status={effective}")
     print(f"active_checkpoint={state.get('active_checkpoint')}")
@@ -101,8 +130,7 @@ def cmd_status() -> int:
     print(f"completion_proven={completion_proven}")
     if active_errors:
         print("active_validation=FAIL")
-        for f in active_errors:
-            print(f"ERROR {f.code}: {f.message}")
+        print_findings(active_errors, limit=6)
     else:
         print("active_validation=PASS")
     if state.get("active_mission") and not completion_proven:
@@ -122,7 +150,7 @@ def cmd_resume(args: list[str]) -> int:
     readiness = validate_active(ROOT, require_completion=True) if isinstance(active, dict) else []
     active_errors = validate_active(ROOT)
     effective = _effective_status(state, readiness, active_errors)
-    print("HYBRID HARNESS RESUME R11")
+    print("HYBRID HARNESS RESUME R12")
     print(f"runtime_termination_reason={runtime_reason}")
     print("runtime_reason_is_diagnostic_only=true")
     print(f"declared_status={state.get('status') if isinstance(state, dict) else None}")
@@ -241,7 +269,7 @@ def cmd_semantic_scan(args: list[str]) -> int:
     text = path.read_text(encoding="utf-8")
     tags = infer_semantic_tags(policy, {"mission":{}}, {}, text)
     floor = risk_floor(policy, tags)
-    print("SEMANTIC SCAN R11")
+    print("SEMANTIC SCAN R12")
     print(f"specification={args[0]}")
     print(f"machine_risk_floor={floor}")
     for tag in sorted(tags):
@@ -261,7 +289,7 @@ def cmd_requirements_scan(args: list[str]) -> int:
         print(f"REQUIREMENTS_SCAN: FAIL missing {args[0]}", file=sys.stderr)
         return 2
     clauses = extract_normative_clauses(path.read_text(encoding="utf-8"))
-    print("REQUIREMENTS SCAN R11")
+    print("REQUIREMENTS SCAN R12")
     print(f"specification={args[0]}")
     print(f"normative_clause_count={len(clauses)}")
     for clause in clauses:
@@ -297,7 +325,7 @@ def cmd_requirements_check(args: list[str]) -> int:
         mission_id=str((wo.get("mission") or {}).get("mission_id")), work_order_id=wo_id,
         acceptance=acceptance, semantic_policy=semantic_policy,
     )
-    print("REQUIREMENTS CHECK R11")
+    print("REQUIREMENTS CHECK R12")
     print(f"work_order={wo_id}")
     print(f"normative_clause_count={len(clauses)}")
     print(f"requirement_count={len(manifest.get('requirements', [])) if isinstance(manifest, dict) else 0}")
@@ -349,7 +377,7 @@ def cmd_acceptance_check(args: list[str]) -> int:
     else:
         errors.append(f"REQUIREMENTS_MANIFEST_MISSING:{req_rel}")
     declared = wo.get("risk")
-    print("ACCEPTANCE CHECK R11")
+    print("ACCEPTANCE CHECK R12")
     print(f"work_order={wo_id}")
     print(f"semantic_tags={','.join(sorted(tags))}")
     print(f"machine_risk_floor={floor}")
@@ -377,10 +405,9 @@ def cmd_validate() -> int:
 
 
 def _print_active(findings, label: str) -> int:
-    for f in findings:
-        print(f"ERROR {f.code}: {f.message}")
     if findings:
-        print(f"{label}: FAIL ({len(findings)} errors)")
+        print_findings(findings, limit=8)
+        print(f"{label}: FAIL ({len(findings)} errors; compact output)")
         return 1
     print(f"{label}: PASS")
     return 0
@@ -443,9 +470,13 @@ def cmd_hygiene() -> int:
 
 def cmd_selftest() -> int:
     ok, lines = run_selftest(ROOT)
-    for line in lines:
-        print(line)
-    print(f"SELFTEST: {'PASS' if ok else 'FAIL'}")
+    if _verbose_output() or not ok:
+        for line in lines:
+            print(line)
+    mutation_count = sum(1 for line in lines if line.startswith("bad-") and line.endswith(": PASS"))
+    print(f"SELFTEST: {'PASS' if ok else 'FAIL'} mutations={mutation_count}")
+    if ok and not _verbose_output():
+        print("SELFTEST_DETAIL=omitted (HARNESS_VERBOSE=1 for full mutation list)")
     return 0 if ok else 1
 
 
@@ -562,7 +593,7 @@ def cmd_report() -> int:
                 semantic_summary = {"tags":sorted(tags),"machine_risk_floor":floor,"declared_risk":wo.get("risk"),"contract_errors":errs,"requirement_traceability":req_summary}
     payload = {
         "schema":"hybrid_harness.machine_report.v1",
-        "harness_revision":"HYBRID-HARNESS-R11",
+        "harness_revision":"HYBRID-HARNESS-R12",
         "semantic_assurance": semantic_summary,
         "head": git_head(ROOT) if (ROOT / ".git").exists() else None,
         "branch": git_branch(ROOT) if (ROOT / ".git").exists() else None,
@@ -680,8 +711,8 @@ def cmd_final_report() -> int:
     complete_claim = bool(isinstance(state, dict) and (state.get("status") == "MISSION_COMPLETE" or (isinstance(active, dict) and active.get("complete") is True)))
     completion_proven = bool(complete_claim and not readiness and not audit_errors and not portable_errors and selftest_ok)
 
-    print("HYBRID HARNESS FINAL REPORT R11")
-    print(f"harness_revision=HYBRID-HARNESS-R11")
+    print("HYBRID HARNESS FINAL REPORT R12")
+    print(f"harness_revision=HYBRID-HARNESS-R12")
     print(f"head={git_head(ROOT) if (ROOT / '.git').exists() else None}")
     print(f"branch={git_branch(ROOT) if (ROOT / '.git').exists() else None}")
     print(f"git_replace_ref_count={len(replace_refs(ROOT)) if (ROOT / '.git').exists() else -1}")
@@ -709,12 +740,26 @@ def cmd_final_report() -> int:
     print(f"receipt_count={len(receipts)}")
     for rel, exit_code, rid in receipt_rows:
         print(f"receipt={rel}\treceipt_id={rid}\texit_code={exit_code}")
-    for f in readiness:
-        print(f"readiness_finding={f.code}\t{f.message}")
-    for f in audit_errors:
-        print(f"audit_error={f.code}\t{f.message}")
-    for err in portable_errors:
-        print(f"portable_error={err}")
+    if _verbose_output():
+        for f in readiness:
+            print(f"readiness_finding={f.code}\t{f.message}")
+        for f in audit_errors:
+            print(f"audit_error={f.code}\t{f.message}")
+        for err in portable_errors:
+            print(f"portable_error={err}")
+    else:
+        rrows, romitted = _compact_finding_rows(readiness, 8)
+        for f, count in rrows:
+            print(f"readiness_code={f.code}\tcount={count}")
+        if romitted:
+            print(f"readiness_codes_omitted={romitted}")
+        arows, aomitted = _compact_finding_rows(audit_errors, 6)
+        for f, count in arows:
+            print(f"audit_code={f.code}\tcount={count}")
+        if aomitted:
+            print(f"audit_codes_omitted={aomitted}")
+        if portable_errors:
+            print(f"portable_error_count={len(portable_errors)}")
     if not selftest_ok:
         for line in selftest_lines:
             if line.endswith(": FAIL") or line.startswith("baseline must"):
@@ -723,7 +768,7 @@ def cmd_final_report() -> int:
     return 0 if (not active or completion_proven) and not audit_errors and not portable_errors and selftest_ok else 1
 
 def cmd_verifier_run(args: list[str]) -> int:
-    """Run verifier-owned tests through the base-owned R11 semantic runner.
+    """Run verifier-owned tests through the base-owned R12 semantic runner.
 
     The resulting receipt contains the exact PASS test IDs plus runtime case /
     partition / oracle observations used by completion validation.
@@ -758,6 +803,227 @@ def cmd_verifier_run(args: list[str]) -> int:
     return write_receipt(ROOT, receipt_id, command, subject_override="candidate", input_paths=input_paths)
 
 
+
+def _git_commit_paths(paths: list[str], message: str) -> str | None:
+    """Commit a bounded generated-evidence set if it changed."""
+    paths = [p for p in paths if (ROOT / p).exists()]
+    if not paths:
+        return None
+    subprocess.run(["git", "-C", str(ROOT), "add", "--", *paths], check=True)
+    staged = subprocess.run(
+        ["git", "-C", str(ROOT), "diff", "--cached", "--quiet", "--exit-code"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    if staged.returncode == 0:
+        return None
+    subprocess.run(["git", "-C", str(ROOT), "commit", "-m", message], check=True)
+    from gitproof import head as git_head
+    return git_head(ROOT)
+
+
+def cmd_brief(args: list[str]) -> int:
+    """Bounded agent context. This is the normal R12 entry point."""
+    runtime_reason = args[0] if args else "UNSPECIFIED"
+    state = strict_load(ROOT / "config/control/project-state.v1.json")
+    active = state.get("active_mission") if isinstance(state, dict) else None
+    active_errors = validate_active(ROOT)
+    readiness = validate_active(ROOT, require_completion=True) if isinstance(active, dict) else []
+    effective = _effective_status(state, readiness, active_errors)
+    if not isinstance(active, dict):
+        nxt = {"handoff_class":"ROLE_BOUNDARY","next_actor":"DIRECTOR","next_action":"DISPATCH_OR_SELECT_MISSION"}
+    elif effective == "MISSION_COMPLETE":
+        nxt = {"handoff_class":"MISSION_COMPLETE","next_actor":None,"next_action":None}
+    elif active_errors:
+        nxt = _next_from_findings(active_errors)
+    else:
+        nxt = _next_from_findings(readiness)
+
+    print("HYBRID HARNESS BRIEF R12")
+    print(f"runtime_reason={runtime_reason}")
+    print(f"effective_status={effective}")
+    print(f"work_order={state.get('active_work_order') if isinstance(state, dict) else None}")
+    print(f"next_actor={nxt.get('next_actor')}")
+    print(f"next_action={nxt.get('next_action')}")
+    print(f"handoff_class={nxt.get('handoff_class')}")
+    print(f"active_errors={len(active_errors)}")
+    print(f"completion_findings={len(readiness)}")
+
+    read_paths: list[str] = []
+    wo_id = state.get("active_work_order") if isinstance(state, dict) else None
+    if isinstance(wo_id, str):
+        wo_rel = f"config/control/missions/{wo_id}.json"
+        read_paths.append(wo_rel)
+        try:
+            wo = strict_load(ROOT / wo_rel)
+        except Exception:
+            wo = {}
+        if isinstance(wo, dict):
+            for key in ("specification", "requirements_manifest", "acceptance_contract"):
+                rel = wo.get(key)
+                if isinstance(rel, str) and rel not in read_paths:
+                    read_paths.append(rel)
+    print("must_read=" + (",".join(read_paths) if read_paths else "<none>"))
+    print("normal_context_forbidden=scripts/harness/**,config/control/harness/**,raw evidence logs")
+    print("diagnostic_rule=use './CONTROL_HARNESS.sh diagnose'; inspect Harness source only for SYSTEM_BLOCKED harness defect")
+
+    source = active_errors if active_errors else readiness
+    rows, omitted = _compact_finding_rows(source, 6)
+    if rows:
+        print("primary_codes=" + ",".join(f"{f.code}:{count}" for f, count in rows))
+        if omitted:
+            print(f"primary_codes_omitted={omitted}")
+
+    action = str(nxt.get("next_action"))
+    if action == "PRODUCE_AND_FREEZE_CANDIDATE":
+        print("command_hint=commit product/tests, run them locally until green, then candidate-check RECEIPT -- TEST_COMMAND")
+    elif action in {"RUN_MACHINE_RECEIPTED_CANDIDATE_VALIDATION", "BUILD_ADVERSARIAL_PREDICATE_COVERAGE"}:
+        print("command_hint=commit verifier tests+manifest, then verifier-check verifier-adversarial evidence/verifier 'test_*.py'")
+    elif action == "PERSIST_CAUSALLY_BOUND_BASE_TRUSTED_SIGNED_REVIEW":
+        print("command_hint=event-record REVIEW_REQUEST reviewer-actor REQUESTED; route compact review packet to external custody")
+    elif action == "DECIDE_INTEGRATION_READINESS":
+        print("command_hint=record director readiness only after review+verification evidence validates")
+    elif action == "CLOSE_MISSION_AFTER_PROOF":
+        print("command_hint=validate-ready && portable-check && final-report")
+    print("BRIEF: PASS")
+    return 0
+
+
+def cmd_diagnose(args: list[str]) -> int:
+    """Explain blockers without dumping the whole completion matrix by default."""
+    full = "--full" in args
+    state = strict_load(ROOT / "config/control/project-state.v1.json")
+    active = state.get("active_mission") if isinstance(state, dict) else None
+    active_errors = validate_active(ROOT)
+    readiness = validate_active(ROOT, require_completion=True) if isinstance(active, dict) else []
+    findings = active_errors if active_errors else readiness
+    print("HYBRID HARNESS DIAGNOSE R12")
+    print(f"scope={'active_validation' if active_errors else 'completion_readiness'}")
+    print(f"finding_count={len(findings)}")
+    if full:
+        for f in findings:
+            print(f"{f.severity} {f.code}: {f.message}")
+    else:
+        counts: dict[str, int] = {}
+        first = {}
+        for f in findings:
+            counts[f.code] = counts.get(f.code, 0) + 1
+            first.setdefault(f.code, f)
+        for code in list(first)[:12]:
+            f = first[code]
+            print(f"{code}\tcount={counts[code]}\tfirst={f.message}")
+        if len(first) > 12:
+            print(f"codes_omitted={len(first)-12}")
+        print("detail_hint=rerun with --full only for a targeted repair")
+    print("DIAGNOSE: " + ("PASS" if not findings else "BLOCKED"))
+    return 0 if not findings else 1
+
+
+def cmd_candidate_check(args: list[str]) -> int:
+    """Freeze a clean product candidate, run one machine test receipt, and commit evidence.
+
+    This replaces the common 5-10 call sequence: freeze -> inspect -> add -> commit ->
+    evidence-run -> inspect -> add -> commit.
+    """
+    if len(args) < 3:
+        print("usage: candidate-check RECEIPT_ID -- COMMAND [ARGS...]", file=sys.stderr)
+        return 2
+    receipt_id = args[0]
+    rest = args[1:]
+    if rest and rest[0] == "--":
+        rest = rest[1:]
+    if not rest:
+        print("candidate-check requires a test command", file=sys.stderr)
+        return 2
+    state = strict_load(ROOT / "config/control/project-state.v1.json")
+    active = state.get("active_mission") if isinstance(state, dict) else None
+    wo_id = state.get("active_work_order") if isinstance(state, dict) else None
+    if not isinstance(active, dict) or not isinstance(wo_id, str):
+        print("CANDIDATE_CHECK: FAIL active mission/work order required", file=sys.stderr)
+        return 1
+    try:
+        wo = strict_load(ROOT / f"config/control/missions/{wo_id}.json")
+        expected_branch = wo.get("branch") if isinstance(wo, dict) else None
+        from gitproof import branch as git_branch
+        current_branch = git_branch(ROOT)
+        if isinstance(expected_branch, str) and current_branch != expected_branch:
+            print(f"CANDIDATE_CHECK: FAIL branch mismatch current={current_branch} expected={expected_branch}", file=sys.stderr)
+            return 1
+        active_errors = validate_active(ROOT)
+        if active_errors:
+            print("CANDIDATE_CHECK: FAIL active validation", file=sys.stderr)
+            print_findings(active_errors, limit=6)
+            return 1
+        lock = write_candidate_lock(ROOT, strict_load(ROOT / "config/control/harness/harness-policy.v1.json").get("closure_tail", {}).get("allowed_paths", []))
+    except Exception as exc:
+        print(f"CANDIDATE_CHECK: FAIL freeze: {exc}", file=sys.stderr)
+        return 1
+    _git_commit_paths([lock.relative_to(ROOT).as_posix()], "evidence(candidate): freeze exact candidate")
+    try:
+        rc = write_receipt(ROOT, receipt_id, rest, subject_override="candidate")
+    except Exception as exc:
+        print(f"CANDIDATE_CHECK: FAIL receipt: {exc}", file=sys.stderr)
+        return 1
+    raw = f"evidence/raw/{receipt_id}.log"
+    receipt = f"evidence/receipts/{receipt_id}.json"
+    commit = _git_commit_paths([raw, receipt], f"evidence(candidate): machine receipt {receipt_id}")
+    try:
+        lock_data = strict_load(lock)
+        candidate = lock_data.get("candidate_head") if isinstance(lock_data, dict) else None
+    except Exception:
+        candidate = None
+    print(f"CANDIDATE_HEAD={candidate}")
+    print(f"EVIDENCE_COMMIT={commit}")
+    print(f"CANDIDATE_CHECK: {'PASS' if rc == 0 else 'FAIL'}")
+    return rc
+
+
+def cmd_verifier_check(args: list[str]) -> int:
+    """Run R11/R12 semantic verifier receipt and durably commit only its generated output."""
+    if not args:
+        print("usage: verifier-check RECEIPT_ID [START_DIR] [PATTERN]", file=sys.stderr)
+        return 2
+    receipt_id = args[0]
+    rc = cmd_verifier_run(args)
+    raw = f"evidence/raw/{receipt_id}.log"
+    receipt = f"evidence/receipts/{receipt_id}.json"
+    commit = _git_commit_paths([raw, receipt], f"evidence(verifier): machine receipt {receipt_id}")
+    print(f"VERIFIER_EVIDENCE_COMMIT={commit}")
+    print(f"VERIFIER_CHECK: {'PASS' if rc == 0 else 'FAIL'}")
+    return rc
+
+
+def cmd_event_record(args: list[str]) -> int:
+    """Append and commit one immutable event in one deterministic call."""
+    if len(args) < 3:
+        print("usage: event-record PHASE ACTOR_ID VERDICT [--json JSON_OBJECT]", file=sys.stderr)
+        return 2
+    phase, actor, verdict = args[:3]
+    rest = args[3:]
+    extra = {}
+    if rest:
+        if len(rest) != 2 or rest[0] != "--json":
+            print("event-record accepts only --json JSON_OBJECT", file=sys.stderr)
+            return 2
+        try:
+            extra = json.loads(rest[1])
+        except json.JSONDecodeError as exc:
+            print(f"event-record JSON invalid: {exc}", file=sys.stderr)
+            return 2
+        if not isinstance(extra, dict):
+            print("--json must be object", file=sys.stderr)
+            return 2
+    try:
+        path = write_event(ROOT, phase, actor, verdict, extra)
+        commit = _git_commit_paths([path.relative_to(ROOT).as_posix()], f"evidence(event): {phase} {verdict}")
+    except Exception as exc:
+        print(f"EVENT_RECORD: FAIL {exc}", file=sys.stderr)
+        return 1
+    print(f"EVENT={path.relative_to(ROOT)}")
+    print(f"EVENT_COMMIT={commit}")
+    print("EVENT_RECORD: PASS")
+    return 0
+
+
 def cmd_demo() -> int:
     rc1 = cmd_validate()
     rc2 = cmd_hygiene() if rc1 == 0 else 1
@@ -776,16 +1042,21 @@ def main() -> int:
         "continuation-demo": cmd_continuation_demo, "freeze-candidate": cmd_freeze_candidate, "report": cmd_report, "final-report": cmd_final_report, "demo": cmd_demo,
     }
     if cmd == "resume": return cmd_resume(args[1:])
+    if cmd == "brief": return cmd_brief(args[1:])
+    if cmd == "diagnose": return cmd_diagnose(args[1:])
     if cmd == "attempt-retry": return cmd_attempt_retry(args[1:])
+    if cmd == "candidate-check": return cmd_candidate_check(args[1:])
     if cmd == "evidence-run": return cmd_evidence_run(args[1:])
     if cmd == "verifier-run": return cmd_verifier_run(args[1:])
+    if cmd == "verifier-check": return cmd_verifier_check(args[1:])
     if cmd == "event-add": return cmd_event_add(args[1:])
+    if cmd == "event-record": return cmd_event_record(args[1:])
     if cmd == "acceptance-check": return cmd_acceptance_check(args[1:])
     if cmd == "requirements-scan": return cmd_requirements_scan(args[1:])
     if cmd == "requirements-check": return cmd_requirements_check(args[1:])
     if cmd == "semantic-scan": return cmd_semantic_scan(args[1:])
     if cmd not in simple:
-        print("usage: control.py status|resume|attempt-retry|validate|validate-active|validate-ready|portable-check|semantic-scan|requirements-scan|requirements-check|acceptance-check|hygiene|selftest|continuation-demo|freeze-candidate|evidence-run|verifier-run|event-add|report|final-report|demo", file=sys.stderr)
+        print("usage: control.py status|resume|brief|diagnose|attempt-retry|candidate-check|validate|validate-active|validate-ready|portable-check|semantic-scan|requirements-scan|requirements-check|acceptance-check|hygiene|selftest|continuation-demo|freeze-candidate|evidence-run|verifier-run|verifier-check|event-add|event-record|report|final-report|demo", file=sys.stderr)
         return 2
     return simple[cmd]()
 

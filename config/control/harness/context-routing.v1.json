@@ -1,57 +1,27 @@
 {
-  "schema": "hybrid_harness.context_routing.v4",
+  "schema": "hybrid_harness.context_routing.v5",
   "always": [
-    "AGENTS.md",
-    "config/control/project-state.v1.json"
+    "AGENTS.md"
   ],
   "routes": {
     "implementation": [
-      "HARNESS_CONTROL.md",
-      "config/control/harness/harness-policy.v1.json",
-      "config/control/harness/risk-policy.v1.json",
-      "config/control/harness/continuation-policy.v1.json",
-      "config/control/harness/mission-policy.v1.json",
-      "config/control/harness/semantic-risk-policy.v1.json",
-      "config/control/harness/acceptance-contract.schema.v1.json",
-      "config/control/harness/verifier-policy.v1.json",
-      "config/control/harness/requirements-manifest.schema.v1.json",
-      "config/control/harness/attempt-policy.v1.json"
+      "HARNESS_CONTROL.md"
     ],
     "review": [
       "HARNESS_CONTROL.md",
       "config/control/harness/review-policy.v1.json",
-      "config/control/harness/risk-policy.v1.json",
-      "config/control/harness/continuation-policy.v1.json",
-      "config/control/harness/trust-providers.v1.json",
-      "config/control/harness/external-attestation.schema.v1.json",
-      "config/control/harness/semantic-risk-policy.v1.json",
-      "config/control/harness/acceptance-contract.schema.v1.json",
-      "config/control/harness/verifier-policy.v1.json",
-      "config/control/harness/requirements-manifest.schema.v1.json",
-      "config/control/harness/attempt-policy.v1.json"
+      "config/control/harness/trust-providers.v1.json"
     ],
     "verification": [
-      "config/control/harness/review-policy.v1.json",
-      "config/control/harness/continuation-policy.v1.json",
-      "config/control/harness/evidence-map.schema.v1.json",
-      "config/control/harness/semantic-risk-policy.v1.json",
-      "config/control/harness/acceptance-contract.schema.v1.json",
-      "config/control/harness/verifier-policy.v1.json",
-      "config/control/harness/requirements-manifest.schema.v1.json",
-      "config/control/harness/attempt-policy.v1.json"
+      "config/control/harness/verifier-policy.v1.json"
     ],
     "control": [
       "PROJECT_CONTROL.md",
-      "config/control/harness/harness-policy.v1.json",
-      "config/control/harness/checkpoint-catalog.v1.json",
-      "config/control/harness/continuation-policy.v1.json",
-      "config/control/harness/mission-policy.v1.json",
-      "config/control/harness/trust-providers.v1.json"
+      "config/control/harness/harness-policy.v1.json"
     ],
     "hygiene": [
       "docs/HYGIENE_RU.md",
-      "config/control/harness/instruction-hygiene-policy.v1.json",
-      "config/control/harness/rule-registry.v1.json"
+      "config/control/harness/instruction-hygiene-policy.v1.json"
     ],
     "architecture": [
       "docs/ARCHITECTURE_RU.md"

@@ -1,25 +1,21 @@
-# Hybrid Harness R11 — Efficiency + Semantic Integrity Template
+# Hybrid Harness R12 — Lean / Token-Bounded Template
 
-Чистая Git-болванка R11 для новой dogfood/test mission. R11 сохраняет R8–R10 guarantees и закрывает проблемы, проявившиеся в h-10.
+R12 — это R11 с более дешёвым агентским протоколом. Проверки не ослаблены: сокращены повторные LLM-шаги, объём stdout и необходимость читать внутренности Harness.
 
-Главные изменения:
-
-- **Structured oracle evidence.** `assert_oracle(id, True)` запрещён. Verifier фиксирует concrete `equal`, `raises` или `unchanged` observation; очевидные no-op assertions отбрасываются base-owned runner.
-- **Safe retry.** `attempt-retry` supersede-ит старый attempt, сохраняет старую ветку/историю, создаёт новый Work Order/attempt и feature branch без `reset/amend/rebase`.
-- **Derived effective status.** `status`/`final-report` различают `declared_status` и machine-derived `effective_status`; ложный `MISSION_COMPLETE` отображается как `INVALID_COMPLETION`.
-- **Durable resume.** `resume [runtime_reason]` восстанавливает следующий шаг только из Git/control state; TIMEOUT/interrupt остаётся диагностикой runtime, а не Harness verdict.
-- **External custody metadata.** MEDIUM+ review/integration keys обязаны иметь `custody_id` + внешний `custody_class`; review/integration custody domains должны различаться. Локальный Harness честно не утверждает, что способен доказать физическое владение ключом.
-
-Базовые команды:
+Основной цикл:
 
 ```bash
-./CONTROL_HARNESS.sh resume
-./CONTROL_HARNESS.sh validate
-./CONTROL_HARNESS.sh hygiene
-python3 -m unittest discover -s tests -p 'test_*.py' -v
-./CONTROL_HARNESS.sh selftest
-./CONTROL_HARNESS.sh portable-check
-./CONTROL_HARNESS.sh final-report
+./CONTROL_HARNESS.sh brief NEW_SESSION
+# читать только must_read из brief
+./CONTROL_HARNESS.sh validate-active
+# implement + локальные product tests
+./CONTROL_HARNESS.sh candidate-check candidate-tests -- python3 -m unittest discover -s tests/product -p 'test_*.py'
+# verifier tests + manifest один раз commit
+./CONTROL_HARNESS.sh verifier-check verifier-adversarial evidence/verifier 'test_*.py'
+# события фиксировать через event-record
+# closure: validate-ready, portable-check, selftest, final-report
 ```
 
-Начните с `START_HERE_RU.md`.
+`HARNESS_VERBOSE=1` включает полный диагностический вывод. По умолчанию findings дедуплицируются и ограничиваются, а raw machine output хранится как durable evidence без возврата в контекст модели.
+
+См. `START_HERE_RU.md`.

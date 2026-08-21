@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import ast
 import json
+import base64
+import zlib
 import shutil
 import subprocess
 import sys
@@ -16,6 +18,7 @@ from control import _effective_status
 from semantic import coverage_errors
 
 MARKER = "HARNESS_VERIFIER_RESULT_JSON="
+COMPRESSED_MARKER = "HARNESS_VERIFIER_RESULT_ZLIB_B64="
 
 
 def run_runner(source: str) -> tuple[subprocess.CompletedProcess[str], dict]:
@@ -26,8 +29,13 @@ def run_runner(source: str) -> tuple[subprocess.CompletedProcess[str], dict]:
             [sys.executable, str(ROOT / "scripts/harness/verifier_runner.py"), str(d), "test_*.py"],
             cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         )
-        line = next(x for x in proc.stdout.splitlines() if x.startswith(MARKER))
-        return proc, json.loads(line.split("=", 1)[1])
+        line = next(x for x in proc.stdout.splitlines() if x.startswith((MARKER, COMPRESSED_MARKER)))
+        payload = line.split("=", 1)[1]
+        if line.startswith(COMPRESSED_MARKER):
+            result = json.loads(zlib.decompress(base64.b64decode(payload)).decode("utf-8"))
+        else:
+            result = json.loads(payload)
+        return proc, result
 
 
 class R11EfficiencyTests(unittest.TestCase):

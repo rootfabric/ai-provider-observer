@@ -190,6 +190,17 @@ def control_findings(root: Path) -> list[Finding]:
     if any(principles.get(k) is not True for k in r11_guards):
         findings.append(_error("R11_EFFICIENCY_INTEGRITY_GUARDS_MISSING", "R11 structured-oracle/retry/resume/derived-state/custody guards must all be enabled"))
 
+    r12_guards = {
+        "agent_context_uses_compact_command_api",
+        "default_validation_output_is_bounded",
+        "raw_machine_output_is_durable_not_echoed",
+        "evidence_transitions_support_atomic_commit",
+        "completion_findings_are_not_normal_implementation_context",
+        "harness_source_is_not_normal_agent_context",
+    }
+    if any(principles.get(k) is not True for k in r12_guards):
+        findings.append(_error("R12_LEAN_CONTEXT_GUARDS_MISSING", "R12 compact-agent/output/atomic-evidence guards must all be enabled"))
+
     closure = policy.get("closure_tail", {})
     if closure.get("candidate_must_remain_ancestor") is not True or closure.get("product_change_after_candidate_invalidates_review") is not True or closure.get("closure_head_is_derived_from_git") is not True:
         findings.append(_error("CLOSURE_LINEAGE_POLICY_WEAKENED", "candidate/closure lineage invariants incomplete"))

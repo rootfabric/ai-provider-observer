@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import subprocess
+import base64
+import zlib
 import sys
 import tempfile
 import unittest
@@ -134,8 +136,12 @@ class R10SemanticProofTests(unittest.TestCase):
                 cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             )
             self.assertEqual(0, proc.returncode, proc.stdout)
-            line = next(x for x in proc.stdout.splitlines() if x.startswith("HARNESS_VERIFIER_RESULT_JSON="))
-            result = json.loads(line.split("=", 1)[1])
+            line = next(x for x in proc.stdout.splitlines() if x.startswith(("HARNESS_VERIFIER_RESULT_JSON=", "HARNESS_VERIFIER_RESULT_ZLIB_B64=")))
+            payload = line.split("=", 1)[1]
+            if line.startswith("HARNESS_VERIFIER_RESULT_ZLIB_B64="):
+                result = json.loads(zlib.decompress(base64.b64decode(payload)).decode("utf-8"))
+            else:
+                result = json.loads(payload)
             self.assertEqual(1, len(result["passed_test_ids"]))
             row = result["tests"][0]
             self.assertEqual("CASE-P", row["case_id"])

@@ -4,11 +4,15 @@ import ast
 import inspect
 import json
 import sys
+import os
+import base64
+import zlib
 import textwrap
 import unittest
 from typing import Any
 
 MARKER = "HARNESS_VERIFIER_RESULT_JSON="
+COMPRESSED_MARKER = "HARNESS_VERIFIER_RESULT_ZLIB_B64="
 
 
 def _call_name(node: ast.Call) -> str | None:
@@ -91,7 +95,8 @@ def main(argv: list[str]) -> int:
     start_dir = argv[1] if len(argv) > 1 else "evidence/verifier"
     pattern = argv[2] if len(argv) > 2 else "test_*.py"
     suite = unittest.defaultTestLoader.discover(start_dir=start_dir, pattern=pattern)
-    result: HarnessResult = HarnessRunner(verbosity=2, stream=sys.stdout).run(suite)  # type: ignore[assignment]
+    verbosity = 2 if os.environ.get("HARNESS_VERBOSE", "").strip().lower() in {"1", "true", "yes", "full"} else 0
+    result: HarnessResult = HarnessRunner(verbosity=verbosity, stream=sys.stdout).run(suite)  # type: ignore[assignment]
     records = sorted(result.records, key=lambda r: str(r.get("test_id")))
     quality = sorted({f"{r.get('test_id')}:{q}" for r in records for q in (r.get("oracle_quality_findings") or [])})
     payload = {
@@ -105,7 +110,13 @@ def main(argv: list[str]) -> int:
         "skipped_test_ids": [r["test_id"] for r in records if r.get("status") == "SKIP"],
         "oracle_quality_findings": quality,
     }
-    print(MARKER + json.dumps(payload, sort_keys=True, separators=(",", ":")))
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    if os.environ.get("HARNESS_VERBOSE", "").strip().lower() in {"1", "true", "yes", "full"}:
+        print(MARKER + raw.decode("utf-8"))
+    else:
+        packed = base64.b64encode(zlib.compress(raw, 9)).decode("ascii")
+        print(COMPRESSED_MARKER + packed)
+        print(f"HARNESS_VERIFIER_SUMMARY=tests:{len(records)},passed:{len(payload['passed_test_ids'])},failed:{len(payload['failed_test_ids'])},quality:{len(quality)}")
     return 0 if result.wasSuccessful() and not quality else 1
 
 

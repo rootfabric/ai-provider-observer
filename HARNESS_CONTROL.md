@@ -1,20 +1,18 @@
-# Harness Control — Hybrid R11
+# Harness Control — Hybrid R12 Lean
 
-R11 = R8 portable causal history + R9 temporal/report/parser hardening + R10 case-derived verifier proof + h-10 efficiency/integrity repair.
+R12 preserves every R8–R11 fail-closed proof invariant and changes the **agent interface**, not the proof strength.
 
-## Новое в R11
+## Normal API
 
-### Structured semantic observations
-Contract oracle объявляет `observation_kind`. Runtime evidence хранит structured observation, а base-owned runner отклоняет generic boolean oracle, literal-vs-literal и same-expression no-op assertions.
+- `brief [RUNTIME_REASON]` — bounded current route; this replaces exploratory reading of Harness internals.
+- `diagnose` — grouped blockers; `diagnose --full` only for a targeted repair.
+- `candidate-check RECEIPT -- COMMAND...` — freeze exact candidate, machine-run tests, commit lock+receipt in one transition.
+- `verifier-check RECEIPT [DIR] [PATTERN]` — run semantic verifier and commit generated receipt/raw evidence.
+- `event-record PHASE ACTOR VERDICT [...]` — append + commit one immutable event.
+- `attempt-retry ...` — preserve failed history and start a fresh attempt.
 
-### Safe attempt retry
-`attempt-retry` supersede-ит failed attempt и создаёт новый dispatch без history rewrite. Старый Work Order/branch остаются inspectable.
+Raw test/verifier output remains durable in `evidence/raw/**` but is not echoed to the LLM by default. Set `HARNESS_VERBOSE=1` only when a specific failure needs full detail.
 
-### Derived state
-`declared_status` — input. `effective_status` — machine result. Completion существует только при `completion_proven=true`.
+## Precision unchanged
 
-### Resume without chat reconstruction
-`resume [reason]` отделяет runtime termination (`TIMEOUT`, `INTERRUPTED`) от Harness continuation и выдаёт next actor/action из durable state.
-
-### External custody honesty
-Base trust key содержит `custody_id`/`custody_class`; review/integration custody domains различны. Local-only Harness не притворяется доказательством физического custody: реальная независимость требует private key вне implementer process.
+Exact-head, clean-clone portability, immutable causal evidence, external custody, temporal consistency, requirement/partition/test/oracle runtime binding, structured observations, and fail-closed completion remain machine-enforced.

@@ -246,6 +246,11 @@ def run(source_root: Path) -> tuple[bool, list[str]]:
         j = json.loads(p.read_text(encoding="utf-8")); j["principles"]["routine_retry_is_supersede_plus_new_attempt_not_history_rewrite"] = False; write_json(p, j)
     mutations.append(("bad-r11-retry-policy", weaken_r11_retry, "R11_EFFICIENCY_INTEGRITY_GUARDS_MISSING"))
 
+    def weaken_r12_lean_context(r: Path):
+        p = r / "config/control/harness/harness-policy.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8")); j["principles"]["default_validation_output_is_bounded"] = False; write_json(p, j)
+    mutations.append(("bad-r12-lean-context", weaken_r12_lean_context, "R12_LEAN_CONTEXT_GUARDS_MISSING"))
+
     for name, mutate, expected in mutations:
         ok, detail = run_mutation(source_root, name, mutate, expected)
         out.append(f"{name}: {'PASS' if ok else 'FAIL'}")

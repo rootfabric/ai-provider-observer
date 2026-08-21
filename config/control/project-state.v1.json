@@ -8,5 +8,5 @@
   "active_mission": null,
   "mutation_lease": null,
   "status": "HARNESS_READY",
-  "note": "Clean Hybrid Harness R11 efficiency/semantic-integrity template. No mission has been dispatched. Configure external custody trust on main, then dispatch a mission."
+  "note": "Clean Hybrid Harness R12 lean/token-bounded template. Use brief as the normal agent API; no mission dispatched."
 }

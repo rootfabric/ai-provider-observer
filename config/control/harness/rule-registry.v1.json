@@ -511,7 +511,36 @@
       ],
       "retirement": "SECURITY_REVISION_REQUIRED",
       "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-TOKEN-BOUNDED-AGENT-R12",
+      "class": "EFFICIENCY_INVARIANT",
+      "source": "R11 dogfood exhausted model token quota after 586 LLM/tool steps despite product being substantially ready near step 100",
+      "applies_when": "normal agent execution and diagnostics",
+      "enforcement": "machine",
+      "enforced_by": [
+        "control.py",
+        "context-routing.v1.json",
+        "instruction-hygiene-policy.v1.json",
+        "test_r12_lean.py"
+      ],
+      "retirement": "REPLACE_ONLY_WITH_STRONGER_MEASURED_CONTEXT_PROTOCOL",
+      "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-DURABLE-RAW-COMPACT-STDOUT-R12",
+      "class": "EFFICIENCY_INVARIANT",
+      "source": "R11 verifier runs repeatedly echoed 38-43KB machine payloads into LLM context",
+      "applies_when": "machine receipt and verifier execution",
+      "enforcement": "machine",
+      "enforced_by": [
+        "evidence.py",
+        "verifier_runner.py",
+        "test_r12_lean.py"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only"
     }
   ],
-  "revision": "HYBRID-HARNESS-R11"
+  "revision": "HYBRID-HARNESS-R12"
 }

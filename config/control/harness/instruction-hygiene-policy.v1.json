@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.instruction_hygiene_policy.v2",
-  "revision": "HH-R1",
+  "revision": "HH-R12-LEAN",
   "protected_rule_classes": [
     "SAFETY_INVARIANT",
     "SECURITY_INVARIANT",
@@ -28,8 +28,10 @@
   "budgets": {
     "root_router_max_lines": 150,
     "root_router_max_bytes": 18000,
-    "always_context_max_estimated_tokens": 5000,
-    "conditional_route_max_estimated_tokens": 9000
+    "always_context_max_estimated_tokens": 2500,
+    "conditional_route_max_estimated_tokens": 5000,
+    "agent_brief_max_chars": 2400,
+    "default_finding_code_limit": 12
   },
   "triggers": {
     "accepted_checkpoints_interval": 10,

@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import base64
+import zlib
 import shutil
 import subprocess
 import sys
@@ -27,14 +29,24 @@ from gitproof import (
 
 BASE_ENV_KEYS = ("PATH", "HOME", "LANG", "LC_ALL", "TZ", "SYSTEMROOT", "COMSPEC", "PATHEXT")
 VERIFIER_RESULT_MARKER = b"HARNESS_VERIFIER_RESULT_JSON="
+VERIFIER_RESULT_ZLIB_MARKER = b"HARNESS_VERIFIER_RESULT_ZLIB_B64="
 
 
 
 def parse_verifier_result(output: bytes) -> dict[str, Any] | None:
+    """Parse both R10/R11 plain JSON and R12 compressed verifier payloads."""
     for raw in reversed(output.splitlines()):
-        if raw.startswith(VERIFIER_RESULT_MARKER):
+        payload: bytes | None = None
+        if raw.startswith(VERIFIER_RESULT_ZLIB_MARKER):
             try:
-                value = json.loads(raw[len(VERIFIER_RESULT_MARKER):].decode("utf-8"))
+                payload = zlib.decompress(base64.b64decode(raw[len(VERIFIER_RESULT_ZLIB_MARKER):], validate=True))
+            except Exception:
+                return None
+        elif raw.startswith(VERIFIER_RESULT_MARKER):
+            payload = raw[len(VERIFIER_RESULT_MARKER):]
+        if payload is not None:
+            try:
+                value = json.loads(payload.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError):
                 return None
             return value if isinstance(value, dict) else None
@@ -138,8 +150,27 @@ def write_receipt(root: Path, receipt_id: str, command: list[str], env_overrides
     if verifier_result is not None:
         receipt["verifier_result"] = verifier_result
     receipt_path.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    os.write(1, output)
-    print(f"\nEVIDENCE_RECEIPT={receipt_path.relative_to(root)}")
+    verbose = os.environ.get("HARNESS_VERBOSE", "").strip().lower() in {"1", "true", "yes", "full"}
+    if verbose:
+        os.write(1, output)
+        print()
+    else:
+        print(f"EVIDENCE_OUTPUT_STORED={output_path.relative_to(root)}")
+        print(f"EVIDENCE_OUTPUT_BYTES={len(output)}")
+        if verifier_result is not None:
+            passed = verifier_result.get("passed_test_ids", []) if isinstance(verifier_result, dict) else []
+            failed = verifier_result.get("failed_test_ids", []) if isinstance(verifier_result, dict) else []
+            quality = verifier_result.get("oracle_quality_findings", []) if isinstance(verifier_result, dict) else []
+            print(f"VERIFIER_RUNTIME_SUMMARY=passed:{len(passed)},failed:{len(failed)},oracle_quality:{len(quality)}")
+        elif proc.returncode != 0:
+            tail = output.decode("utf-8", errors="replace").splitlines()[-12:]
+            rendered = "\n".join(tail)
+            if len(rendered) > 3000:
+                rendered = rendered[-3000:]
+            print("EVIDENCE_FAILURE_TAIL_BEGIN")
+            print(rendered)
+            print("EVIDENCE_FAILURE_TAIL_END")
+    print(f"EVIDENCE_RECEIPT={receipt_path.relative_to(root)}")
     print(f"EVIDENCE_SUBJECT_HEAD={subject}")
     print(f"EVIDENCE_EXIT_CODE={proc.returncode}")
     return proc.returncode

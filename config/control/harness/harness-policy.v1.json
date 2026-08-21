@@ -1,6 +1,6 @@
 {
   "schema": "hybrid_harness.policy.v5",
-  "revision": "HYBRID-HARNESS-R11",
+  "revision": "HYBRID-HARNESS-R12",
   "canonical_branch": "main",
   "principles": {
     "git_is_durable_memory": true,
@@ -73,7 +73,13 @@
     "effective_status_is_machine_derived": true,
     "routine_retry_is_supersede_plus_new_attempt_not_history_rewrite": true,
     "session_resume_is_derived_from_durable_state": true,
-    "external_trust_keys_declare_distinct_custody_domains": true
+    "external_trust_keys_declare_distinct_custody_domains": true,
+    "agent_context_uses_compact_command_api": true,
+    "default_validation_output_is_bounded": true,
+    "raw_machine_output_is_durable_not_echoed": true,
+    "evidence_transitions_support_atomic_commit": true,
+    "completion_findings_are_not_normal_implementation_context": true,
+    "harness_source_is_not_normal_agent_context": true
   },
   "concurrency": {
     "runtime_mutation_lease_capacity": 1,
