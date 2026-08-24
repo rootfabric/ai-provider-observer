@@ -147,6 +147,8 @@ def score_window(wa: t.WindowAnalytics, cfg: Any) -> tuple[int, dict[str, float]
     factors["f_accel"] = _factor_accel(wa.burn_acceleration)
     factors["f_pace"] = _factor_pace(wa.pacing)
     factors["f_projected"] = _factor_projected(wa.pacing)
+    runway_days = wa.runway.runway_days if wa.runway is not None else None
+    factors["f_runway"] = _factor_runway(runway_days, getattr(cfg, "balance_low_days", 7.0))
 
     base_max = max(factors.values()) if factors else 0
     elevated = sum(1 for v in factors.values() if v >= 55)
@@ -237,6 +239,25 @@ def _factor_projected(pacing: t.Pacing | None) -> float:
     if projected >= 90.0:
         return 50.0
     if projected >= 70.0:
+        return 30.0
+    return 10.0
+
+
+def _factor_runway(runway_days: float | None, balance_low_days: float) -> float:
+    """Monetary runway factor (spec §14/§16): low runway raises risk.
+
+    ``None`` (unknown / stable / insufficient data) contributes nothing so
+    quota-only providers are unaffected.
+    """
+    if runway_days is None:
+        return 0.0
+    if runway_days <= 1.0:
+        return 90.0
+    if runway_days <= 3.0:
+        return 75.0
+    if runway_days <= 7.0:
+        return 55.0
+    if runway_days <= 14.0:
         return 30.0
     return 10.0
 
