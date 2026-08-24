@@ -18,7 +18,7 @@ portable-check:
 hygiene:
 	python3 scripts/harness/control.py hygiene
 unit:
-	python3 -m unittest discover -s tests -p 'test_*.py'
+	@if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest tests -q; else python3 -m pytest tests -q; fi
 selftest:
 	python3 scripts/harness/control.py selftest
 report:

@@ -1,0 +1,12 @@
+services:
+  observer:
+    build: .
+    ports:
+      - "127.0.0.1:8787:8787"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      # Uncomment for Codex quota monitoring on Linux/macOS.
+      # - ~/.codex:/root/.codex:ro
+    restart: unless-stopped
