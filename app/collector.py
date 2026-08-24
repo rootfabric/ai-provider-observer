@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Awaitable, Callable, Optional
 
 from app.config import Settings
-from app.demo import demo_snapshots
+from app.demo import demo_snapshots, seed_demo_history
 from app.models import ProviderSnapshot
 from app.normalize import snapshot_to_rows
 from app.providers import CodexProvider, DeepSeekProvider, MiniMaxProvider, OpenRouterProvider, ZaiProvider
@@ -29,6 +29,10 @@ class Collector:
         self.store = store
         self.on_collect = on_collect
         self._lock = asyncio.Lock()
+        # Demo-mode state: history seeding runs once per process, the
+        # tick counter advances demo_snapshots() between cycles.
+        self._demo_seeded: bool = False
+        self._demo_tick: int = 0
         self.providers = [
             ZaiProvider(settings.zai_api_key, settings.zai_base_url, settings.request_timeout_seconds),
             MiniMaxProvider(settings.minimax_api_key, settings.minimax_base_url, settings.request_timeout_seconds),
@@ -40,7 +44,22 @@ class Collector:
     async def collect(self) -> list[dict]:
         async with self._lock:
             if self.settings.demo_mode:
-                snaps = demo_snapshots()
+                # Seed quota history once per process so analytics has
+                # something to chew on. Errors are logged but never
+                # raised — production code paths must not crash on a
+                # transient seeding failure.
+                if (
+                    self.settings.analytics_enabled
+                    and not self._demo_seeded
+                ):
+                    try:
+                        seed_demo_history(self.store, self.settings)
+                    except Exception:
+                        log.exception("demo history seeding failed")
+                    self._demo_seeded = True
+
+                self._demo_tick += 1
+                snaps = demo_snapshots(self.settings.demo_scenario, self._demo_tick - 1)
             else:
                 results = await asyncio.gather(*(p.fetch() for p in self.providers), return_exceptions=True)
                 snaps: list[ProviderSnapshot] = []
