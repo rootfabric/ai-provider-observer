@@ -101,6 +101,17 @@ def _segment_first_last_span_minutes(seg: t.Segment) -> float | None:
 # AnalyticsEngine
 # ---------------------------------------------------------------------------
 
+# Canonical display order for providers across the analytics payload and the
+# dashboard (user-facing preference; unknown providers are appended last).
+PROVIDER_DISPLAY_ORDER: tuple[str, ...] = ("zai", "minimax", "deepseek", "codex", "openrouter")
+
+
+def _display_rank(provider: str) -> tuple[int, str]:
+    """Sort key: canonical order first, then unknowns alphabetically."""
+    if provider in PROVIDER_DISPLAY_ORDER:
+        return PROVIDER_DISPLAY_ORDER.index(provider), ""
+    return len(PROVIDER_DISPLAY_ORDER), provider
+
 
 class AnalyticsEngine:
     """Compose all R1 analytics modules around a Store snapshot."""
@@ -153,7 +164,7 @@ class AnalyticsEngine:
                 "plan": None,
             }
         # Stable ordering: alphabetical.
-        return [merged[key] for key in sorted(merged)]
+        return [merged[key] for key in sorted(merged, key=_display_rank)]
 
     def refresh_all(self, now: datetime | None = None) -> None:
         now = now or datetime.now(timezone.utc)
