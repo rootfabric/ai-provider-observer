@@ -97,6 +97,14 @@ def build_forecast(
             sample_burn = burns[key]
             break
     burn_unit = sample_burn.unit if sample_burn is not None else None
+    # The ETA basis is the *denominator* unit ("credits", "percent"), not the
+    # per-hour burn unit string ("credits/hour").
+    if burn_unit and burn_unit.endswith("/hour"):
+        basis_unit: str | None = burn_unit[: -len("/hour")]
+    elif burn_unit == "percentage_points_per_hour":
+        basis_unit = "percent"
+    else:
+        basis_unit = burn_unit
     remaining = _resolve_remaining(latest, burn_unit)
 
     eta_current = _eta_seconds(remaining, burns.get("15m"))
@@ -121,7 +129,7 @@ def build_forecast(
         eta_current_seconds=eta_current,
         eta_stable_seconds=eta_stable,
         eta_conservative_seconds=eta_conservative,
-        eta_basis_unit=burn_unit,
+        eta_basis_unit=basis_unit,
         reset_in_seconds=reset_in,
         survival_margin_seconds=survival_margin,
         recovery_mode=mode,
