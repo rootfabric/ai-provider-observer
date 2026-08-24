@@ -207,6 +207,7 @@ function renderWindow(window, typeLabel) {
   const remaining = latest.remaining;
   const limit = latest.limit;
   const usedAbs = latest.used;
+  const unitStr = esc(latest.unit || '');
 
   const burns = window.burns || {};
   const burn15 = burns['15m'] && burns['15m'].value;
