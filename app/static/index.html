@@ -11,18 +11,77 @@
     <header>
       <div>
         <div class="eyebrow">AI PROVIDER OBSERVER</div>
-        <h1>Пакеты и лимиты</h1>
-        <p>5h / week / balance / скорость расхода / latency проверки</p>
+        <h1>AI CAPACITY</h1>
+        <p>Квоты, скорость расхода, прогноз исчерпания, рекомендации по мощности</p>
       </div>
       <div class="actions">
-        <span id="mode" class="pill"></span>
-        <button id="refresh">Обновить</button>
+        <span id="mode" class="pill">live</span>
+        <span id="generated" class="pill muted"></span>
+        <button id="refresh" type="button">Обновить</button>
       </div>
     </header>
-    <section id="summary" class="summary"></section>
-    <section id="cards" class="grid"></section>
+
+    <section id="summary" class="summary" aria-label="Сводка"></section>
+    <section id="cards" class="grid" aria-label="Провайдеры"></section>
+
+    <section class="bottlenecks-wrap" aria-label="Бутылочные горлышки">
+      <div class="panel-title">Bottlenecks — таблица рисков</div>
+      <div class="table-scroll">
+        <table id="bottlenecks" class="bottlenecks">
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Bottleneck</th>
+              <th>ETA</th>
+              <th>Reset</th>
+              <th>Margin</th>
+              <th>Risk</th>
+            </tr>
+          </thead>
+          <tbody id="bottlenecks-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="chart-wrap" aria-label="График истории">
+      <div class="chart-head">
+        <div class="chart-title">График истории использования</div>
+        <div class="chart-controls">
+          <label>
+            <span>Provider</span>
+            <select id="chart-provider"></select>
+          </label>
+          <label>
+            <span>Window</span>
+            <select id="chart-window"></select>
+          </label>
+          <label>
+            <span>Range</span>
+            <select id="chart-range">
+              <option value="6">6h</option>
+              <option value="24" selected>24h</option>
+              <option value="168">7d</option>
+              <option value="720">30d</option>
+            </select>
+          </label>
+          <label id="chart-mode-label" hidden>
+            <span>Режим</span>
+            <select id="chart-mode">
+              <option value="balance">Balance</option>
+              <option value="spend">Daily spend</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div id="chart-error" class="error" hidden></div>
+      <div id="chart-canvas" class="chart-canvas"></div>
+      <div id="chart-meta" class="chart-meta"></div>
+    </section>
+
     <footer>Секреты читаются только серверной частью. Браузер их не получает.</footer>
   </main>
+
+  <script src="/static/charts.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

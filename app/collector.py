@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime
+from typing import Awaitable, Callable, Optional
 
 from app.config import Settings
 from app.demo import demo_snapshots
@@ -13,11 +14,20 @@ from app.store import Store
 
 log = logging.getLogger("observer.collector")
 
+# Type alias: post-collect callback (sync or async, both supported).
+OnCollect = Optional[Callable[[], Optional[Awaitable[None]]]]
+
 
 class Collector:
-    def __init__(self, settings: Settings, store: Store):
+    def __init__(
+        self,
+        settings: Settings,
+        store: Store,
+        on_collect: OnCollect = None,
+    ):
         self.settings = settings
         self.store = store
+        self.on_collect = on_collect
         self._lock = asyncio.Lock()
         self.providers = [
             ZaiProvider(settings.zai_api_key, settings.zai_base_url, settings.request_timeout_seconds),
@@ -47,7 +57,23 @@ class Collector:
                         self.store.save_quota_snapshots(rows, retention_days=self.settings.quota_retention_days)
                 except Exception:
                     log.exception("quota history persistence failed")
-            return [s.to_dict() for s in snaps]
+        result = [s.to_dict() for s in snaps]
+        await self._fire_on_collect()
+        return result
+
+    async def _fire_on_collect(self) -> None:
+        if self.on_collect is None:
+            return
+        try:
+            outcome = self.on_collect()
+        except Exception:
+            log.exception("on_collect callback raised")
+            return
+        if asyncio.iscoroutine(outcome):
+            try:
+                await outcome
+            except Exception:
+                log.exception("on_collect awaitable raised")
 
     async def loop(self) -> None:
         while True:

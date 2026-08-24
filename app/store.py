@@ -156,6 +156,44 @@ class Store:
             result.append(entry)
         return result
 
+    def known_quota_providers(self) -> list[str]:
+        """Return the list of distinct providers with quota_snapshots rows."""
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT DISTINCT provider FROM quota_snapshots ORDER BY provider"
+            ).fetchall()
+        return [row[0] for row in rows]
+
+    def series_identities(
+        self, provider: str, since_iso: str | None = None
+    ) -> list[tuple[str, str]]:
+        """Return distinct (account, window_type) pairs for ``provider``.
+
+        When ``since_iso`` is given only pairs whose latest collected_at
+        is >= ``since_iso`` are returned — keeps the engine fast for the
+        lookback window.
+        """
+        if since_iso is not None:
+            query = (
+                "SELECT account, window_type FROM quota_snapshots "
+                "WHERE provider=? AND collected_at>=? "
+                "GROUP BY account, window_type "
+                "HAVING MAX(collected_at)>=? "
+                "ORDER BY account, window_type"
+            )
+            params: tuple[Any, ...] = (provider, since_iso, since_iso)
+        else:
+            query = (
+                "SELECT account, window_type FROM quota_snapshots "
+                "WHERE provider=? "
+                "GROUP BY account, window_type "
+                "ORDER BY account, window_type"
+            )
+            params = (provider,)
+        with self._connect() as db:
+            rows = db.execute(query, params).fetchall()
+        return [(row[0], row[1]) for row in rows]
+
     def latest_quota(self, provider: str, account: str, window_type: str) -> dict | None:
         with self._connect() as db:
             row = db.execute(
