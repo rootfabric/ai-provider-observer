@@ -15,6 +15,9 @@ class QuotaWindow:
     remaining: float | None = None
     unit: str | None = None
     unlimited: bool = False
+    # Additive R1 annotations (canonical window classification, spec §4.1).
+    window_type: str | None = None          # five_hour|daily|weekly|monthly|balance|credits|unknown
+    reset_estimated: bool = False           # True when reset_at is computed, not guaranteed
 
 
 @dataclass(slots=True)
@@ -29,6 +32,8 @@ class ProviderSnapshot:
     balances: list[dict[str, Any]] = field(default_factory=list)
     details: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
+    # Additive R1 annotation: account/key identity ("default" unless provider has several).
+    account: str = "default"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

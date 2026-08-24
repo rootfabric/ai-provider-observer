@@ -1,0 +1,45 @@
+# plans.yaml — tariff capacity hints for the recommendation engine.
+#
+# How this is consumed:
+#   * app/analytics/plans.py loads this YAML. When the file exists and
+#     parses, source becomes "configured"; missing/broken -> "none".
+#   * weekly_capacity is the only number the loader reads. Leaving it
+#     blank (null/~) means "I don't know" — the loader will NOT
+#     invent a number and the engine will fall back to capacity
+#     multipliers instead of naming a plan.
+#   * Fill ONLY verified numbers from your provider's pricing page.
+#     Wrong numbers produce bad plan picks.
+#
+# Quoting a built plan name in your reasoning (e.g. "Next: Pro,
+# sufficient") requires configured capacities for that provider; this
+# template ships with everything null so the observer stays in the
+# "headroom factor only" mode until you opt in.
+#
+# Schema:
+# providers:
+#   <provider_key>:
+#     current_plan: <name or "" if unknown>
+#     plans:
+#       <plan_name>: { weekly_capacity: <number|null> }
+
+providers:
+  zai:
+    current_plan: ""
+    plans:
+      lite: { weekly_capacity: null }
+      pro:  { weekly_capacity: null }
+      max:  { weekly_capacity: null }
+
+  minimax:
+    current_plan: ""
+    plans:
+      starter: { weekly_capacity: null }
+      plus:    { weekly_capacity: null }
+      pro:     { weekly_capacity: null }
+
+  openrouter:
+    current_plan: ""
+    plans:
+      free:       { weekly_capacity: null }
+      builder:    { weekly_capacity: null }
+      enterprise: { weekly_capacity: null }

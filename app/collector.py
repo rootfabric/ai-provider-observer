@@ -7,6 +7,7 @@ from datetime import datetime
 from app.config import Settings
 from app.demo import demo_snapshots
 from app.models import ProviderSnapshot
+from app.normalize import snapshot_to_rows
 from app.providers import CodexProvider, DeepSeekProvider, MiniMaxProvider, OpenRouterProvider, ZaiProvider
 from app.store import Store
 
@@ -40,6 +41,12 @@ class Collector:
                         snaps.append(result)
             for snap in snaps:
                 self.store.save(snap)
+                try:
+                    rows = snapshot_to_rows(snap)
+                    if rows:
+                        self.store.save_quota_snapshots(rows, retention_days=self.settings.quota_retention_days)
+                except Exception:
+                    log.exception("quota history persistence failed")
             return [s.to_dict() for s in snaps]
 
     async def loop(self) -> None:
