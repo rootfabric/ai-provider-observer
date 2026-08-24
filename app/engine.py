@@ -203,107 +203,128 @@ class AnalyticsEngine:
                 rows = self.store.load_series(
                     provider, account, window_type, since_iso=since_iso
                 )
-                points = [_row_to_point(r) for r in rows]
+                raw_points = [_row_to_point(r) for r in rows]
+                # Balance/credits rows may carry several currencies (e.g.
+                # DeepSeek returns CNY and USD sub-balances). Each currency is
+                # an independent series: mixing them fabricates a zig-zag
+                # "spend" and a fake runway (spec §16/§17: never mix balances).
+                unit_groups: dict[Any, list[t.QuotaPoint]] = {}
+                if window_type in _BALANCE_WINDOW_TYPES:
+                    for _p in raw_points:
+                        unit_groups.setdefault(_p.unit, []).append(_p)
+                else:
+                    unit_groups = {None: raw_points}
+
                 window_label: str | None = None
                 if rows:
                     raw_label = rows[0].get("window_label")
                     if isinstance(raw_label, str):
                         window_label = raw_label
-                cleaned, _dropped = series_mod.clean_points(points, self.settings)
-                is_balance = window_type in _BALANCE_WINDOW_TYPES
-                segments = series_mod.build_segments(
-                    cleaned,
-                    cfg=self.settings,
-                    now=now,
-                    is_balance=is_balance,
-                    window_type=window_type,
-                    account=account,
-                )
-                if not segments or not segments[-1].points:
-                    continue
-                current = segments[-1]
 
-                unit = current.unit or (
-                    current.points[-1].unit if current.points else None
-                )
-                burns = compute_burns(
-                    current.points, now, unit, self.settings, window_type
-                )
-                accel: t.Acceleration | None = None
-                b15 = burns.get("15m")
-                b1h = burns.get("1h")
-                if b15 is not None and b1h is not None:
-                    accel = compute_acceleration(b15, b1h, self.settings)
+                for unit_key, points in unit_groups.items():
+                    cleaned, _dropped = series_mod.clean_points(points, self.settings)
+                    is_balance = window_type in _BALANCE_WINDOW_TYPES
+                    segments = series_mod.build_segments(
+                        cleaned,
+                        cfg=self.settings,
+                        now=now,
+                        is_balance=is_balance,
+                        window_type=window_type,
+                        account=account,
+                    )
+                    if not segments or not segments[-1].points:
+                        continue
+                    current = segments[-1]
 
-                last_point = current.points[-1]
-                span_minutes = _segment_first_last_span_minutes(current)
-                forecast = build_forecast(
-                    last_point, burns, now, self.settings, span_minutes
-                )
+                    unit = unit_key
+                    if unit is None:
+                        # Quota windows: keep the series' own unit (e.g.
+                        # "credits") so burns/ETA stay absolute when the
+                        # provider reports used/limit (spec §4).
+                        unit = current.points[-1].unit if current.points else None
+                    burns = compute_burns(
+                        current.points, now, unit, self.settings, window_type
+                    )
+                    accel: t.Acceleration | None = None
+                    b15 = burns.get("15m")
+                    b1h = burns.get("1h")
+                    if b15 is not None and b1h is not None:
+                        accel = compute_acceleration(b15, b1h, self.settings)
 
-                pacing: t.Pacing | None = None
-                if window_type == "weekly":
-                    pacing = compute_pacing(
-                        current.points, burns, now, self.settings
+                    last_point = current.points[-1]
+                    span_minutes = _segment_first_last_span_minutes(current)
+                    forecast = build_forecast(
+                        last_point, burns, now, self.settings, span_minutes
                     )
 
-                runway: t.Runway | None = None
-                if is_balance:
-                    runway = compute_runway(
-                        current.points, unit, now, self.settings
-                    )
-
-                wa = t.WindowAnalytics(
-                    provider=provider,
-                    account=account,
-                    window_type=window_type,
-                    window_label=window_label,
-                    latest_used_percent=last_point.used_percent,
-                    latest_used=last_point.used,
-                    latest_remaining=last_point.remaining,
-                    latest_limit=last_point.limit_value,
-                    unit=unit,
-                    reset_at=last_point.reset_at,
-                    reset_estimated=last_point.reset_estimated,
-                    burns=burns,
-                    burn_acceleration=accel,
-                    forecast=forecast,
-                    pacing=pacing,
-                    runway=runway,
-                    history_span_minutes=span_minutes,
-                    points_available=len(current.points),
-                )
-                score, _factors = risk_mod.score_window(wa, self.settings)
-                wa.risk_score = score
-                wa.risk_level = _band_to_level(score)
-                wa.alert_level = risk_mod.alert_level_for(wa, self.settings)
-                wa.status = t.STATUS_OK
-
-                windows.append(wa)
-                windows_by_type.setdefault(window_type, []).append(wa)
-
-                # quota_reset drafts: current segment started on a
-                # detected reset and we know its reset_at.
-                if (
-                    current.has_reset_boundary
-                    and last_point.reset_at is not None
-                ):
-                    reset_drafts.append(
-                        t.EventDraft(
-                            provider=provider,
-                            account=account,
-                            window_type=window_type,
-                            event_type=t.EVENT_QUOTA_RESET,
-                            severity="info",
-                            created_at=_iso(now),
-                            dedup_key=f"{provider}:{account}:quota_reset:{last_point.reset_at}",
-                            payload={"reset_at": last_point.reset_at},
+                    pacing: t.Pacing | None = None
+                    if window_type == "weekly":
+                        pacing = compute_pacing(
+                            current.points, burns, now, self.settings
                         )
-                    )
 
-                key = f"{provider}:{account}:{window_type}"
-                if wa.alert_level is not None:
-                    new_alert[key] = wa.alert_level
+                    runway: t.Runway | None = None
+                    if is_balance:
+                        runway = compute_runway(
+                            current.points, unit, now, self.settings
+                        )
+
+                    wa = t.WindowAnalytics(
+                        provider=provider,
+                        account=account,
+                        window_type=window_type,
+                        # Balance windows are labelled by their currency in
+                        # the UI; a stale row label (e.g. "CNY") must not
+                        # leak onto the primary (USD) window.
+                        window_label=None if is_balance else window_label,
+                        latest_used_percent=last_point.used_percent,
+                        latest_used=last_point.used,
+                        latest_remaining=last_point.remaining,
+                        latest_limit=last_point.limit_value,
+                        unit=unit,
+                        reset_at=last_point.reset_at,
+                        reset_estimated=last_point.reset_estimated,
+                        burns=burns,
+                        burn_acceleration=accel,
+                        forecast=forecast,
+                        pacing=pacing,
+                        runway=runway,
+                        history_span_minutes=span_minutes,
+                        points_available=len(current.points),
+                    )
+                    score, _factors = risk_mod.score_window(wa, self.settings)
+                    wa.risk_score = score
+                    wa.risk_level = _band_to_level(score)
+                    wa.alert_level = risk_mod.alert_level_for(wa, self.settings)
+                    wa.status = t.STATUS_OK
+
+                    windows.append(wa)
+                    windows_by_type.setdefault(window_type, []).append(wa)
+
+                    # quota_reset drafts: current segment started on a
+                    # detected reset and we know its reset_at.
+                    if (
+                        current.has_reset_boundary
+                        and last_point.reset_at is not None
+                    ):
+                        reset_drafts.append(
+                            t.EventDraft(
+                                provider=provider,
+                                account=account,
+                                window_type=window_type,
+                                event_type=t.EVENT_QUOTA_RESET,
+                                severity="info",
+                                created_at=_iso(now),
+                                dedup_key=f"{provider}:{account}:quota_reset:{last_point.reset_at}",
+                                payload={"reset_at": last_point.reset_at},
+                            )
+                        )
+
+                    alert_key = f"{provider}:{account}:{window_type}"
+                    if is_balance:
+                        alert_key += f":{unit_key or 'unknown'}"
+                    if wa.alert_level is not None:
+                        new_alert[alert_key] = wa.alert_level
 
             # Provider-level snapshot key for error/recovered events.
             new_alert[f"snap:{provider}"] = status
@@ -319,6 +340,25 @@ class AnalyticsEngine:
 
             windows_block: dict[str, dict[str, Any]] = {}
             for wtype, group in windows_by_type.items():
+                if wtype in _BALANCE_WINDOW_TYPES:
+                    # One entry per currency. Primary (largest latest balance,
+                    # e.g. the real USD money vs a depleted CNY sub-balance)
+                    # keeps the plain window_type key; the rest are suffixed.
+                    primary = max(
+                        group,
+                        key=lambda wa: (
+                            wa.latest_remaining
+                            if wa.latest_remaining is not None
+                            else float("-inf")
+                        ),
+                    )
+                    windows_block[wtype] = primary.to_dict()
+                    for wa in group:
+                        if wa is primary:
+                            continue
+                        suffix = wa.unit or "unknown"
+                        windows_block[f"{wtype}:{suffix}"] = wa.to_dict()
+                    continue
                 # Pick the worst (highest risk_score) per window_type.
                 if len(group) == 1:
                     chosen = group[0]

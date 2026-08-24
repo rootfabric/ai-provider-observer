@@ -68,17 +68,32 @@ function fmtConfidence(c) {
   return v;
 }
 
+function fmtResetCountdown(seconds) {
+  // Reset times in hours/minutes (spec §19); days shown beyond 48h.
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) return null;
+  const totalMin = Math.max(1, Math.round(seconds / 60));
+  const d = Math.floor(totalMin / 1440);
+  const h = Math.floor((totalMin % 1440) / 60);
+  const m = totalMin % 60;
+  if (d > 2) return `${d}д ${h}ч`;
+  if (d >= 1) return `${d}д ${h}ч ${m}м`;
+  if (h >= 1) return `${h}ч ${m}м`;
+  return `${m}м`;
+}
+
 function resetLabel(window) {
   if (!window) return '—';
-  const mode = window.forecast && window.forecast.recovery_mode;
+  const fc = window.forecast || {};
+  const mode = fc.recovery_mode;
+  const countdown = fmtResetCountdown(fc.reset_in_seconds);
+  const exactAt = window.latest && window.latest.reset_at
+    ? fmtTime(window.latest.reset_at) : '';
+  const titleAttr = exactAt ? ` title="сброс: ${esc(exactAt)}"` : '';
   if (mode === 'rolling') return 'rolling';
-  if (mode === 'estimated_reset' || mode === 'unknown') {
-    return window.latest && window.latest.reset_at
-      ? fmtTime(window.latest.reset_at) + ' (estimated)'
-      : 'estimated';
-  }
-  if (window.latest && window.latest.reset_at) return fmtTime(window.latest.reset_at);
-  return '—';
+  const suffix = mode === 'estimated_reset' || mode === 'unknown' ? ' (estimated)' : '';
+  if (countdown) return `<span${titleAttr}>через ${countdown}${suffix}</span>`;
+  if (exactAt) return `<span${titleAttr}>${esc(exactAt)}${suffix}</span>`;
+  return suffix ? esc(suffix.trim()) : '—';
 }
 
 function fmtMargin(seconds) {
@@ -206,6 +221,41 @@ function renderWindow(window, typeLabel) {
 
   const resetText = resetLabel(window);
 
+  const isBalanceLike = ['balance', 'credits'].includes(window.window_type);
+  if (isBalanceLike) {
+    const runway = window.runway || {};
+    const runwayDays = typeof runway.runway_days === 'number'
+      ? (Math.round(runway.runway_days * 10) / 10) + ' дн.' : '—';
+    return `
+      <div class="window">
+        <div class="windowhead">
+          <span class="windowname">${esc(typeLabel)}${latest.unit ? ' · ' + unitStr : ''}</span>
+          <span class="windowvalue">${typeof usedAbs === 'number' ? fmtNum(usedAbs) + ' ' + unitStr : '—'}</span>
+        </div>
+        <div class="bal-big">
+          <div class="bal-amount">${typeof usedAbs === 'number' ? fmtNum(usedAbs) : '—'} <span class="muted small">${unitStr}</span></div>
+          <div class="bal-aside"><div>Runway: ${runwayDays}</div></div>
+        </div>
+        <div class="card-extra">
+          <div class="kv">
+            <div class="kv-row">
+              <span class="kv-key">USD/day</span>
+              <span class="kv-val">${typeof runway.usd_per_day === 'number' ? fmtNum(runway.usd_per_day) : '—'}</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">Monthly spend</span>
+              <span class="kv-val">${typeof runway.projected_monthly_spend === 'number' ? fmtNum(runway.projected_monthly_spend) : '—'}</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-key">Confidence</span>
+              <span class="kv-val">${fmtConfidence(runway.confidence)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   const pace = window.pacing;
   const weeklyExtra = (window.window_type === 'weekly' && pace)
     ? `
@@ -229,32 +279,6 @@ function renderWindow(window, typeLabel) {
     `
     : '';
 
-  const isBalanceLike = ['balance', 'credits'].includes(window.window_type);
-  if (isBalanceLike) {
-    const runway = window.runway;
-    return `
-      <div class="window">
-        <div class="windowhead">
-          <span class="windowname">${esc(typeLabel)}${window.window_label ? ' · ' + esc(window.window_label) : ''}</span>
-          <span class="windowvalue">${typeof usedAbs === 'number' ? fmtNum(usedAbs) + ' ' + esc(latest.unit || '') : '—'}</span>
-        </div>
-        <div class="bal-big">
-          <div class="bal-amount">${typeof usedAbs === 'number' ? fmtNum(usedAbs) : '—'} <span class="muted small">${esc(latest.unit || '')}</span></div>
-          <div class="bal-aside">
-            <div>USD/day: ${runway && typeof runway.spend_per_day_usd === 'number' ? fmtNum(runway.spend_per_day_usd) : '—'}</div>
-            <div>Runway: ${runway && typeof runway.runway_days === 'number'
-              ? (Math.round(runway.runway_days * 10) / 10) + ' дн.'
-              : '—'}</div>
-            <div>Monthly spend: ${runway && typeof runway.projected_monthly_spend === 'number'
-              ? fmtNum(runway.projected_monthly_spend)
-              : '—'}</div>
-          </div>
-        </div>
-        <div class="sub"><span>bottleneck: ${esc(window.window_type)}</span><span>—</span></div>
-      </div>
-    `;
-  }
-
   return `
     <div class="window">
       <div class="windowhead">
@@ -265,38 +289,49 @@ function renderWindow(window, typeLabel) {
       <div class="kv">
         <div class="kv-row">
           <span class="kv-key">Remaining</span>
-          <span class="kv-val">${typeof remaining === 'number' ? fmtNum(remaining) + ' ' + esc(latest.unit || '') : '—'}</span>
+          <span class="kv-val">${typeof remaining === 'number' ? fmtNum(remaining) + ' ' + unitStr : '—'}</span>
         </div>
         <div class="kv-row">
           <span class="kv-key">Limit</span>
-          <span class="kv-val">${typeof limit === 'number' ? fmtNum(limit) + ' ' + esc(latest.unit || '') : '—'}</span>
+          <span class="kv-val">${typeof limit === 'number' ? fmtNum(limit) + ' ' + unitStr : '—'}</span>
         </div>
         <div class="kv-row">
-          <span class="kv-key">Burn 15m / 1h</span>
+          <span class="kv-key">Burn 1h</span>
           <span class="kv-val">
-            ${typeof burn15 === 'number' ? fmtNum(burn15) : '—'} / ${typeof burn1h === 'number' ? fmtNum(burn1h) : '—'} ед/ч
-            <span class="accel">${arrow} ${esc(accel.band || '')}</span>
-          </span>
-        </div>
-        <div class="kv-row">
-          <span class="kv-key">Exhaustion</span>
-          <span class="kv-val">
-            ${typeof eta === 'number' && eta > 0 ? fmtDuration(eta) : '—'}
-            <span class="muted small">confidence: ${fmtConfidence(confidence)}</span>
+            ${typeof burn1h === 'number' ? fmtNum(burn1h) : '—'} ед/ч
+            <span class="accel">${arrow}</span>
           </span>
         </div>
         <div class="kv-row">
           <span class="kv-key">Reset</span>
-          <span class="kv-val">${esc(resetText)}</span>
+          <span class="kv-val">${resetText}</span>
         </div>
-        <div class="kv-row">
-          <span class="kv-key">Margin</span>
-          <span class="kv-val ${typeof margin === 'number' && margin < 0 ? 'margin-bad' : ''}">
-            ${typeof margin === 'number' ? fmtMargin(margin) : '—'}
-            ${typeof margin === 'number' && margin < 0 ? ' ⚠' : ''}
-          </span>
+      </div>
+      <div class="card-extra">
+        <div class="kv">
+          <div class="kv-row">
+            <span class="kv-key">Burn 15m</span>
+            <span class="kv-val">
+              ${typeof burn15 === 'number' ? fmtNum(burn15) : '—'} ед/ч
+              <span class="accel">${arrow} ${esc(accel.band || '')}</span>
+            </span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-key">Exhaustion</span>
+            <span class="kv-val">
+              ${typeof eta === 'number' && eta > 0 ? fmtDuration(eta) : '—'}
+              <span class="muted small">confidence: ${fmtConfidence(confidence)}</span>
+            </span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-key">Margin</span>
+            <span class="kv-val ${typeof margin === 'number' && margin < 0 ? 'margin-bad' : ''}">
+              ${typeof margin === 'number' ? fmtMargin(margin) : '—'}
+              ${typeof margin === 'number' && margin < 0 ? ' ⚠' : ''}
+            </span>
+          </div>
+          ${weeklyExtra}
         </div>
-        ${weeklyExtra}
       </div>
     </div>
   `;
@@ -306,12 +341,17 @@ function renderProviderCard(p) {
   const risk = p.risk || {};
   const recommendation = p.recommendation || {};
   const windows = p.windows || {};
+  const providerId = p.provider || '';
+  const expanded = window.__EXPANDED__ && window.__EXPANDED__.has(providerId);
   const windowHtml = Object.keys(windows)
-    .map(k => renderWindow(windows[k], PROFILE_LABELS[k] || k))
+    .map(k => {
+      const base = String(k).split(':')[0]; // keys like "balance:CNY" share the base label
+      return renderWindow(windows[k], PROFILE_LABELS[base] || base);
+    })
     .join('');
 
   const reasonLines = Array.isArray(recommendation.reason_lines) ? recommendation.reason_lines : [];
-  const firstReasons = reasonLines.slice(0, 2).map(r => `<li>${esc(r)}</li>`).join('');
+  const firstReasons = reasonLines.slice(0, 3).map(r => `<li>${esc(r)}</li>`).join('');
 
   const recParts = [];
   recParts.push(`<div class="rec-action">${esc(recommendation.title || recommendation.action || '—')}</div>`);
@@ -324,7 +364,7 @@ function renderProviderCard(p) {
   const statusCls = esc(p.status || 'ok');
 
   return `
-    <article class="card">
+    <article class="card ${expanded ? 'expanded' : 'collapsed'}" data-provider="${esc(providerId)}">
       <div class="cardtop">
         <div>
           <div class="provider">${esc(p.label || p.provider || '—')}</div>
@@ -333,11 +373,12 @@ function renderProviderCard(p) {
         <div class="card-badges">
           ${levelChip(risk.level, risk.score)}
           <span class="status ${statusCls}">${esc(statusText(p.status))}</span>
+          <span class="expand-hint"><span class="chev">▸</span> подробнее</span>
         </div>
       </div>
       ${renderBottleneckRow(risk.bottleneck, risk.score)}
       ${windowHtml || '<div class="empty">Нет числовых метрик</div>'}
-      ${recParts.length ? `<div class="recommendation">${recParts.join('')}</div>` : ''}
+      ${recParts.length ? `<div class="recommendation card-extra">${recParts.join('')}</div>` : ''}
       ${errorBlock}
     </article>
   `;
@@ -512,6 +553,7 @@ async function load() {
   }
 
   window.__LAST_ANALYTICS__ = analytics;
+  window.__EXPANDED__ = window.__EXPANDED__ || new Set();
   const providers = analytics.providers || [];
   renderSummary(analytics);
   cards.innerHTML = providers.length
@@ -550,6 +592,22 @@ refresh.addEventListener('click', async () => {
   } finally {
     refresh.disabled = false;
     refresh.textContent = oldText;
+  }
+});
+
+// Expand/collapse provider cards (state survives 30s re-renders).
+cards.addEventListener('click', (e) => {
+  if (e.target.closest('button, a, select, input')) return;
+  const card = e.target.closest('.card');
+  if (!card || !card.dataset.provider) return;
+  window.__EXPANDED__ = window.__EXPANDED__ || new Set();
+  const id = card.dataset.provider;
+  if (card.classList.toggle('expanded')) {
+    card.classList.remove('collapsed');
+    window.__EXPANDED__.add(id);
+  } else {
+    card.classList.add('collapsed');
+    window.__EXPANDED__.delete(id);
   }
 });
 

@@ -634,3 +634,10 @@ footer {
   .chart-controls { width: 100%; }
   .chart-controls label { flex: 1 1 calc(50% - 12px); }
 }
+/* R1 compact cards: details hidden until the card is expanded */
+.card{cursor:pointer}
+.card .card-extra{display:none}
+.card.expanded .card-extra{display:block}
+.expand-hint{color:var(--muted);font-size:11px;white-space:nowrap}
+.expand-hint .chev{display:inline-block;transition:transform .15s ease}
+.card.expanded .expand-hint .chev{transform:rotate(90deg)}
