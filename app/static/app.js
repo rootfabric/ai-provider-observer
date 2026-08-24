@@ -227,14 +227,18 @@ function renderWindow(window, typeLabel) {
     const runway = window.runway || {};
     const runwayDays = typeof runway.runway_days === 'number'
       ? (Math.round(runway.runway_days * 10) / 10) + ' дн.' : '—';
+    // Balance rows carry the money in `remaining` (used is None); fall back
+    // to `used` for window variants that store the total there instead.
+    const balAmount = typeof remaining === 'number' ? remaining : usedAbs;
+    const balText = typeof balAmount === 'number' ? fmtNum(balAmount) : '—';
     return `
       <div class="window">
         <div class="windowhead">
           <span class="windowname">${esc(typeLabel)}${latest.unit ? ' · ' + unitStr : ''}</span>
-          <span class="windowvalue">${typeof usedAbs === 'number' ? fmtNum(usedAbs) + ' ' + unitStr : '—'}</span>
+          <span class="windowvalue">${balText === '—' ? '—' : balText + ' ' + unitStr}</span>
         </div>
         <div class="bal-big">
-          <div class="bal-amount">${typeof usedAbs === 'number' ? fmtNum(usedAbs) : '—'} <span class="muted small">${unitStr}</span></div>
+          <div class="bal-amount">${balText} <span class="muted small">${unitStr}</span></div>
           <div class="bal-aside"><div>Runway: ${runwayDays}</div></div>
         </div>
         <div class="card-extra">
@@ -290,7 +294,11 @@ function renderWindow(window, typeLabel) {
       <div class="kv">
         <div class="kv-row">
           <span class="kv-key">Remaining</span>
-          <span class="kv-val">${typeof remaining === 'number' ? fmtNum(remaining) + ' ' + unitStr : '—'}</span>
+          <span class="kv-val">${
+            typeof remaining === 'number'
+              ? fmtNum(remaining) + ' ' + unitStr
+              : (used == null ? '—' : fmtNum(Math.round((100 - used) * 10) / 10) + ' %')
+          }</span>
         </div>
         <div class="kv-row">
           <span class="kv-key">Limit</span>
