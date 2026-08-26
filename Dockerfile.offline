@@ -1,0 +1,23 @@
+# Offline-friendly image: builds ON TOP of the previously built runtime
+# image (python 3.12 + pinned requirements already installed), so no
+# registry or apt access is needed. When you DO have network access,
+# prefer building the full Dockerfile instead.
+FROM ai-provider-observer-observer:latest
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DATABASE_PATH=/app/data/observer.db
+
+WORKDIR /app
+
+COPY app ./app
+
+RUN mkdir -p /app/data
+
+EXPOSE 8787
+
+# curl-free healthcheck (the slim runtime has no curl).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD ["python", "-c", "import sys,urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/healthz', timeout=4)"]
+
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8787"]
