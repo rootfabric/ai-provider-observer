@@ -324,7 +324,10 @@ function renderWindow(window, typeLabel) {
     <div class="window">
       <div class="windowhead">
         <span class="windowname">${esc(typeLabel)}${window.window_label ? ' · ' + esc(window.window_label) : ''}</span>
-        <span class="windowvalue">${used == null ? '—' : fmtPercent(used) + ' used'}</span>
+        <span class="windowvalue">${
+          used == null ? '—' : fmtPercent(used) + ' used · ' +
+          fmtPercent(Math.round((100 - used) * 10) / 10) + ' left'
+        }</span>
       </div>
       ${used == null ? '' : `<div class="bar"><div class="fill ${cls}" style="width:${Math.max(0, Math.min(100, used))}%"></div></div>`}
       <div class="kv">
