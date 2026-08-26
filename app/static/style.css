@@ -641,3 +641,24 @@ footer {
 .expand-hint{color:var(--muted);font-size:11px;white-space:nowrap}
 .expand-hint .chev{display:inline-block;transition:transform .15s ease}
 .card.expanded .expand-hint .chev{transform:rotate(90deg)}
+
+/* Manual panel reorder (drag & drop) ------------------------------------- */
+
+.card .grip {
+  cursor: grab;
+  color: var(--muted-2);
+  font-size: 11px;
+  letter-spacing: .18em;
+  margin-right: 7px;
+  user-select: none;
+}
+
+.card.dragging {
+  opacity: .45;
+  border-style: dashed;
+}
+
+.card.drop-target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(138, 180, 255, .35), var(--shadow);
+}

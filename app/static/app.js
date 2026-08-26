@@ -33,6 +33,42 @@ const PROFILE_LABELS = {
   unknown: 'Неизвестно',
 };
 
+/* -------------------- manual panel order (drag&drop) ------------------- */
+// Provider cards can be reordered by dragging. The chosen order persists
+// per-browser in localStorage and survives reloads and the 30s poll that
+// re-renders the whole grid.
+const PANEL_ORDER_KEY = 'aio.panel.order.v1';
+
+function loadPanelOrder() {
+  try {
+    const raw = window.localStorage.getItem(PANEL_ORDER_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter(x => typeof x === 'string').slice(0, 64)
+      : [];
+  } catch (_) {
+    return []; // corrupted JSON / privacy mode — fall back to canonical order
+  }
+}
+
+function savePanelOrder(ids) {
+  try {
+    window.localStorage.setItem(PANEL_ORDER_KEY, JSON.stringify(ids.slice(0, 64)));
+  } catch (_) { /* non-fatal: the order just won't persist */ }
+}
+
+// Stable sort: panels listed in the saved order come first, everything else
+// keeps the canonical server order behind them.
+function applyPanelOrder(providers) {
+  const order = loadPanelOrder();
+  const rank = id => {
+    const i = order.indexOf(id);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  return providers.slice().sort((a, b) => rank(a.provider) - rank(b.provider));
+}
+
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
   '&': '&amp;',
   '<': '&lt;',
@@ -373,10 +409,10 @@ function renderProviderCard(p) {
   const statusCls = esc(p.status || 'ok');
 
   return `
-    <article class="card ${expanded ? 'expanded' : 'collapsed'}" data-provider="${esc(providerId)}">
+    <article class="card ${expanded ? 'expanded' : 'collapsed'}" data-provider="${esc(providerId)}" draggable="true">
       <div class="cardtop">
         <div>
-          <div class="provider">${esc(p.label || p.provider || '—')}</div>
+          <div class="provider"><span class="grip" title="Перетащите, чтобы поменять панели местами">⠿</span>${esc(p.label || p.provider || '—')}</div>
           <div class="plan">${esc(p.plan || '')}</div>
         </div>
         <div class="card-badges">
@@ -563,7 +599,7 @@ async function load() {
 
   window.__LAST_ANALYTICS__ = analytics;
   window.__EXPANDED__ = window.__EXPANDED__ || new Set();
-  const providers = analytics.providers || [];
+  const providers = applyPanelOrder(analytics.providers || []);
   renderSummary(analytics);
   cards.innerHTML = providers.length
     ? providers.map(renderProviderCard).join('')
@@ -618,6 +654,92 @@ cards.addEventListener('click', (e) => {
     card.classList.add('collapsed');
     window.__EXPANDED__.delete(id);
   }
+});
+
+/* --------------------- drag & drop panel reordering -------------------- */
+
+let __dragPanelId = null;
+
+// Insertion side within the multi-column grid: dominant direction from the
+// hovered cell's center (scaled by cell aspect ratio), so both "swap left/
+// right on one row" and "move to another row" land where the pointer is.
+function dropAfterPoint(target, x, y) {
+  const r = target.getBoundingClientRect();
+  const dx = x - (r.left + r.width / 2);
+  const dy = y - (r.top + r.height / 2);
+  if (Math.abs(dy) * r.width > Math.abs(dx) * r.height) return dy > 0;
+  return dx > 0;
+}
+
+function clearDragMarkers() {
+  cards.querySelectorAll('.card.dragging, .card.drop-target')
+    .forEach(c => c.classList.remove('dragging', 'drop-target'));
+}
+
+cards.addEventListener('dragstart', (e) => {
+  const card = e.target.closest ? e.target.closest('.card') : null;
+  if (!card || !card.dataset.provider) return;
+  __dragPanelId = card.dataset.provider;
+  card.classList.add('dragging');
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', __dragPanelId); } catch (_) {}
+  }
+});
+
+cards.addEventListener('dragover', (e) => {
+  if (!__dragPanelId) return;
+  e.preventDefault(); // required for drop to be allowed
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  const target = e.target.closest ? e.target.closest('.card') : null;
+  cards.querySelectorAll('.card.drop-target')
+    .forEach(c => { if (c !== target) c.classList.remove('drop-target'); });
+  if (!target || !target.dataset.provider || target.dataset.provider === __dragPanelId) return;
+  target.classList.add('drop-target');
+  target.__dropAfter = dropAfterPoint(target, e.clientX, e.clientY);
+});
+
+cards.addEventListener('dragleave', (e) => {
+  const card = e.target.closest ? e.target.closest('.card') : null;
+  if (card) card.classList.remove('drop-target');
+});
+
+cards.addEventListener('drop', (e) => {
+  if (!__dragPanelId) return;
+  e.preventDefault();
+  const dragging = cards.querySelector('.card.dragging');
+  const target = e.target.closest ? e.target.closest('.card') : null;
+  if (dragging && target && target.dataset.provider && target !== dragging) {
+    if (target.__dropAfter) target.after(dragging);
+    else target.before(dragging);
+  } else if (dragging && !target) {
+    cards.appendChild(dragging); // dropped on empty grid space → move to end
+  }
+});
+
+cards.addEventListener('dragend', () => {
+  __dragPanelId = null;
+  clearDragMarkers();
+  // Persist the new DOM order and align the bottlenecks table immediately
+  // (the next poll re-renders everything through applyPanelOrder anyway).
+  const ids = Array.from(cards.querySelectorAll('.card'))
+    .map(c => c.dataset.provider)
+    .filter(Boolean);
+  savePanelOrder(ids);
+  const analytics = window.__LAST_ANALYTICS__ || {};
+  const byId = {};
+  (analytics.providers || []).forEach(p => { byId[p.provider] = p; });
+  renderBottlenecks(ids.map(id => byId[id]).filter(Boolean));
+});
+
+// Safety net: a drag that ends outside #cards must never leave markers or
+// let the browser navigate on the dragged text payload.
+window.addEventListener('dragover', (e) => { if (__dragPanelId) e.preventDefault(); });
+window.addEventListener('drop', (e) => {
+  if (!__dragPanelId) return;
+  e.preventDefault();
+  __dragPanelId = null;
+  clearDragMarkers();
 });
 
 load().catch(e => {
