@@ -653,17 +653,36 @@ footer {
   user-select: none;
 }
 
-/* ▲/▼ panel move fallback buttons */
-.mv-btn {
-  border: none;
-  background: none;
-  color: var(--muted-2);
-  cursor: pointer;
-  font-size: 9px;
-  padding: 0 3px 0 0;
-  margin-left: 2px;
+/* ▲/▼ panel move buttons — shown in the expanded ("подробнее") view */
+.move-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -2px 0 0;
 }
-.mv-btn:hover { color: var(--accent); }
+
+.move-label {
+  font-size: 11px;
+  color: var(--muted-2);
+}
+
+.mv-btn {
+  border: 1px solid var(--line);
+  background: #131a25;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: 8px;
+}
+.mv-btn:hover {
+  color: var(--accent);
+  border-color: rgba(138, 180, 255, .45);
+  background: #16202e;
+}
+.mv-btn:active { transform: translateY(1px); }
 .mv-btn:disabled { opacity: .35; cursor: default; }
 
 .card.dragging {

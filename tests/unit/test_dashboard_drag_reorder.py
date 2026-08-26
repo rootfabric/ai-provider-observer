@@ -102,11 +102,18 @@ def test_drag_feedback_styles_present() -> None:
 
 
 def test_move_buttons_fallback_wired() -> None:
-    """▲/▼ buttons must exist on cards and persist the order like a drag."""
+    """▲/▼ buttons must exist and persist the order like a drag."""
     js = _read(APP_JS)
     assert 'data-move="up"' in js and 'data-move="down"' in js, (
         "move buttons missing from card markup"
     )
+    # Buttons live inside a card-extra row: visible only when the panel
+    # is expanded via "подробнее".
+    m = re.search(
+        r'<div class="card-extra move-row">.*?</div>', js, re.S
+    )
+    assert m, "move buttons must render inside the card-extra (expanded) row"
+    assert "move-label" in m.group(0)
     m = re.search(r"addEventListener\(\s*['\"]click['\"].*?\.mv-btn.*?\n\}\);", js, re.S)
     assert m, "mv-btn click handler missing"
     body = m.group(0)

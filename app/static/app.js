@@ -79,7 +79,9 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
 
 function fmtNum(v) {
   if (typeof v !== 'number' || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(v);
+  if (Object.is(v, -0)) v = 0;
+  const out = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(v);
+  return out === '-0' ? '0' : out; // tiny negatives rounded to "-0" read as noise
 }
 
 function fmtPercent(v) {
@@ -415,7 +417,7 @@ function renderProviderCard(p) {
     <article class="card ${expanded ? 'expanded' : 'collapsed'}" data-provider="${esc(providerId)}" draggable="true">
       <div class="cardtop">
         <div>
-          <div class="provider"><span class="grip" title="Перетащите, чтобы поменять панели местами">⠿</span>${esc(p.label || p.provider || '—')}<button type="button" class="mv-btn" data-move="up" title="Панель выше">▲</button><button type="button" class="mv-btn" data-move="down" title="Панель ниже">▼</button></div>
+          <div class="provider"><span class="grip" title="Перетащите, чтобы поменять панели местами">⠿</span>${esc(p.label || p.provider || '—')}</div>
           <div class="plan">${esc(p.plan || '')}</div>
         </div>
         <div class="card-badges">
@@ -423,6 +425,11 @@ function renderProviderCard(p) {
           <span class="status ${statusCls}">${esc(statusText(p.status))}</span>
           <span class="expand-hint"><span class="chev">▸</span> подробнее</span>
         </div>
+      </div>
+      <div class="card-extra move-row">
+        <span class="move-label">Переместить панель:</span>
+        <button type="button" class="mv-btn" data-move="up" title="Панель выше">▲ выше</button>
+        <button type="button" class="mv-btn" data-move="down" title="Панель ниже">▼ ниже</button>
       </div>
       ${renderBottleneckRow(risk.bottleneck, risk.score)}
       ${windowHtml || '<div class="empty">Нет числовых метрик</div>'}
