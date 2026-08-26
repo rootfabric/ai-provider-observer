@@ -76,7 +76,10 @@ def _settings(**overrides: Any) -> SimpleNamespace:
 def _new_engine(tmp_path: Path, **overrides: Any) -> tuple[Store, AnalyticsEngine, SimpleNamespace]:
     db_path = tmp_path / "engine.db"
     settings = _settings(**overrides)
-    store = Store(str(db_path))
+    # Scenario tests drive the demo pipeline (seed_demo_history /
+    # demo_snapshots), so the store must read demo-marked rows — exactly
+    # like the demo dashboard wiring in app.main.
+    store = Store(str(db_path), include_demo_rows=True)
     engine = AnalyticsEngine(store, settings)
     return store, engine, settings
 

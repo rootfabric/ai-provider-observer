@@ -27,7 +27,14 @@ def _float(name: str, default: float) -> float:
 class Settings:
     poll_interval_seconds: int = max(30, int(os.getenv("POLL_INTERVAL_SECONDS", "60")))
     request_timeout_seconds: float = max(2.0, float(os.getenv("REQUEST_TIMEOUT_SECONDS", "12")))
-    database_path: str = os.getenv("DATABASE_PATH", "./data/observer.db")
+    # Demo mode never writes into the production database by default: a demo
+    # run pointed at the live DB once poisoned the Codex panel with fake
+    # quota numbers. Override explicitly via DATABASE_PATH if you really want
+    # a shared file.
+    database_path: str = (
+        os.getenv("DATABASE_PATH", "").strip()
+        or ("./data/observer-demo.db" if _bool("DEMO_MODE") else "./data/observer.db")
+    )
     demo_mode: bool = _bool("DEMO_MODE")
 
     # R1 analytics surface

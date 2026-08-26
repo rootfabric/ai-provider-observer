@@ -74,7 +74,7 @@ def test_history_survives_engine_restart(tmp_path):
     settings = _settings_for_demo(db_path)
 
     # First "process" — collect twice, snapshot state.
-    store1 = Store(str(db_path))
+    store1 = Store(str(db_path), include_demo_rows=True)  # demo-mode pipeline
     _run_collector_twice(store1, settings)
     rows_before, burn_before = _snapshot_burn(store1, settings)
     assert rows_before, "history must be present after demo seeding + 2 collect cycles"
@@ -82,7 +82,7 @@ def test_history_survives_engine_restart(tmp_path):
 
     # Second "process" — fresh Store + Engine pointing at the same DB.
     settings2 = _settings_for_demo(db_path)
-    store2 = Store(str(db_path))
+    store2 = Store(str(db_path), include_demo_rows=True)
     rows_after, burn_after = _snapshot_burn(store2, settings2)
 
     # Same number of rows and identical timestamps + used_percent.

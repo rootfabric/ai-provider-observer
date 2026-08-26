@@ -83,7 +83,9 @@ def settings_for_test(tmp_path, monkeypatch):
     collector_mod = importlib.import_module("app.collector")
 
     settings = config.Settings()
-    store = store_mod.Store(settings.database_path)
+    # The contract test drives the demo collector; the store must read back
+    # its demo-marked rows (same wiring as app.main).
+    store = store_mod.Store(settings.database_path, include_demo_rows=settings.demo_mode)
     collector = collector_mod.Collector(settings, store)
     return settings, store, collector, collector_mod
 

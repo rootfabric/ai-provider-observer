@@ -8,10 +8,19 @@ from typing import Any
 
 from app.models import ProviderSnapshot
 
+# Marker embedded by demo snapshots (app.demo) in their raw payload JSON.
+DEMO_ROW_MARKER = '"demo":true'
+
 
 class Store:
-    def __init__(self, path: str):
+    def __init__(self, path: str, include_demo_rows: bool = False):
         self.path = Path(path)
+        # Demo snapshots carry ``"demo":true`` in their raw JSON. A demo run
+        # pointed at the production database must never bleed into live
+        # analytics (it once showed fake Codex quota numbers), so reads
+        # exclude demo-marked rows unless this store serves the demo
+        # dashboard itself.
+        self._include_demo_rows = include_demo_rows
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as db:
             db.execute("PRAGMA journal_mode=WAL")
@@ -64,6 +73,18 @@ class Store:
     def _connect(self):
         return sqlite3.connect(self.path, timeout=5)
 
+    def _quota_where(self) -> str:
+        """Extra WHERE fragment excluding demo rows for live reads."""
+        if self._include_demo_rows:
+            return ""
+        return f" AND raw_json NOT LIKE '%{DEMO_ROW_MARKER}%'"
+
+    def _snap_where(self) -> str:
+        """Extra WHERE fragment excluding demo rows (snapshots table)."""
+        if self._include_demo_rows:
+            return ""
+        return f" AND payload NOT LIKE '%{DEMO_ROW_MARKER}%'"
+
     def save(self, snap: ProviderSnapshot) -> None:
         payload = json.dumps(snap.to_dict(), ensure_ascii=False, separators=(",", ":"))
         with self._connect() as db:
@@ -82,9 +103,11 @@ class Store:
     def latest(self) -> list[dict[str, Any]]:
         with self._connect() as db:
             rows = db.execute(
-                """
+                f"""
                 SELECT s.payload FROM snapshots s
-                JOIN (SELECT provider, MAX(id) AS max_id FROM snapshots GROUP BY provider) x
+                JOIN (SELECT provider, MAX(id) AS max_id FROM snapshots
+                      WHERE 1=1{self._snap_where()}
+                      GROUP BY provider) x
                   ON x.max_id=s.id
                 ORDER BY s.provider
                 """
@@ -94,7 +117,8 @@ class Store:
     def recent(self, provider: str, limit: int = 30) -> list[dict[str, Any]]:
         with self._connect() as db:
             rows = db.execute(
-                "SELECT payload FROM snapshots WHERE provider=? ORDER BY id DESC LIMIT ?",
+                "SELECT payload FROM snapshots WHERE provider=?"
+                f"{self._snap_where()} ORDER BY id DESC LIMIT ?",
                 (provider, max(2, min(limit, 500))),
             ).fetchall()
         return [json.loads(row[0]) for row in rows]
@@ -135,6 +159,8 @@ class Store:
     ) -> list[dict]:
         clauses = ["provider=?", "account=?", "window_type=?"]
         params: list[Any] = [provider, account, window_type]
+        if not self._include_demo_rows:
+            clauses.append(f"raw_json NOT LIKE '%{DEMO_ROW_MARKER}%'")
         if since_iso is not None:
             clauses.append("collected_at>=?")
             params.append(since_iso)
@@ -160,7 +186,8 @@ class Store:
         """Return the list of distinct providers with quota_snapshots rows."""
         with self._connect() as db:
             rows = db.execute(
-                "SELECT DISTINCT provider FROM quota_snapshots ORDER BY provider"
+                "SELECT DISTINCT provider FROM quota_snapshots WHERE 1=1"
+                f"{self._quota_where()} ORDER BY provider"
             ).fetchall()
         return [row[0] for row in rows]
 
@@ -176,7 +203,7 @@ class Store:
         if since_iso is not None:
             query = (
                 "SELECT account, window_type FROM quota_snapshots "
-                "WHERE provider=? AND collected_at>=? "
+                f"WHERE provider=? AND collected_at>=?{self._quota_where()} "
                 "GROUP BY account, window_type "
                 "HAVING MAX(collected_at)>=? "
                 "ORDER BY account, window_type"
@@ -185,7 +212,7 @@ class Store:
         else:
             query = (
                 "SELECT account, window_type FROM quota_snapshots "
-                "WHERE provider=? "
+                f"WHERE provider=?{self._quota_where()} "
                 "GROUP BY account, window_type "
                 "ORDER BY account, window_type"
             )
@@ -198,7 +225,8 @@ class Store:
         with self._connect() as db:
             row = db.execute(
                 f"SELECT {','.join(self._QUOTA_COLUMNS)} FROM quota_snapshots "
-                "WHERE provider=? AND account=? AND window_type=? "
+                "WHERE provider=? AND account=? AND window_type=?"
+                f"{self._quota_where()} "
                 "ORDER BY collected_at DESC, id DESC LIMIT 1",
                 (provider, account, window_type),
             ).fetchone()

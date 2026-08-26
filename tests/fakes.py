@@ -60,8 +60,14 @@ def make_snapshot(
     when: datetime | None = None,
     plan: str | None = None,
     error: str | None = None,
+    demo: bool = False,
 ) -> ProviderSnapshot:
-    """Return a single ``ProviderSnapshot`` for one provider."""
+    """Return a single ``ProviderSnapshot`` for one provider.
+
+    By default the snapshot stands in for **real** provider data (no demo
+    marker). Pass ``demo=True`` to emulate an ``app.demo`` snapshot — live
+    store reads filter those out.
+    """
     if when is None:
         when = datetime.now(timezone.utc)
     return ProviderSnapshot(
@@ -73,7 +79,7 @@ def make_snapshot(
         plan=plan,
         windows=list(windows or []),
         balances=list(balances or []),
-        details={"demo": True},
+        details={"demo": True} if demo else {},
         error=error,
     )
 

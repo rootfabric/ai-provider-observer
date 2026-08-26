@@ -16,7 +16,8 @@ from app.engine import AnalyticsEngine
 from app.store import Store
 
 settings = Settings()
-store = Store(settings.database_path)
+# Demo mode reads back its own demo-marked rows; live mode never mixes them in.
+store = Store(settings.database_path, include_demo_rows=settings.demo_mode)
 engine = AnalyticsEngine(store, settings)
 collector = Collector(settings, store, on_collect=lambda: engine.refresh_all())
 
