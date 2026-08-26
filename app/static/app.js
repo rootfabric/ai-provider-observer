@@ -415,7 +415,7 @@ function renderProviderCard(p) {
     <article class="card ${expanded ? 'expanded' : 'collapsed'}" data-provider="${esc(providerId)}" draggable="true">
       <div class="cardtop">
         <div>
-          <div class="provider"><span class="grip" title="Перетащите, чтобы поменять панели местами">⠿</span>${esc(p.label || p.provider || '—')}</div>
+          <div class="provider"><span class="grip" title="Перетащите, чтобы поменять панели местами">⠿</span>${esc(p.label || p.provider || '—')}<button type="button" class="mv-btn" data-move="up" title="Панель выше">▲</button><button type="button" class="mv-btn" data-move="down" title="Панель ниже">▼</button></div>
           <div class="plan">${esc(p.plan || '')}</div>
         </div>
         <div class="card-badges">
@@ -720,11 +720,9 @@ cards.addEventListener('drop', (e) => {
   }
 });
 
-cards.addEventListener('dragend', () => {
-  __dragPanelId = null;
-  clearDragMarkers();
-  // Persist the new DOM order and align the bottlenecks table immediately
-  // (the next poll re-renders everything through applyPanelOrder anyway).
+// Persist the DOM order of #cards and align the bottlenecks table right
+// away (the next poll re-renders everything through applyPanelOrder anyway).
+function persistPanelOrderFromDom() {
   const ids = Array.from(cards.querySelectorAll('.card'))
     .map(c => c.dataset.provider)
     .filter(Boolean);
@@ -733,6 +731,29 @@ cards.addEventListener('dragend', () => {
   const byId = {};
   (analytics.providers || []).forEach(p => { byId[p.provider] = p; });
   renderBottlenecks(ids.map(id => byId[id]).filter(Boolean));
+}
+
+cards.addEventListener('dragend', () => {
+  __dragPanelId = null;
+  clearDragMarkers();
+  persistPanelOrderFromDom();
+});
+
+// Button fallback (works on touch screens and whenever HTML5 DnD is
+// unavailable): ▲/▼ move the panel one slot, same persistence as dragging.
+cards.addEventListener('click', (e) => {
+  const btn = e.target.closest ? e.target.closest('.mv-btn') : null;
+  if (!btn) return;
+  const card = btn.closest('.card');
+  if (!card || !card.dataset.provider) return;
+  if (btn.dataset.move === 'up' && card.previousElementSibling) {
+    card.previousElementSibling.before(card);
+  } else if (btn.dataset.move === 'down' && card.nextElementSibling) {
+    card.nextElementSibling.after(card);
+  } else {
+    return; // already at the edge
+  }
+  persistPanelOrderFromDom();
 });
 
 // Safety net: a drag that ends outside #cards must never leave markers or

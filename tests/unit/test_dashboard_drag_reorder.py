@@ -85,12 +85,37 @@ def test_drop_commits_dom_order_and_refreshes_table() -> None:
         r"cards\.addEventListener\(\s*['\"]dragend['\"].*?\n\}\);", js, re.S
     )
     assert dragend_m, "dragend commit handler missing"
-    body = dragend_m.group(0)
+    assert "persistPanelOrderFromDom()" in dragend_m.group(0), (
+        "drag end must persist the manual order"
+    )
+    fn_m = re.search(r"function persistPanelOrderFromDom\(\)\s*\{(.*?)\n\}", js, re.S)
+    assert fn_m, "persistPanelOrderFromDom helper missing"
+    body = fn_m.group(1)
     assert "savePanelOrder(" in body, "manual order must persist after drop"
     assert "renderBottlenecks(" in body, "risk table must follow panel order"
 
 
 def test_drag_feedback_styles_present() -> None:
     css = _read(STYLE_CSS)
-    for selector in (".card .grip", ".card.dragging", ".card.drop-target"):
+    for selector in (".card .grip", ".card.dragging", ".card.drop-target", ".mv-btn"):
         assert selector in css, f"missing drag feedback style: {selector}"
+
+
+def test_move_buttons_fallback_wired() -> None:
+    """▲/▼ buttons must exist on cards and persist the order like a drag."""
+    js = _read(APP_JS)
+    assert 'data-move="up"' in js and 'data-move="down"' in js, (
+        "move buttons missing from card markup"
+    )
+    m = re.search(r"addEventListener\(\s*['\"]click['\"].*?\.mv-btn.*?\n\}\);", js, re.S)
+    assert m, "mv-btn click handler missing"
+    body = m.group(0)
+    assert "previousElementSibling.before" in body and "nextElementSibling.after" in body
+    assert "persistPanelOrderFromDom()" in body, "buttons must persist the order"
+
+
+def test_static_assets_revalidate() -> None:
+    """Deployed JS/CSS must not be heuristically cached by browsers."""
+    text = (ROOT / "app" / "main.py").read_text(encoding="utf-8")
+    assert "Cache-Control" in text and 'no-cache' in text
+    assert 'startswith("/static")' in text

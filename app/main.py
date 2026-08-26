@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -37,6 +37,19 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="AI Provider Observer", version="0.1.0", lifespan=lifespan)
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.middleware("http")
+async def _revalidate_static(request: Request, call_next):
+    """Static assets must revalidate (ETag) instead of heuristically caching.
+
+    Without ``Cache-Control`` browsers kept serving a stale ``app.js`` after
+    deploys, so new dashboard features silently never appeared.
+    """
+    response = await call_next(request)
+    if request.url.path == "/" or request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @app.get("/")
