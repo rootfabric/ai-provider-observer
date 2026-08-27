@@ -5,7 +5,11 @@ executes the exact REQ predicate against the exact candidate implementation.
 """
 from __future__ import annotations
 
+import os
+import sys
 import unittest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.providers.codex import CodexProvider, _app_server_to_payload
 
