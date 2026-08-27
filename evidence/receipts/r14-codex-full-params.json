@@ -1,0 +1,31 @@
+{
+  "schema": "hybrid_harness.evidence_receipt.v5",
+  "receipt_id": "r14-codex-full-params",
+  "subject_head": "a1ccfc032f0d8b6f59000aeb06e5b7d0e48952a2",
+  "execution_head": "94957b0d61847ce544463ba7584a0059ca041e78",
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/",
+    "-q"
+  ],
+  "cwd": ".",
+  "environment_mode": "SANITIZED_PLUS_DECLARED_OVERRIDES",
+  "environment_overrides": {},
+  "base_environment": {
+    "PATH": "/home/yurig/.npm/_npx/de4831d60afe10da/node_modules/.bin:/home/yurig/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "HOME": "/home/yurig",
+    "LANG": "en_US.UTF-8"
+  },
+  "resolved_executable": ".venv/bin/python",
+  "python_version": "3.14.4",
+  "clean_subject_tree": true,
+  "started_at_utc": "2026-08-27T02:55:13Z",
+  "finished_at_utc": "2026-08-27T02:55:36Z",
+  "exit_code": 0,
+  "output_path": "evidence/raw/r14-codex-full-params.log",
+  "output_sha256": "77690610a6a98385d49c4daeac7f343a6735ecb2aaffb06fcb0b148f1b0cfe9a",
+  "input_files": [],
+  "runner": "HARNESS_COMMAND_API_R11"
+}
