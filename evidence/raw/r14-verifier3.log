@@ -1,0 +1,21 @@
+======================================================================
+ERROR: test_r14_codex_full_params (unittest.loader._FailedTest.test_r14_codex_full_params)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_r14_codex_full_params
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/evidence/verifier/test_r14_codex_full_params.py", line 14, in <module>
+    from app.providers.codex import CodexProvider, _app_server_to_payload
+ModuleNotFoundError: No module named 'app'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)
+HARNESS_VERIFIER_RESULT_ZLIB_B64=eNqtUcFqwzAM/RcdR8nY2Cn37ToIvY0iVFtZxFwnk5zQUPrvs9NurIxeRm/W09PTe/IBeM9uTOwxsSUUb1C/wRgllboKPXnWCl9IAvt1gRaePjyh6z3vsR1DwIGUdgabFbQL8UZivZILjJ8jBUkzthK9xPcimpsDmV1uWsC8SiPUsOB31TDDCsx1vKMMdvNWxWNHGtmsmlilFVY8HUH6WE2Phf8hw/BH2xJpQi+ahXgSz9Hx/bdEnirsQj2AI+M8B3XMeXKMrbFOWe+c50fxSn3iU/Fz2bh2CE3yi5x9pjG/4blpXpuzscXOf7/iuDl+AXSyyxQ=
+HARNESS_VERIFIER_SUMMARY=tests:1,passed:0,failed:1,quality:0
