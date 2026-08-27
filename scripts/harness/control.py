@@ -46,15 +46,20 @@ def _compact_finding_rows(findings, limit: int = 8):
     return rows, max(0, len(first) - len(rows))
 
 
+def _finding_severity(f) -> str:
+    """ActiveFinding carries no severity; tolerate both finding shapes."""
+    return getattr(f, "severity", "") or "ACTIVE"
+
+
 def print_findings(findings, *, limit: int = 8):
     if _verbose_output():
         for f in findings:
-            print(f"{f.severity} {f.code}: {f.message}")
+            print(f"{_finding_severity(f)} {f.code}: {f.message}")
         return
     rows, omitted = _compact_finding_rows(findings, limit)
     for f, count in rows:
         suffix = f" x{count}" if count > 1 else ""
-        print(f"{f.severity} {f.code}{suffix}: {f.message}")
+        print(f"{_finding_severity(f)} {f.code}{suffix}: {f.message}")
     if omitted:
         print(f"FINDING_CODES_OMITTED={omitted} (set HARNESS_VERBOSE=1 for full detail)")
 
