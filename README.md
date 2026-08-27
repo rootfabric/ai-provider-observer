@@ -14,8 +14,8 @@
 
 ### Возможности R1 (аналитика потребления)
 
-- **Burn rate** — OLS-регрессии по окнам **15 м / 1 ч / 3 ч** (плюс **24 ч / 3 д** для weekly); классификация ускорения (decelerating / stable / accelerating / anomaly) относительно `burn_1h`.
-- **ETA и survival margin** — три горизонта оценки исчерпания (по `burn_15m`, `burn_1h`, `burn_3h`) и дельта до ближайшего reset: `survival_margin < 0` означает, что квота закончится до автоматического сброса.
+- **Burn rate** — OLS-регрессии по окнам **10 м / 15 м / 1 ч / 3 ч** (плюс **24 ч / 3 д** для weekly); классификация ускорения (decelerating / stable / accelerating / anomaly) относительно `burn_1h`.
+- **ETA и survival margin** — горизонты оценки исчерпания (по `burn_10m`, `burn_15m`, `burn_1h`, `burn_3h`) и дельта до ближайшего reset: `survival_margin < 0` означает, что квота закончится до автоматического сброса; `survival_margin_short` — то же по мелкому 10-минутному темпу (ловит burst-расход).
 - **Weekly pace / projected** — для weekly-окон: `pace_ratio`, полосы (`comfortable → unsustainable`), три проекции конца окна (`whole_window` / `pace_24h` / `pace_3d`) и confidence (`LOW/MEDIUM/HIGH`) по длине истории.
 - **Bottleneck и risk score** — факторный скор 0..100 на окно, боттлнек = argmax; уровни `HEALTHY → WATCH → WARNING → HIGH → CRITICAL`; пороги алертов (`ALERT_*`) настраиваются через env.
 - **Рекомендации** — действия `NO_ACTION / WATCH / REDUCE_LOAD / SHIFT_TRAFFIC / INCREASE_BUDGET / UPGRADE_PLAN` с обязательными `reason_lines` (конкретные числа) и `capacity_overview` для cross-provider shift.

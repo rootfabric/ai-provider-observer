@@ -248,6 +248,7 @@ function renderWindow(window, typeLabel) {
   const unitStr = esc(latest.unit || '');
 
   const burns = window.burns || {};
+  const burn10 = burns['10m'] && burns['10m'].value;
   const burn15 = burns['15m'] && burns['15m'].value;
   const burn1h = burns['1h'] && burns['1h'].value;
   const accel = window.burn_acceleration || {};
@@ -257,6 +258,9 @@ function renderWindow(window, typeLabel) {
   const eta = forecast.eta_current_seconds;
   const confidence = forecast.confidence;
   const margin = forecast.survival_margin_seconds;
+  const etaShort = forecast.eta_short_seconds;
+  const confidenceShort = forecast.confidence_short;
+  const marginShort = forecast.survival_margin_short_seconds;
 
   const resetText = resetLabel(window);
 
@@ -353,6 +357,13 @@ function renderWindow(window, typeLabel) {
           </span>
         </div>
         <div class="kv-row">
+          <span class="kv-key">Burn 10m</span>
+          <span class="kv-val">
+            ${typeof burn10 === 'number' ? fmtNum(burn10) : '—'} ед/ч
+            <span class="muted small">· ${typeof burn10 === 'number' ? fmtNum(burn10 / 6) : '—'} ед/10м</span>
+          </span>
+        </div>
+        <div class="kv-row">
           <span class="kv-key">Reset</span>
           <span class="kv-val">${resetText}</span>
         </div>
@@ -367,6 +378,13 @@ function renderWindow(window, typeLabel) {
             </span>
           </div>
           <div class="kv-row">
+            <span class="kv-key">Exhaustion 10m</span>
+            <span class="kv-val">
+              ${typeof etaShort === 'number' && etaShort > 0 ? fmtDuration(etaShort) : '—'}
+              <span class="muted small">confidence: ${fmtConfidence(confidenceShort)}</span>
+            </span>
+          </div>
+          <div class="kv-row">
             <span class="kv-key">Exhaustion</span>
             <span class="kv-val">
               ${typeof eta === 'number' && eta > 0 ? fmtDuration(eta) : '—'}
@@ -378,6 +396,13 @@ function renderWindow(window, typeLabel) {
             <span class="kv-val ${typeof margin === 'number' && margin < 0 ? 'margin-bad' : ''}">
               ${typeof margin === 'number' ? fmtMargin(margin) : '—'}
               ${typeof margin === 'number' && margin < 0 ? ' ⚠' : ''}
+            </span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-key">Margin 10m</span>
+            <span class="kv-val ${typeof marginShort === 'number' && marginShort < 0 ? 'margin-bad' : ''}">
+              ${typeof marginShort === 'number' ? fmtMargin(marginShort) : '—'}
+              ${typeof marginShort === 'number' && marginShort < 0 ? ' ⚠' : ''}
             </span>
           </div>
           ${weeklyExtra}

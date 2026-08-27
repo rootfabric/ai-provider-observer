@@ -109,7 +109,7 @@ class Segment:
 class BurnStat:
     """Burn rate over one lookback window (spec §4-§6)."""
 
-    lookback: str                    # "15m" | "1h" | "3h" | "24h" | "3d" | "7d" | "window"
+    lookback: str                    # "10m" | "15m" | "1h" | "3h" | "24h" | "3d" | "7d" | "window"
     value: float | None              # units per hour (signed); None when insufficient
     unit: str                        # e.g. "credits/hour", "USD/hour", "percentage_points_per_hour"
     points_used: int = 0
@@ -139,11 +139,14 @@ class Forecast:
     eta_current_seconds: float | None = None    # pace of burn_15m
     eta_stable_seconds: float | None = None     # pace of burn_1h
     eta_conservative_seconds: float | None = None  # pace of burn_3h / longest available
+    eta_short_seconds: float | None = None      # pace of burn_10m (last ~10 min)
     eta_basis_unit: str | None = None           # unit the ETA is expressed in
     reset_in_seconds: float | None = None
     survival_margin_seconds: float | None = None  # eta_current - reset_in; <0 exhausts before reset
+    survival_margin_short_seconds: float | None = None  # eta_short - reset_in; <0 bursts break the window
     recovery_mode: str = "unknown"               # hard_reset|estimated_reset|rolling|unknown
     confidence: str = CONFIDENCE_LOW
+    confidence_short: str = CONFIDENCE_LOW       # confidence of the burn_10m regression itself
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
