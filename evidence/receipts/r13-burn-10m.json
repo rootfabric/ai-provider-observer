@@ -1,0 +1,41 @@
+{
+  "schema": "hybrid_harness.evidence_receipt.v5",
+  "receipt_id": "r13-burn-10m",
+  "subject_head": "4fe15feb34b494603c86f69dd1cb90bf500fa030",
+  "execution_head": "6ff116e2fabe5f0b132d08d1a282f082e809ecb0",
+  "command": [
+    "/usr/bin/python3",
+    "scripts/harness/verifier_runner.py",
+    "evidence/verifier",
+    "test_*.py"
+  ],
+  "cwd": ".",
+  "environment_mode": "SANITIZED_PLUS_DECLARED_OVERRIDES",
+  "environment_overrides": {},
+  "base_environment": {
+    "PATH": "/home/yurig/.npm/_npx/de4831d60afe10da/node_modules/.bin:/home/yurig/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "HOME": "/home/yurig",
+    "LANG": "en_US.UTF-8"
+  },
+  "resolved_executable": "/usr/bin/python3",
+  "python_version": "3.14.4",
+  "clean_subject_tree": true,
+  "started_at_utc": "2026-08-27T01:30:56Z",
+  "finished_at_utc": "2026-08-27T01:30:56Z",
+  "exit_code": 0,
+  "output_path": "evidence/raw/r13-burn-10m.log",
+  "output_sha256": "cc7e849ed607cc0353352bfa7a73289dcc33dc45646f65f3bda44a58fcd50593",
+  "input_files": [],
+  "runner": "HARNESS_COMMAND_API_R11",
+  "verifier_result": {
+    "executed_test_ids": [],
+    "failed_test_ids": [],
+    "oracle_quality_findings": [],
+    "passed_test_ids": [],
+    "pattern": "test_*.py",
+    "schema": "hybrid_harness.verifier_execution.v2",
+    "skipped_test_ids": [],
+    "start_dir": "evidence/verifier",
+    "tests": []
+  }
+}
