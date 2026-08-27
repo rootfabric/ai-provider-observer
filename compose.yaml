@@ -46,7 +46,10 @@ services:
       - ./data:/app/data
       # Feed Codex quota monitoring from your local Codex CLI login
       # (Linux/macOS hosts). Read-only: the observer only reads auth.json.
-      - ~/.codex:/app/codex-home:ro
+      # NOTE: absolute path on purpose — with snap docker, `~` expands to the
+      # daemon's snap HOME (…/snap/docker/<rev>), where ~/.codex is empty,
+      # which silently disables Codex collection after every daemon update.
+      - /home/yurig/.codex:/app/codex-home:ro
     healthcheck:
       # curl-free check: the slim runtime image has no curl.
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/healthz', timeout=4)"]

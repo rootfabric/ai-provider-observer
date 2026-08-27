@@ -67,17 +67,25 @@
   }
 
   /**
-   * Reduce history points to (time, used_percent). Defensive against
-   * missing/garbled entries: only returns points with a parseable
-   * collected_at and a numeric used_percent.
+   * Reduce history points to (time, value) for the chosen mode.
+   * - 'percent': used_percent (usage windows).
+   * - 'balance': remaining money (balance/credits windows store the amount in
+   *   `remaining`; `used`/`used_percent` are null there).
+   * Defensive against missing/garbled entries: only returns points with a
+   * parseable collected_at and a numeric value.
    */
-  function buildSeries(points) {
+  function buildSeries(points, mode) {
     const out = [];
     if (!Array.isArray(points)) return out;
     for (const p of points) {
       if (!p) continue;
       const t = new Date(p.collected_at);
-      const v = typeof p.used_percent === 'number' ? p.used_percent : null;
+      let v = null;
+      if (mode === 'balance') {
+        v = typeof p.remaining === 'number' ? p.remaining : null;
+      } else {
+        v = typeof p.used_percent === 'number' ? p.used_percent : null;
+      }
       if (Number.isNaN(t.getTime()) || v === null) continue;
       out.push({ time: t, value: v, reset_at: p.reset_at || null });
     }
@@ -102,16 +110,21 @@
 
   function buildDailySpend(points) {
     // Aggregate points into local-time-day buckets; return delta (proxy).
+    // Balance rows carry the money in `remaining` (used is null), so fall
+    // back to remaining deltas — a drop in remaining is spend.
     const out = [];
     if (!Array.isArray(points)) return out;
     const byDay = new Map();
     for (const p of points) {
-      if (typeof p.used !== 'number') continue;
+      const v = typeof p.used === 'number'
+        ? p.used
+        : (typeof p.remaining === 'number' ? -p.remaining : null);
+      if (v === null) continue;
       const d = new Date(p.collected_at);
       if (Number.isNaN(d.getTime())) continue;
       const key = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
       const arr = byDay.get(key) || [];
-      arr.push({ t: d, v: p.used });
+      arr.push({ t: d, v: v });
       byDay.set(key, arr);
     }
     const keys = Array.from(byDay.keys()).sort();
@@ -173,14 +186,24 @@
       return;
     }
 
+    const isBalance = options && options.mode === 'balance';
     const points = (options && options.points) || [];
-    const series = buildSeries(points);
+    const series = buildSeries(points, isBalance ? 'balance' : 'percent');
     if (!series.length) {
       drawEmptyState(svg, W, H, 'нет данных за выбранный диапазон');
       drawAxisFrame(svg, W, H, PAD_L, PAD_R, PAD_T, PAD_B);
       return;
     }
     const xr = xRange(series);
+    if (isBalance) {
+      renderBalanceLine(svg, options, series, xr, {
+        W: W, H: H,
+        padL: PAD_L, padR: PAD_R, padT: PAD_T, padB: PAD_B,
+        innerW: innerW, innerH: innerH,
+      });
+      drawAxisFrame(svg, W, H, PAD_L, PAD_R, PAD_T, PAD_B);
+      return;
+    }
     const yMin = 0;
     const yMax = 100;
 
@@ -301,6 +324,92 @@
     }
 
     drawAxisFrame(svg, W, H, PAD_L, PAD_R, PAD_T, PAD_B);
+  }
+
+  /**
+   * Balance/credits line: plots `remaining` (money) with an adaptive y-scale
+   * instead of the fixed 0–100% one, and labels the axis in the point unit.
+   */
+  function renderBalanceLine(svg, options, series, xr, g) {
+    const unit = balanceUnit(options && options.points);
+    let vMin = series[0].value;
+    let vMax = series[0].value;
+    for (const p of series) {
+      if (p.value < vMin) vMin = p.value;
+      if (p.value > vMax) vMax = p.value;
+    }
+    // Flat series (e.g. balance stuck at 0) still needs a visible band.
+    if (vMax - vMin < 1e-9) {
+      vMin -= 1;
+      vMax += 1;
+    }
+    const pad = (vMax - vMin) * 0.08;
+    vMin -= pad;
+    vMax += pad;
+
+    function sx(t) {
+      return g.padL + ((t.getTime() - xr.min) / (xr.max - xr.min)) * g.innerW;
+    }
+    function sy(v) {
+      return g.padT + (1 - (v - vMin) / (vMax - vMin)) * g.innerH;
+    }
+
+    drawYGridAuto(svg, g.padL, g.padT, g.innerW, g.innerH, vMin, vMax, unit);
+    drawXLabels(svg, g.padL, g.padT, g.innerW, g.innerH, xr);
+
+    const path = series
+      .map((p, i) => (i === 0 ? 'M' : 'L') + sx(p.time).toFixed(1) + ',' + sy(p.value).toFixed(1))
+      .join(' ');
+    svg.appendChild(svgEl('path', { d: path, class: 'series-line', fill: 'none' }));
+    const areaPath =
+      path +
+      ' L' + sx(series[series.length - 1].time).toFixed(1) + ',' + (g.padT + g.innerH).toFixed(1) +
+      ' L' + sx(series[0].time).toFixed(1) + ',' + (g.padT + g.innerH).toFixed(1) +
+      ' Z';
+    svg.appendChild(svgEl('path', { d: areaPath, class: 'series-area' }));
+
+    // Latest value badge so a flat line still communicates the amount.
+    const last = series[series.length - 1];
+    const badge = svgEl('text', {
+      x: g.padL + g.innerW - 4, y: sy(last.value) - 6,
+      class: 'slope-note',
+      'text-anchor': 'end',
+    });
+    badge.textContent = fmtBalanceValue(last.value) + ' ' + unit;
+    svg.appendChild(badge);
+  }
+
+  function balanceUnit(points) {
+    if (Array.isArray(points)) {
+      for (let i = points.length - 1; i >= 0; i--) {
+        const p = points[i];
+        if (p && typeof p.unit === 'string' && p.unit) return p.unit;
+      }
+    }
+    return '';
+  }
+
+  function fmtBalanceValue(v) {
+    const abs = Math.abs(v);
+    const digits = abs >= 100 ? 0 : abs >= 1 ? 2 : 4;
+    return v.toFixed(digits).replace(/\.?0+$/, '');
+  }
+
+  function drawYGridAuto(svg, x, y, w, h, vMin, vMax, unit) {
+    const ticks = 4;
+    for (let i = 0; i <= ticks; i++) {
+      const ratio = i / ticks;
+      const v = vMin + (vMax - vMin) * ratio;
+      const yy = y + (1 - ratio) * h;
+      svg.appendChild(
+        svgEl('line', { x1: x, x2: x + w, y1: yy, y2: yy, class: 'grid-line' }),
+      );
+      const t = svgEl('text', {
+        x: x - 6, y: yy + 3, class: 'axis-label', 'text-anchor': 'end',
+      });
+      t.textContent = fmtBalanceValue(v) + (unit ? ' ' + unit : '');
+      svg.appendChild(t);
+    }
   }
 
   function renderSpendBars(svg, options, geom) {
