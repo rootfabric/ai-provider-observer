@@ -1,0 +1,14 @@
+{
+  "schema": "hybrid_harness.event.v2",
+  "seq": 1,
+  "prev_event_sha256": null,
+  "phase": "r13-ui-burn-10m",
+  "actor_id": "agent",
+  "subject_head": "4fe15feb34b494603c86f69dd1cb90bf500fa030",
+  "verdict": "pass",
+  "recorded_at_utc": "2026-08-27T01:30:52Z",
+  "scope": "analytics+ui",
+  "summary": "10m burn lookback, eta_short/margin_short/confidence_short, dashboard rows Burn 10m / Exhaustion 10m / Margin 10m",
+  "tests": "321 passed (pytest tests -q)",
+  "commit": "4fe15fe"
+}
