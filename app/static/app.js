@@ -499,6 +499,12 @@ function renderProviderCard(p) {
     const bBal = /^(balance|credits)(:|$)/.test(b) ? 1 : 0;
     return aBal - bBal;
   });
+  // Pay-as-you-go operators (OpenRouter, DeepSeek) carry no package windows
+  // at all — only balance/credits. The money block is then everything the
+  // card has to say, so it must be visible without expanding; providers that
+  // also own 5h/weekly packages keep the expand-only balance (style.css).
+  const balanceOnly = winKeys.length > 0
+    && winKeys.every(k => /^(balance|credits)(:|$)/.test(k));
   const windowHtml = winKeys
     .map(k => {
       const base = String(k).split(':')[0]; // keys like "balance:CNY" share the base label
@@ -520,7 +526,7 @@ function renderProviderCard(p) {
   const statusCls = esc(p.status || 'ok');
 
   return `
-    <article class="card ${expanded ? 'expanded' : 'collapsed'}" data-provider="${esc(providerId)}" draggable="true">
+    <article class="card ${expanded ? 'expanded' : 'collapsed'}${balanceOnly ? ' only-balance' : ''}" data-provider="${esc(providerId)}" draggable="true">
       <div class="cardtop">
         <div>
           <div class="provider"><span class="grip" title="Перетащите, чтобы поменять панели местами">⠿</span>${esc(p.label || p.provider || '—')}</div>
@@ -549,7 +555,9 @@ function renderProviderCard(p) {
 function renderBottleneckRow(bottleneck, score) {
   if (!bottleneck) return '';
   const label = PROFILE_LABELS[bottleneck] || bottleneck;
-  return `<div class="bottleneck-row"><span class="lbl">BOTTLENECK</span><span>${esc(label)}${typeof score === 'number' ? ' · ' + Math.round(score) : ''}</span></div>`;
+  // A bare "Баланс · 15" reads like a balance of 15 units — label the risk
+  // score explicitly (same convention as the summary facts above the grid).
+  return `<div class="bottleneck-row"><span class="lbl">BOTTLENECK</span><span>${esc(label)}${typeof score === 'number' ? ' · score ' + Math.round(score) : ''}</span></div>`;
 }
 
 /* ------------------------- bottlenecks table --------------------------- */

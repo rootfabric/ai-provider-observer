@@ -278,6 +278,12 @@ button:disabled { opacity: .6; cursor: progress; }
    surface them once the user explicitly expands the card. */
 .card:not(.expanded) .window.is-balance { display: none; }
 
+/* Exception: pay-as-you-go operators (OpenRouter, DeepSeek) have no package
+   windows — the balance block is the card's entire content, so keep it
+   visible in the collapsed state too. Higher specificity than the rule
+   above, order-independent. */
+.card.only-balance:not(.expanded) .window.is-balance { display: block; }
+
 .windowhead {
   display: flex;
   justify-content: space-between;
