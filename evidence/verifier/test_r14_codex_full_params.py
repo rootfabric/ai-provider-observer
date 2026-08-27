@@ -9,7 +9,8 @@ import os
 import sys
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_here = os.path.dirname(os.path.abspath(__file__))          # evidence/verifier
+sys.path.insert(0, os.path.dirname(os.path.dirname(_here)))  # repo root
 
 from app.providers.codex import CodexProvider, _app_server_to_payload
 
