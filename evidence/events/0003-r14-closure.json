@@ -1,0 +1,16 @@
+{
+  "schema": "hybrid_harness.event.v2",
+  "seq": 3,
+  "prev_event_sha256": "f205d15eede91b6015924266c8873ce52c17f0dd343228bd96426b322e8bfd8a",
+  "phase": "r14-closure",
+  "actor_id": "agent",
+  "subject_head": "a1ccfc032f0d8b6f59000aeb06e5b7d0e48952a2",
+  "verdict": "pass",
+  "recorded_at_utc": "2026-08-27T02:59:23Z",
+  "validate_active": "PASS",
+  "portable_check": "PASS",
+  "selftest": "PASS mutations=43",
+  "final_report": "PASS",
+  "verifier": "PASS r14-verifier4",
+  "candidate_receipt": "r14-codex-full-params"
+}
