@@ -153,6 +153,9 @@ class AnalyticsEngine:
                 "label": snap.get("label") or provider,
                 "status": snap.get("status") or "ok",
                 "plan": snap.get("plan"),
+                # Non-secret parameter surface reported by the provider
+                # (credits flags, spend control, additional limits, ...).
+                "details": snap.get("details") or {},
             }
         for provider in self.store.known_quota_providers():
             if provider in merged:
@@ -162,6 +165,7 @@ class AnalyticsEngine:
                 "label": provider,
                 "status": "ok",
                 "plan": None,
+                "details": {},
             }
         # Stable ordering: alphabetical.
         return [merged[key] for key in sorted(merged, key=_display_rank)]
@@ -394,6 +398,7 @@ class AnalyticsEngine:
                     "label": label,
                     "status": status,
                     "plan": plan_name,
+                    "details": provider_meta.get("details") or {},
                     "risk": risk.to_dict(),
                     "windows": windows_block,
                     "recommendation": rec.to_dict(),

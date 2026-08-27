@@ -35,6 +35,7 @@ class CodexProvider(Provider):
                 remaining_percent=None if used is None else round(100 - used, 2),
                 reset_at=epoch_to_iso(row.get("reset_at")),
             ))
+        credits = payload.get("credits") or {}
         details = {
             "limit_reached": bool(rate.get("limit_reached")),
             "allowed": rate.get("allowed"),
@@ -42,7 +43,27 @@ class CodexProvider(Provider):
         }
         if source.endswith("usage endpoint"):
             details["warning"] = "Internal endpoint used by Codex; may change without notice."
-        credits = payload.get("credits") or {}
+        # Full parameter surface: keep everything the usage surface reports so
+        # the UI parameter block can render it (all values are non-secret).
+        details.update(_credit_params(credits))
+        spend = payload.get("spend_control")
+        if isinstance(spend, dict) and any(v is not None for v in spend.values()):
+            details["spend_control"] = {
+                "reached": bool(spend.get("reached")),
+                "individual_limit": spend.get("individual_limit"),
+            }
+        promo = payload.get("promo")
+        if promo is not None:
+            details["promo"] = promo
+        reset_credits = _reset_credits(payload)
+        if reset_credits is not None:
+            details["rate_limit_reset_credits"] = reset_credits
+        extras = _additional_limits(payload)
+        if extras:
+            details["additional_rate_limits"] = extras
+        code_review = _code_review_limits(payload)
+        if code_review is not None:
+            details["code_review_rate_limit"] = code_review
         balances = []
         if isinstance(credits, dict) and credits.get("balance") not in (None, ""):
             try:
@@ -124,8 +145,7 @@ class CodexProvider(Provider):
             if response.get("error"):
                 raise RuntimeError(str(response["error"]))
             result = response.get("result") or {}
-            rate = _pick_codex_rate_limit(result)
-            payload = _app_server_to_payload(rate)
+            payload = _app_server_to_payload(result)
             latency = round((loop.time() - started) * 1000)
             return self.parse(payload, latency, source="Codex app-server account/rateLimits/read")
         finally:
@@ -170,7 +190,11 @@ def _pick_codex_rate_limit(result: dict) -> dict:
     return rate if isinstance(rate, dict) else {}
 
 
-def _app_server_to_payload(rate: dict) -> dict:
+def _app_server_to_payload(result: dict) -> dict:
+    """Map the app-server ``account/rateLimits/read`` result to the snake_case
+    payload shape of the HTTP usage endpoint, preserving every parameter the
+    result carries (extra metered limits, spend control, reset credits)."""
+
     def window(row):
         if not isinstance(row, dict):
             return None
@@ -181,8 +205,9 @@ def _app_server_to_payload(rate: dict) -> dict:
             "reset_at": row.get("resetsAt"),
         }
 
+    rate = _pick_codex_rate_limit(result)
     credits = rate.get("credits") if isinstance(rate.get("credits"), dict) else {}
-    return {
+    payload = {
         "plan_type": rate.get("planType"),
         "rate_limit": {
             "allowed": None,
@@ -193,9 +218,112 @@ def _app_server_to_payload(rate: dict) -> dict:
         "credits": {
             "has_credits": credits.get("hasCredits"),
             "unlimited": credits.get("unlimited"),
+            "overage_limit_reached": None,
             "balance": credits.get("balance"),
         },
     }
+    spend = {"reached": rate.get("spendControlReached"), "individual_limit": rate.get("individualLimit")}
+    if any(v is not None for v in spend.values()):
+        payload["spend_control"] = spend
+    by_id = result.get("rateLimitsByLimitId")
+    extras: list[dict] = []
+    if isinstance(by_id, dict):
+        for limit_id, row in by_id.items():
+            if limit_id == "codex" or not isinstance(row, dict):
+                continue
+            extras.append({
+                "limit_name": row.get("limitName") or limit_id,
+                "metered_feature": limit_id,
+                "rate_limit": {
+                    "primary_window": window(row.get("primary")),
+                    "secondary_window": window(row.get("secondary")),
+                },
+            })
+    if extras:
+        payload["additional_rate_limits"] = extras
+    reset = result.get("rateLimitResetCredits")
+    if isinstance(reset, dict):
+        payload["rate_limit_reset_credits"] = {
+            "available_count": reset.get("availableCount"),
+            "applicable_available_count": None,
+            "credits": [
+                {"title": entry.get("title")}
+                for entry in reset.get("credits", [])
+                if isinstance(entry, dict) and entry.get("title")
+            ],
+        }
+    return payload
+
+
+def _credit_params(credits: dict) -> dict:
+    out: dict = {}
+    for key in ("has_credits", "unlimited", "overage_limit_reached"):
+        value = credits.get(key)
+        if isinstance(value, bool):
+            out[key] = value
+    return out
+
+
+def _limit_row(label: str, inner: object) -> dict | None:
+    if not isinstance(inner, dict):
+        return None
+
+    def window_row(row) -> dict | None:
+        if not isinstance(row, dict):
+            return None
+        seconds = _int(row.get("limit_window_seconds"))
+        return {
+            "period": _window_name(seconds, "window"),
+            "used_percent": clamp_percent(row.get("used_percent")),
+            "reset_at": epoch_to_iso(row.get("reset_at")),
+        }
+
+    rows = [r for r in (window_row(inner.get("primary_window")),
+                        window_row(inner.get("secondary_window"))) if r]
+    if not rows:
+        return None
+    return {"name": label, "windows": rows}
+
+
+def _additional_limits(payload: dict) -> list[dict]:
+    out: list[dict] = []
+    for extra in payload.get("additional_rate_limits") or []:
+        if not isinstance(extra, dict):
+            continue
+        label = str(extra.get("limit_name") or extra.get("metered_feature") or "").strip()
+        if not label:
+            continue
+        row = _limit_row(label, extra.get("rate_limit"))
+        if row is not None:
+            out.append(row)
+    return out
+
+
+def _code_review_limits(payload: dict) -> dict | None:
+    code_review = payload.get("code_review_rate_limit")
+    if not isinstance(code_review, dict):
+        return None
+    return _limit_row("code review", code_review)
+
+
+def _reset_credits(payload: dict) -> dict | None:
+    reset = payload.get("rate_limit_reset_credits")
+    if not isinstance(reset, dict):
+        return None
+    out = {
+        "available_count": reset.get("available_count"),
+        "applicable_available_count": reset.get("applicable_available_count"),
+    }
+    titles = [
+        entry.get("title")
+        for entry in reset.get("credits", [])
+        if isinstance(entry, dict) and entry.get("title")
+    ]
+    if titles:
+        out["titles"] = titles
+    if all(v is None for v in out.values()):
+        return None
+    return out
 
 
 def _int(value):

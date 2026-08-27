@@ -225,14 +225,18 @@ function renderSummary(data) {
     return `<div class="stat ${c.cls}"><span class="stat-n">${n}</span><span class="stat-label">${esc(c.label)}</span></div>`;
   }).join('');
 
-  const lines = `
-    <div class="summary-row"><span class="lbl">Most constrained</span><span>${bottleneckLabel(sum.most_constrained)}</span></div>
-    <div class="summary-row"><span class="lbl">First expected exhaustion</span><span>${exhaustionLabel(sum.first_expected_exhaustion)}</span></div>
-    <div class="summary-row"><span class="lbl">Highest weekly overspend</span><span>${overspendLabel(sum.highest_weekly_overspend)}</span></div>
-    <div class="summary-row"><span class="lbl">Lowest runway</span><span>${runwayLabel(sum.lowest_runway)}</span></div>
-  `;
+  const facts = [
+    { lbl: 'Most constrained', val: bottleneckLabel(sum.most_constrained) },
+    { lbl: 'First expected exhaustion', val: exhaustionLabel(sum.first_expected_exhaustion) },
+    { lbl: 'Highest weekly overspend', val: overspendLabel(sum.highest_weekly_overspend) },
+    { lbl: 'Lowest runway', val: runwayLabel(sum.lowest_runway) },
+  ].map(f =>
+    `<div class="fact"><span class="fact-lbl">${f.lbl}</span><span class="fact-val">${f.val}</span></div>`
+  ).join('');
 
-  summary.innerHTML = `<div class="summary-counters">${counters}</div>${lines}`;
+  summary.innerHTML =
+    `<div class="summary-counters">${counters}</div>` +
+    `<div class="summary-facts">${facts}</div>`;
 }
 
 /* -------------------------- per-window block --------------------------- */
@@ -274,7 +278,7 @@ function renderWindow(window, typeLabel) {
     const balAmount = typeof remaining === 'number' ? remaining : usedAbs;
     const balText = typeof balAmount === 'number' ? fmtNum(balAmount) : '—';
     return `
-      <div class="window">
+      <div class="window is-balance">
         <div class="windowhead">
           <span class="windowname">${esc(typeLabel)}${latest.unit ? ' · ' + unitStr : ''}</span>
           <span class="windowvalue">${balText === '—' ? '—' : balText + ' ' + unitStr}</span>
@@ -412,13 +416,90 @@ function renderWindow(window, typeLabel) {
   `;
 }
 
+// --- Parameter block ------------------------------------------------------
+// Providers report a non-secret parameter surface in snapshot.details
+// (credits flags, spend control, free reset credits, extra metered limits).
+// Render it under the windows so the card shows ALL reported parameters.
+const PARAM_LABELS = {
+  has_credits: 'Кредиты подключены',
+  unlimited: 'Безлимитные кредиты',
+  overage_limit_reached: 'Овердрафт достигнут',
+  spend_control: 'Спенд-контроль',
+  promo: 'Промо',
+  rate_limit_reset_credits: 'Бесплатные сбросы лимита',
+  code_review_rate_limit: 'Лимит код-ревью',
+};
+const SKIP_PARAM_KEYS = new Set(['source', 'warning', 'note', 'limit_reached', 'allowed']);
+
+function usageSubRows(limits) {
+  const rows = [];
+  for (const lim of limits || []) {
+    for (const w of (lim && lim.windows) || []) {
+      if (!w) continue;
+      const pct = typeof w.used_percent === 'number' ? Math.round(w.used_percent) + '%' : '—';
+      rows.push({
+        label: `${lim.name} · ${w.period}`,
+        value: pct + (w.reset_at ? `, сброс ${fmtTime(w.reset_at)}` : ''),
+      });
+    }
+  }
+  return rows;
+}
+
+function paramRows(details) {
+  const rows = [];
+  for (const [key, v] of Object.entries(details || {})) {
+    if (SKIP_PARAM_KEYS.has(key)) continue;
+    if (v == null || v === '') continue;
+    const label = PARAM_LABELS[key] || key.replace(/_/g, ' ');
+    if (key === 'additional_rate_limits' && Array.isArray(v)) {
+      rows.push(...usageSubRows(v));
+    } else if (key === 'code_review_rate_limit' && typeof v === 'object') {
+      rows.push(...usageSubRows([v]));
+    } else if (key === 'rate_limit_reset_credits' && typeof v === 'object') {
+      const n = typeof v.available_count === 'number' ? v.available_count : 0;
+      const titles = Array.isArray(v.titles) ? v.titles : [];
+      if (n <= 0 && !titles.length && !v.applicable_available_count) continue;
+      rows.push({ label, value: `${n} доступно` + (titles.length ? ` — ${titles[0]}` : '') });
+    } else if (key === 'spend_control' && typeof v === 'object') {
+      rows.push({
+        label,
+        value: (v.reached ? 'достигнут' : 'не достигнут')
+          + (v.individual_limit != null ? ` · лимит ${fmtNum(v.individual_limit)}` : ''),
+      });
+    } else if (typeof v === 'boolean') {
+      rows.push({ label, value: v ? 'да' : 'нет' });
+    } else if (typeof v === 'number' || typeof v === 'string') {
+      rows.push({ label, value: String(v) });
+    }
+  }
+  return rows;
+}
+
+function renderParams(p) {
+  const rows = paramRows(p.details);
+  if (!rows.length) return '';
+  const items = rows.map(r =>
+    `<div class="param-row"><span class="param-label">${esc(r.label)}</span><span class="param-value">${esc(r.value)}</span></div>`
+  ).join('');
+  return `<div class="params card-extra"><div class="params-title">Параметры</div>${items}</div>`;
+}
+
 function renderProviderCard(p) {
   const risk = p.risk || {};
   const recommendation = p.recommendation || {};
   const windows = p.windows || {};
   const providerId = p.provider || '';
   const expanded = window.__EXPANDED__ && window.__EXPANDED__.has(providerId);
-  const windowHtml = Object.keys(windows)
+  // Render spend windows first; push balance/credits windows to the end so
+  // the money block sits below the 5h / weekly rows instead of stealing the
+  // top of the card.
+  const winKeys = Object.keys(windows).sort((a, b) => {
+    const aBal = /^(balance|credits)(:|$)/.test(a) ? 1 : 0;
+    const bBal = /^(balance|credits)(:|$)/.test(b) ? 1 : 0;
+    return aBal - bBal;
+  });
+  const windowHtml = winKeys
     .map(k => {
       const base = String(k).split(':')[0]; // keys like "balance:CNY" share the base label
       return renderWindow(windows[k], PROFILE_LABELS[base] || base);
@@ -458,6 +539,7 @@ function renderProviderCard(p) {
       </div>
       ${renderBottleneckRow(risk.bottleneck, risk.score)}
       ${windowHtml || '<div class="empty">Нет числовых метрик</div>'}
+      ${renderParams(p)}
       ${recParts.length ? `<div class="recommendation card-extra">${recParts.join('')}</div>` : ''}
       ${errorBlock}
     </article>
