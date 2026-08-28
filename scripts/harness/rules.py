@@ -144,6 +144,8 @@ def _health_for_rule(root: Path, rule: dict[str, Any], review: dict[str, Any] | 
     reviewed_day = _parse_day(review.get("last_reviewed") if isinstance(review, dict) else None)
     if isinstance(review, dict) and review.get("last_reviewed") and reviewed_day is None:
         broken_reasons.append("last_reviewed invalid")
+    if isinstance(review, dict) and not str(review.get("reviewed_by") or "").strip():
+        broken_reasons.append("reviewed_by missing")
     if reviewed_day is not None and reviewed_day > today:
         broken_reasons.append("last_reviewed is in the future")
 
@@ -267,6 +269,8 @@ def review_rule(root: Path, rule_id: str, *, reviewed_on: str | None = None,
         raise RuleLifecycleError("RULE_REVIEW_DATE_INVALID")
     if day > date.today():
         raise RuleLifecycleError("RULE_REVIEW_DATE_IN_FUTURE")
+    if not str(reviewed_by or "").strip():
+        raise RuleLifecycleError("RULE_REVIEW_ACTOR_REQUIRED")
     state = load_review_state(root)
     reviews = state.setdefault("reviews", {})
     reviews[rule_id] = {
@@ -282,6 +286,7 @@ def review_rule(root: Path, rule_id: str, *, reviewed_on: str | None = None,
 def add_rule(root: Path, rule: dict[str, Any], *, reviewed_by: str = "DIRECTOR",
              note: str = "initial rule activation") -> tuple[Path, Path]:
     registry = load_registry(root)
+    policy = load_lifecycle_policy(root)
     rules = registry.get("rules", [])
     if not isinstance(rules, list):
         raise RuleLifecycleError("RULE_REGISTRY_RULES_ARRAY_REQUIRED")
@@ -290,6 +295,9 @@ def add_rule(root: Path, rule: dict[str, Any], *, reviewed_by: str = "DIRECTOR",
         raise RuleLifecycleError("RULE_ID_REQUIRED")
     if any(isinstance(r, dict) and r.get("id") == rid for r in rules):
         raise RuleLifecycleError(f"RULE_ID_DUPLICATE:{rid}")
+    allowed_classes = set(policy.get("review_every_days_by_class", {}))
+    if rule.get("class") not in allowed_classes:
+        raise RuleLifecycleError(f"RULE_CLASS_INVALID:{rule.get('class')}")
     required = {
         "id", "class", "source", "applies_when", "enforcement",
         "enforced_by", "retirement", "prose_mode", "owner", "tests",
@@ -297,8 +305,20 @@ def add_rule(root: Path, rule: dict[str, Any], *, reviewed_by: str = "DIRECTOR",
     missing = sorted(required - set(rule))
     if missing:
         raise RuleLifecycleError("RULE_ADD_FIELDS_MISSING:" + ",".join(missing))
+    for field in ("source", "applies_when", "enforcement", "retirement", "prose_mode", "owner"):
+        if not str(rule.get(field) or "").strip():
+            raise RuleLifecycleError(f"RULE_FIELD_EMPTY:{field}")
+    if rule.get("enforcement") not in {"machine", "mixed", "prose"}:
+        raise RuleLifecycleError(f"RULE_ENFORCEMENT_INVALID:{rule.get('enforcement')}")
     if rule.get("enforcement") in {"machine", "mixed"} and not _refs(rule.get("tests")):
         raise RuleLifecycleError("RULE_TEST_LINK_REQUIRED")
+    if "review_every_days" in rule:
+        try:
+            cadence = int(rule["review_every_days"])
+        except (TypeError, ValueError) as exc:
+            raise RuleLifecycleError("RULE_REVIEW_CADENCE_INVALID") from exc
+        if cadence <= 0:
+            raise RuleLifecycleError("RULE_REVIEW_CADENCE_INVALID")
     missing_targets = [
         ref
         for ref in _refs(rule.get("enforced_by")) + _refs(rule.get("tests"))
