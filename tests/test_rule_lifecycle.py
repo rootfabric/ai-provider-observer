@@ -127,3 +127,18 @@ def test_non_positive_cadence_rejected_before_write(tmp_path):
         assert "RULE_REVIEW_CADENCE_INVALID" in str(exc)
     else:
         raise AssertionError("non-positive cadence must fail closed")
+
+
+def test_empty_activation_actor_is_rejected(tmp_path):
+    fixture(tmp_path)
+    rule = {
+      "id":"CTRL-NO-ACTOR","class":"CONTROL_INVARIANT","source":"x","applies_when":"x",
+      "enforcement":"machine","enforced_by":["guard.py"],"retirement":"CONTROL_REVISION_REQUIRED",
+      "prose_mode":"router_only","owner":"proof-kernel","tests":["test_guard.py"]
+    }
+    try:
+        add_rule(tmp_path, rule, reviewed_by="")
+    except Exception as exc:
+        assert "RULE_REVIEW_ACTOR_REQUIRED" in str(exc)
+    else:
+        raise AssertionError("initial activation must have durable actor provenance")
