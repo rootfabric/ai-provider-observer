@@ -287,6 +287,8 @@ def add_rule(root: Path, rule: dict[str, Any], *, reviewed_by: str = "DIRECTOR",
              note: str = "initial rule activation") -> tuple[Path, Path]:
     registry = load_registry(root)
     policy = load_lifecycle_policy(root)
+    if not str(reviewed_by or "").strip():
+        raise RuleLifecycleError("RULE_REVIEW_ACTOR_REQUIRED")
     rules = registry.get("rules", [])
     if not isinstance(rules, list):
         raise RuleLifecycleError("RULE_REGISTRY_RULES_ARRAY_REQUIRED")
