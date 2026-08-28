@@ -69,6 +69,151 @@ class Store:
             db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_events_time ON events(provider, created_at)"
             )
+            # --- R2 admin cabinet ------------------------------------
+            db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+                """
+            )
+            db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS sessions (
+                    token_hash TEXT PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    expires_at TEXT NOT NULL
+                )
+                """
+            )
+            db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS provider_config (
+                    slug TEXT PRIMARY KEY,
+                    display_name TEXT,
+                    enabled INTEGER NOT NULL DEFAULT 1,
+                    config_json TEXT NOT NULL DEFAULT '{}',
+                    updated_at TEXT
+                )
+                """
+            )
+
+    # --- R2 admin: users & sessions ------------------------------
+
+    def count_users(self) -> int:
+        with self._connect() as db:
+            return int(db.execute("SELECT COUNT(*) FROM users").fetchone()[0])
+
+    def get_user(self, username: str) -> dict[str, Any] | None:
+        with self._connect() as db:
+            row = db.execute(
+                "SELECT id, username, password_hash FROM users WHERE username=?", (username,)
+            ).fetchone()
+        return {"id": row[0], "username": row[1], "password_hash": row[2]} if row else None
+
+    def create_user(self, username: str, password_hash: str) -> int:
+        now = datetime.now(timezone.utc).isoformat()
+        with self._connect() as db:
+            cur = db.execute(
+                "INSERT INTO users(username, password_hash, created_at) VALUES(?,?,?)",
+                (username, password_hash, now),
+            )
+            return int(cur.lastrowid)
+
+    def update_password(self, user_id: int, password_hash: str) -> None:
+        with self._connect() as db:
+            db.execute("UPDATE users SET password_hash=? WHERE id=?", (password_hash, user_id))
+
+    def create_session(self, token_hash: str, user_id: int, expires_at: datetime) -> None:
+        with self._connect() as db:
+            db.execute(
+                "DELETE FROM sessions WHERE expires_at < ?",
+                (datetime.now(timezone.utc).isoformat(),),
+            )
+            db.execute(
+                "INSERT OR REPLACE INTO sessions(token_hash, user_id, expires_at) VALUES(?,?,?)",
+                (token_hash, user_id, expires_at.isoformat()),
+            )
+
+    def get_session(self, token_hash: str) -> dict[str, Any] | None:
+        with self._connect() as db:
+            row = db.execute(
+                "SELECT s.user_id, u.username, s.expires_at FROM sessions s "
+                "JOIN users u ON u.id = s.user_id WHERE s.token_hash=?",
+                (token_hash,),
+            ).fetchone()
+        if not row:
+            return None
+        try:
+            expires = datetime.fromisoformat(row[2])
+        except ValueError:
+            return None
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        if expires < datetime.now(timezone.utc):
+            self.delete_session(token_hash)
+            return None
+        return {"user_id": row[0], "username": row[1], "expires_at": expires}
+
+    def delete_session(self, token_hash: str) -> None:
+        with self._connect() as db:
+            db.execute("DELETE FROM sessions WHERE token_hash=?", (token_hash,))
+
+    # --- R2 admin: provider config --------------------------------
+
+    def list_provider_configs(self) -> list[dict[str, Any]]:
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT slug, display_name, enabled, config_json, updated_at FROM provider_config"
+            ).fetchall()
+        configs = []
+        for slug, display_name, enabled, config_json, updated_at in rows:
+            try:
+                cfg = json.loads(config_json or "{}")
+            except ValueError:
+                cfg = {}
+            configs.append(
+                {
+                    "slug": slug,
+                    "display_name": display_name,
+                    "enabled": bool(enabled),
+                    "config": cfg if isinstance(cfg, dict) else {},
+                    "updated_at": updated_at,
+                }
+            )
+        return configs
+
+    def upsert_provider_config(
+        self, slug: str, display_name: str | None, enabled: bool, config: dict
+    ) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        with self._connect() as db:
+            db.execute(
+                """
+                INSERT INTO provider_config(slug, display_name, enabled, config_json, updated_at)
+                VALUES(?,?,?,?,?)
+                ON CONFLICT(slug) DO UPDATE SET
+                    display_name=excluded.display_name,
+                    enabled=excluded.enabled,
+                    config_json=excluded.config_json,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    slug,
+                    display_name or slug,
+                    1 if enabled else 0,
+                    json.dumps(config, ensure_ascii=False),
+                    now,
+                ),
+            )
+
+    def delete_provider_config(self, slug: str) -> bool:
+        with self._connect() as db:
+            cur = db.execute("DELETE FROM provider_config WHERE slug=?", (slug,))
+            return cur.rowcount > 0
 
     def _connect(self):
         return sqlite3.connect(self.path, timeout=5)

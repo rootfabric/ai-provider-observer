@@ -7,12 +7,17 @@ ETA horizons are exposed:
 * ``eta_current_seconds``  – uses ``burn_15m`` (current pace).
 * ``eta_stable_seconds``   – uses ``burn_1h`` (stable pace).
 * ``eta_conservative_seconds`` – uses ``burn_3h`` (long-term pace).
+* ``eta_short_seconds``    – uses ``burn_10m`` (fine-grained pace over the
+  last ~10 minutes; reacts to bursts within one poll cycle).
 
 ETA is only set when the corresponding burn is ``ok`` and strictly
 positive (above an epsilon); otherwise the ETA is ``None`` and never
-zero (spec §29). The survival margin ``eta_current − reset_in`` is
-computed only when both sides are known; it is ``None`` when the
-provider never reports a reset (rolling/estimated recovery modes).
+zero (spec §29). The survival margins ``eta_current − reset_in`` and
+``eta_short − reset_in`` are computed only when both sides are known;
+they are ``None`` when the provider never reports a reset
+(rolling/estimated recovery modes). ``confidence_short`` is resolved
+from the span of the ``burn_10m`` regression itself, so a thin
+10-minute window never borrows credibility from the longer history.
 """
 from __future__ import annotations
 
@@ -81,7 +86,7 @@ def build_forecast(
         is preferred when burns are absolute; otherwise ``used_percent``
         is used to derive the remaining fraction.
     burns:
-        Mapping of lookback label (``15m``/``1h``/``3h``) → :class:`BurnStat`.
+        Mapping of lookback label (``10m``/``15m``/``1h``/``3h``) → :class:`BurnStat`.
     now:
         Reference time (UTC, tz-aware).
     cfg:
@@ -110,6 +115,7 @@ def build_forecast(
     eta_current = _eta_seconds(remaining, burns.get("15m"))
     eta_stable = _eta_seconds(remaining, burns.get("1h"))
     eta_conservative = _eta_seconds(remaining, burns.get("3h"))
+    eta_short = _eta_seconds(remaining, burns.get("10m"))
 
     reset_in: float | None = None
     if latest.reset_at:
@@ -122,18 +128,30 @@ def build_forecast(
     if eta_current is not None and reset_in is not None:
         survival_margin = eta_current - reset_in
 
+    survival_margin_short: float | None = None
+    if eta_short is not None and reset_in is not None:
+        survival_margin_short = eta_short - reset_in
+
     confidence = confidence_from_span(segment_span_minutes)
+    burn_10m = burns.get("10m")
+    if eta_short is not None and burn_10m is not None:
+        confidence_short = confidence_from_span(burn_10m.span_minutes)
+    else:
+        confidence_short = t.CONFIDENCE_LOW
     mode = _recovery_mode(latest)
 
     return t.Forecast(
         eta_current_seconds=eta_current,
         eta_stable_seconds=eta_stable,
         eta_conservative_seconds=eta_conservative,
+        eta_short_seconds=eta_short,
         eta_basis_unit=basis_unit,
         reset_in_seconds=reset_in,
         survival_margin_seconds=survival_margin,
+        survival_margin_short_seconds=survival_margin_short,
         recovery_mode=mode,
         confidence=confidence,
+        confidence_short=confidence_short,
     )
 
 

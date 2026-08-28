@@ -29,6 +29,7 @@ from app.analytics.series import parse_iso_utc
 # ---------------------------------------------------------------------------
 
 _LOOKBACK_DURATION: dict[str, timedelta] = {
+    "10m": timedelta(minutes=10),
     "15m": timedelta(minutes=15),
     "1h": timedelta(hours=1),
     "3h": timedelta(hours=3),
@@ -38,6 +39,7 @@ _LOOKBACK_DURATION: dict[str, timedelta] = {
 }
 
 _LOOKBACK_HOURS: dict[str, float] = {
+    "10m": 10.0 / 60.0,
     "15m": 0.25,
     "1h": 1.0,
     "3h": 3.0,
@@ -230,17 +232,20 @@ def compute_burns(
 ) -> dict[str, t.BurnStat]:
     """Return burn stats for every relevant lookback window.
 
-    The standard three windows ``15m``, ``1h`` and ``3h`` are always
-    returned. For ``weekly`` windows, ``24h`` and ``3d`` are appended
-    so that pacing / weekly forecasting has enough history to work
-    with. A synthetic ``window`` burn is also computed over the whole
-    segment (from its earliest observation to ``now``); it is reported
-    as ``insufficient_data`` when fewer than the minimum points are
-    available.
+    The standard four windows ``10m``, ``15m``, ``1h`` and ``3h`` are
+    always returned. ``10m`` is the finest-grained pace: with the
+    default 60 s poll cadence it only sees the last ~10 minutes of
+    consumption, which tracks burst behaviour far closer than the
+    hourly rate. For ``weekly`` windows, ``24h`` and ``3d`` are
+    appended so that pacing / weekly forecasting has enough history to
+    work with. A synthetic ``window`` burn is also computed over the
+    whole segment (from its earliest observation to ``now``); it is
+    reported as ``insufficient_data`` when fewer than the minimum
+    points are available.
     """
     out: dict[str, t.BurnStat] = {}
 
-    for label in ("15m", "1h", "3h"):
+    for label in ("10m", "15m", "1h", "3h"):
         seconds = _LOOKBACK_DURATION[label].total_seconds()
         stat = compute_burn(current_segment_points, seconds, now, unit, cfg)
         stat.lookback = label

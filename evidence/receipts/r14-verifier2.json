@@ -1,0 +1,61 @@
+{
+  "schema": "hybrid_harness.evidence_receipt.v5",
+  "receipt_id": "r14-verifier2",
+  "subject_head": "a1ccfc032f0d8b6f59000aeb06e5b7d0e48952a2",
+  "execution_head": "0250ad8aaa71486b1620cb6fdf34b72038aa5a25",
+  "command": [
+    "/usr/bin/python3",
+    "scripts/harness/verifier_runner.py",
+    "evidence/verifier",
+    "test_*.py"
+  ],
+  "cwd": ".",
+  "environment_mode": "SANITIZED_PLUS_DECLARED_OVERRIDES",
+  "environment_overrides": {},
+  "base_environment": {
+    "PATH": "/home/yurig/.npm/_npx/de4831d60afe10da/node_modules/.bin:/home/yurig/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "HOME": "/home/yurig",
+    "LANG": "en_US.UTF-8"
+  },
+  "resolved_executable": "/usr/bin/python3",
+  "python_version": "3.14.4",
+  "clean_subject_tree": true,
+  "started_at_utc": "2026-08-27T02:57:07Z",
+  "finished_at_utc": "2026-08-27T02:57:07Z",
+  "exit_code": 1,
+  "output_path": "evidence/raw/r14-verifier2.log",
+  "output_sha256": "fea281ca2c044b1449e8e519894c76979d3b0f0a6f06354c3e9f0e17afee2ad6",
+  "input_files": [
+    {
+      "path": "evidence/verifier/test_r14_codex_full_params.py",
+      "sha256": "3c84e4dbb661c650f0c704f4e8919735e5ead35571417d09eb57e2229712b71e"
+    }
+  ],
+  "runner": "HARNESS_COMMAND_API_R11",
+  "verifier_result": {
+    "executed_test_ids": [
+      "unittest.loader._FailedTest.test_r14_codex_full_params"
+    ],
+    "failed_test_ids": [
+      "unittest.loader._FailedTest.test_r14_codex_full_params"
+    ],
+    "oracle_quality_findings": [],
+    "passed_test_ids": [],
+    "pattern": "test_*.py",
+    "schema": "hybrid_harness.verifier_execution.v2",
+    "skipped_test_ids": [],
+    "start_dir": "evidence/verifier",
+    "tests": [
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.test_r14_codex_full_params"
+      }
+    ]
+  }
+}

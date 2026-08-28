@@ -1,0 +1,1325 @@
+{
+  "schema": "hybrid_harness.evidence_receipt.v5",
+  "receipt_id": "r14-verifier",
+  "subject_head": "a1ccfc032f0d8b6f59000aeb06e5b7d0e48952a2",
+  "execution_head": "4a622bccc25f1fa25bf9acec5fecc0811070fe50",
+  "command": [
+    "/usr/bin/python3",
+    "scripts/harness/verifier_runner.py",
+    "tests",
+    "test_*.py"
+  ],
+  "cwd": ".",
+  "environment_mode": "SANITIZED_PLUS_DECLARED_OVERRIDES",
+  "environment_overrides": {},
+  "base_environment": {
+    "PATH": "/home/yurig/.npm/_npx/de4831d60afe10da/node_modules/.bin:/home/yurig/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "HOME": "/home/yurig",
+    "LANG": "en_US.UTF-8"
+  },
+  "resolved_executable": "/usr/bin/python3",
+  "python_version": "3.14.4",
+  "clean_subject_tree": true,
+  "started_at_utc": "2026-08-27T02:56:08Z",
+  "finished_at_utc": "2026-08-27T02:56:25Z",
+  "exit_code": 1,
+  "output_path": "evidence/raw/r14-verifier.log",
+  "output_sha256": "f0e4ddf01c809b188fbd692c7602e845aa17b630aa13a7c7133cccacba7f6f85",
+  "input_files": [
+    {
+      "path": "tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/fakes.py",
+      "sha256": "d4fd0746b26fc8b7be026334f340f40a1c8f0bccab4a712a1b2aa8ca067d5d04"
+    },
+    {
+      "path": "tests/integration/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/integration/test_api_analytics.py",
+      "sha256": "5523fd73d973b816afd93190a8154870a567fcca9d0d91037847d7c1dd89b9e4"
+    },
+    {
+      "path": "tests/integration/test_restart_persistence.py",
+      "sha256": "49b0761be5a4581d2abda5956b9f1209576a4965fa5f95965913f249e4cbce1c"
+    },
+    {
+      "path": "tests/integration/test_scenarios.py",
+      "sha256": "eaf64f3fbc43fe27ed28786189dc4eaeb142f29f32c08093a80e22f2c706ca07"
+    },
+    {
+      "path": "tests/integration/test_store_quota.py",
+      "sha256": "71e92e1523d90c827d27d27c93cc2a3c9be2b1be8c50b24ce4fd1fdd221148dc"
+    },
+    {
+      "path": "tests/test_continuation.py",
+      "sha256": "1510f04b4358ea6092f62727533decf265299b08064207c061bafa9915eaf427"
+    },
+    {
+      "path": "tests/test_hardening.py",
+      "sha256": "fb0d73c9a8b6df2078dab1e796422296558a91f32aa81835f7051cc4797698e1"
+    },
+    {
+      "path": "tests/test_harness.py",
+      "sha256": "654657c6a73bf4c0baa41c24b4424faa3abc96ac969b50b77ebbf390dfe97884"
+    },
+    {
+      "path": "tests/test_parsers.py",
+      "sha256": "bbeaaa3b0b3c27d59d5afdcc62c0bd3f8d52880435ba1eb5cd121918fd84089a"
+    },
+    {
+      "path": "tests/test_portability_r8.py",
+      "sha256": "2cfefef67c01a984a3286b50db4ffd80392d4875ff572a9f556d13515c1e86f0"
+    },
+    {
+      "path": "tests/test_r10_semantic_proof.py",
+      "sha256": "8b5467791ff98072b233372d055bc4cfb2a0bff9ef17a867d9b196004c719de8"
+    },
+    {
+      "path": "tests/test_r11_efficiency.py",
+      "sha256": "dda45eb69888e24b9ef14c6b7a69186096a46100ec2d2163d11a67c710cebab7"
+    },
+    {
+      "path": "tests/test_r12_lean.py",
+      "sha256": "3a270fe1d49b65e40351befe8ba25af68059f937a086d9cca64eec70b9e16acb"
+    },
+    {
+      "path": "tests/test_r9_hardening.py",
+      "sha256": "c175c9c524bcd5e2e937815df4854295baea235fc2ae9229e17d99f0e6e9f751"
+    },
+    {
+      "path": "tests/test_redaction.py",
+      "sha256": "8df764ce9e8a8644cca74c760d8ea1c38e3aaa4d2f440e5abe93a1bbc1ecda35"
+    },
+    {
+      "path": "tests/test_requirement_traceability.py",
+      "sha256": "aca3e7c4bc18ce78413aa10d7e2fb3a1e1d4a7f4ae70c176ac90e97996628232"
+    },
+    {
+      "path": "tests/test_semantic_assurance.py",
+      "sha256": "19a2188273cee0296808d2c0c6d147bb1a5bab7bef03e4f8010f41113b826d6c"
+    },
+    {
+      "path": "tests/test_status_contract.py",
+      "sha256": "66d775767f7ecfc1a118b71f57b249b96c6e51d32c004b14384d00f4bac88e0d"
+    },
+    {
+      "path": "tests/test_store.py",
+      "sha256": "27ecd84d8359a013e140e067973b7a1887d4a432d73a8b08df6201868c6e9083"
+    },
+    {
+      "path": "tests/test_time_handling.py",
+      "sha256": "06f9b1c942a06b6103d0babd67417cfb61ff63125c80148e2aebf5a0b26478a2"
+    },
+    {
+      "path": "tests/unit/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/unit/test_balance_currency_split.py",
+      "sha256": "4a68ab431d9c484a1080330a8bbe2a7fc4bd96f98671e28528d0ec93bf33989f"
+    },
+    {
+      "path": "tests/unit/test_burn_rate.py",
+      "sha256": "aa0c082083e4cd0e897da69fdfbd7f68d652a7981ea2a0848ce389a27cde5772"
+    },
+    {
+      "path": "tests/unit/test_chart_balance_render.py",
+      "sha256": "d1e0dfc95ff428408e572bbdf6be27edf95995977b80c4cb80c0c6266f5e23b7"
+    },
+    {
+      "path": "tests/unit/test_confidence.py",
+      "sha256": "fa970da164b3e107c6867f03dd259ea15b5354bb169a1e559219e105d724502f"
+    },
+    {
+      "path": "tests/unit/test_dashboard_drag_reorder.py",
+      "sha256": "5c84af8fceb3f3d30cf50850444a5013de0114fb3413d673d54c42549ee2c6ee"
+    },
+    {
+      "path": "tests/unit/test_demo_isolation.py",
+      "sha256": "ad7de007b3e12848310f8d5d1e3cf37e4243258a994684943d2d1845af5842f7"
+    },
+    {
+      "path": "tests/unit/test_engine_details_passthrough.py",
+      "sha256": "7e24edf321e4be3afba598e8d1f338cd81e8dbe1824c5914962e7b4c98d5e2aa"
+    },
+    {
+      "path": "tests/unit/test_events.py",
+      "sha256": "1ea3bc3e7ac20b26d4e34f41d9d0439e6aa654ae7590674b8b5383f711fa71f1"
+    },
+    {
+      "path": "tests/unit/test_forecast.py",
+      "sha256": "93f314df56c22698c4eafb166d64370269353923c53a83269779468c553a94a7"
+    },
+    {
+      "path": "tests/unit/test_normalize.py",
+      "sha256": "0316e494acd7b9406392b42ea6ad72abafeb0159d776ea6b83cab0e63696fa44"
+    },
+    {
+      "path": "tests/unit/test_pacing.py",
+      "sha256": "c22737999a1d99e07bd70866c27dca8c700c4db8ec1701710cd61e0c4352963b"
+    },
+    {
+      "path": "tests/unit/test_plans.py",
+      "sha256": "6d9f24af95031af25a02927fa6850c70523a30b2fc00d4f0044b0bcfe5ed13c0"
+    },
+    {
+      "path": "tests/unit/test_provider_order.py",
+      "sha256": "c109105c0a3bcd462726fe1f23b24dbe314e4f4107f82abe05db68cc6dd124ad"
+    },
+    {
+      "path": "tests/unit/test_recommendation.py",
+      "sha256": "7e1741064570810c03b35903ac66145b5f7a54933ce6dd205eac46c314ca528a"
+    },
+    {
+      "path": "tests/unit/test_risk.py",
+      "sha256": "a27c4bf7d72765f78b97f0b2c4db37e05d260e1235d2590e384f6fac9df94596"
+    },
+    {
+      "path": "tests/unit/test_risk_runway_factor.py",
+      "sha256": "81e2249e87031221c270b28e10d4bb0f071b85cedde9eef87878e67020442a15"
+    },
+    {
+      "path": "tests/unit/test_runway.py",
+      "sha256": "b4c1a33ff1131a13348bdc1910356f446e1978816f6093f83e64ef53857cd4ba"
+    },
+    {
+      "path": "tests/unit/test_series.py",
+      "sha256": "3a37d26985c5c516dc04289632466d48a50dfb8446754d98937929f054627628"
+    },
+    {
+      "path": "tests/unit/test_static_assets.py",
+      "sha256": "4f63989d2faa0a6ee14f40bde551e4d7c88c45e27d629155fbe66dac1eb72291"
+    }
+  ],
+  "runner": "HARNESS_COMMAND_API_R11",
+  "verifier_result": {
+    "executed_test_ids": [
+      "test_continuation.ContinuationTests.test_chat_only_pass_does_not_advance",
+      "test_continuation.ContinuationTests.test_fresh_durable_pass_advances_to_director_when_ready",
+      "test_continuation.ContinuationTests.test_human_only_for_explicit_attention",
+      "test_continuation.ContinuationTests.test_mission_complete_is_terminal",
+      "test_continuation.ContinuationTests.test_stale_review_returns_to_reviewer",
+      "test_hardening.HardeningTests.test_candidate_lock_cannot_self_expand_closure_policy",
+      "test_hardening.HardeningTests.test_canonical_amend_is_detected_locally",
+      "test_hardening.HardeningTests.test_completion_requires_released_lease",
+      "test_hardening.HardeningTests.test_declared_complete_without_machine_proof_is_blocked",
+      "test_hardening.HardeningTests.test_duplicate_json_keys_are_rejected",
+      "test_hardening.HardeningTests.test_ed25519_rfc8032_vector",
+      "test_hardening.HardeningTests.test_evidence_map_may_not_self_author_derived_lineage",
+      "test_hardening.HardeningTests.test_fake_external_signature_is_rejected",
+      "test_hardening.HardeningTests.test_freeform_proof_ref_cannot_replace_signed_attestation",
+      "test_hardening.HardeningTests.test_freeze_candidate_rejects_dirty_product_tree",
+      "test_hardening.HardeningTests.test_integration_authorization_must_precede_source",
+      "test_hardening.HardeningTests.test_integration_result_must_remain_ancestor_of_final",
+      "test_hardening.HardeningTests.test_old_event_cannot_be_rewritten_even_with_rehashed_tail",
+      "test_hardening.HardeningTests.test_post_integration_receipt_is_required",
+      "test_hardening.HardeningTests.test_product_change_after_candidate_invalidates_completion",
+      "test_hardening.HardeningTests.test_raw_receipt_output_must_be_git_durable",
+      "test_hardening.HardeningTests.test_review_contract_forces_medium_floor",
+      "test_hardening.HardeningTests.test_trust_key_must_exist_at_base",
+      "test_hardening.HardeningTests.test_uncommitted_evidence_cannot_complete",
+      "test_hardening.HardeningTests.test_valid_r7_flow_is_proven",
+      "test_hardening.HardeningTests.test_work_order_cannot_be_mutated_after_dispatch",
+      "test_hardening.HardeningTests.test_wrong_product_commit_identity_is_rejected",
+      "test_harness.HybridHarnessTests.test_baseline_is_green",
+      "test_harness.HybridHarnessTests.test_mutation_selftest_is_not_embedded_in_unit_discovery",
+      "test_portability_r8.R8PortabilityHistoryTests.test_forbidden_closure_path_cannot_be_laundered_by_revert",
+      "test_portability_r8.R8PortabilityHistoryTests.test_mutate_then_revert_does_not_restore_immutability",
+      "test_portability_r8.R8PortabilityHistoryTests.test_replace_refs_are_rejected_even_though_gitproof_ignores_overlay",
+      "test_portability_r8.R8PortabilityHistoryTests.test_review_consumer_binds_exact_attestation_sha_and_blob",
+      "test_portability_r8.R8PortabilityHistoryTests.test_trajectory_helper_reports_intermediate_violation",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_base_owned_runner_emits_exact_test_and_oracle_observation",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_declared_oracle_must_have_succeeded_at_runtime",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_h99_style_partition_overclaim_is_rejected",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_manifest_test_id_not_seen_as_pass_is_rejected",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_plain_prose_wrapping_has_stable_clause_identity",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_runtime_case_metadata_must_match_manifest",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_valid_case_derived_runtime_bound_coverage_passes",
+      "test_r11_efficiency.R11EfficiencyTests.test_attempt_retry_preserves_old_history_and_creates_new_dispatch",
+      "test_r11_efficiency.R11EfficiencyTests.test_contract_observation_kind_mismatch_blocks_coverage",
+      "test_r11_efficiency.R11EfficiencyTests.test_declared_complete_with_findings_has_invalid_completion_effective_state",
+      "test_r11_efficiency.R11EfficiencyTests.test_h10_style_assert_true_oracle_is_rejected",
+      "test_r11_efficiency.R11EfficiencyTests.test_resume_keeps_runtime_timeout_diagnostic_separate_from_durable_state",
+      "test_r11_efficiency.R11EfficiencyTests.test_structured_raises_oracle_is_machine_observable",
+      "test_r11_efficiency.R11EfficiencyTests.test_trivial_constant_equal_oracle_is_rejected_even_if_test_passes",
+      "test_r12_lean.R12LeanTests.test_brief_is_bounded_and_avoids_harness_source_as_normal_context",
+      "test_r12_lean.R12LeanTests.test_candidate_check_refuses_idle_template",
+      "test_r12_lean.R12LeanTests.test_default_finding_rows_are_deduplicated_and_bounded",
+      "test_r12_lean.R12LeanTests.test_r12_policy_keeps_lean_guards_machine_declared",
+      "test_r12_lean.R12LeanTests.test_verifier_runner_uses_compact_compressed_transport_by_default",
+      "test_r9_hardening.R9HardeningTests.test_attestation_prerequisite_time_after_issuance_is_rejected",
+      "test_r9_hardening.R9HardeningTests.test_future_dated_review_attestation_claim_is_rejected",
+      "test_r9_hardening.R9HardeningTests.test_h8_style_future_issued_time_is_rejected_by_pure_temporal_gate",
+      "test_r9_hardening.R9HardeningTests.test_logical_clause_hash_is_stable_across_markdown_line_wrapping",
+      "test_r9_hardening.R9HardeningTests.test_wrapped_normative_bullet_is_one_logical_clause_not_fragments",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_attestation_evidence_digest_tamper_is_rejected",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_implementation_branch_reset_is_detected_when_reflog_exists",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_integration_attestation_cannot_predate_director_readiness",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_negative_balance_requirement_forces_domain_partitions",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_no_negative_balance_is_machine_extracted_as_normative",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_requirement_must_reach_verifier_coverage",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_review_attestation_cannot_be_bound_to_same_commit_review_event",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_semantic_trigger_respects_word_boundary",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_unmapped_normative_clause_is_rejected",
+      "unittest.loader._FailedTest.integration.test_api_analytics",
+      "unittest.loader._FailedTest.integration.test_restart_persistence",
+      "unittest.loader._FailedTest.integration.test_scenarios",
+      "unittest.loader._FailedTest.integration.test_store_quota",
+      "unittest.loader._FailedTest.test_parsers",
+      "unittest.loader._FailedTest.test_redaction",
+      "unittest.loader._FailedTest.test_semantic_assurance",
+      "unittest.loader._FailedTest.test_store",
+      "unittest.loader._FailedTest.test_time_handling",
+      "unittest.loader._FailedTest.unit.test_balance_currency_split",
+      "unittest.loader._FailedTest.unit.test_burn_rate",
+      "unittest.loader._FailedTest.unit.test_confidence",
+      "unittest.loader._FailedTest.unit.test_demo_isolation",
+      "unittest.loader._FailedTest.unit.test_engine_details_passthrough",
+      "unittest.loader._FailedTest.unit.test_events",
+      "unittest.loader._FailedTest.unit.test_forecast",
+      "unittest.loader._FailedTest.unit.test_normalize",
+      "unittest.loader._FailedTest.unit.test_pacing",
+      "unittest.loader._FailedTest.unit.test_plans",
+      "unittest.loader._FailedTest.unit.test_provider_order",
+      "unittest.loader._FailedTest.unit.test_recommendation",
+      "unittest.loader._FailedTest.unit.test_risk",
+      "unittest.loader._FailedTest.unit.test_risk_runway_factor",
+      "unittest.loader._FailedTest.unit.test_runway",
+      "unittest.loader._FailedTest.unit.test_series"
+    ],
+    "failed_test_ids": [
+      "unittest.loader._FailedTest.integration.test_api_analytics",
+      "unittest.loader._FailedTest.integration.test_restart_persistence",
+      "unittest.loader._FailedTest.integration.test_scenarios",
+      "unittest.loader._FailedTest.integration.test_store_quota",
+      "unittest.loader._FailedTest.test_parsers",
+      "unittest.loader._FailedTest.test_redaction",
+      "unittest.loader._FailedTest.test_semantic_assurance",
+      "unittest.loader._FailedTest.test_store",
+      "unittest.loader._FailedTest.test_time_handling",
+      "unittest.loader._FailedTest.unit.test_balance_currency_split",
+      "unittest.loader._FailedTest.unit.test_burn_rate",
+      "unittest.loader._FailedTest.unit.test_confidence",
+      "unittest.loader._FailedTest.unit.test_demo_isolation",
+      "unittest.loader._FailedTest.unit.test_engine_details_passthrough",
+      "unittest.loader._FailedTest.unit.test_events",
+      "unittest.loader._FailedTest.unit.test_forecast",
+      "unittest.loader._FailedTest.unit.test_normalize",
+      "unittest.loader._FailedTest.unit.test_pacing",
+      "unittest.loader._FailedTest.unit.test_plans",
+      "unittest.loader._FailedTest.unit.test_provider_order",
+      "unittest.loader._FailedTest.unit.test_recommendation",
+      "unittest.loader._FailedTest.unit.test_risk",
+      "unittest.loader._FailedTest.unit.test_risk_runway_factor",
+      "unittest.loader._FailedTest.unit.test_runway",
+      "unittest.loader._FailedTest.unit.test_series"
+    ],
+    "oracle_quality_findings": [
+      "test_r9_hardening.R9HardeningTests.test_logical_clause_hash_is_stable_across_markdown_line_wrapping:ORACLE_SOURCE_UNAVAILABLE",
+      "test_r9_hardening.R9HardeningTests.test_wrapped_normative_bullet_is_one_logical_clause_not_fragments:ORACLE_SOURCE_UNAVAILABLE"
+    ],
+    "passed_test_ids": [
+      "test_continuation.ContinuationTests.test_chat_only_pass_does_not_advance",
+      "test_continuation.ContinuationTests.test_fresh_durable_pass_advances_to_director_when_ready",
+      "test_continuation.ContinuationTests.test_human_only_for_explicit_attention",
+      "test_continuation.ContinuationTests.test_mission_complete_is_terminal",
+      "test_continuation.ContinuationTests.test_stale_review_returns_to_reviewer",
+      "test_hardening.HardeningTests.test_candidate_lock_cannot_self_expand_closure_policy",
+      "test_hardening.HardeningTests.test_canonical_amend_is_detected_locally",
+      "test_hardening.HardeningTests.test_completion_requires_released_lease",
+      "test_hardening.HardeningTests.test_declared_complete_without_machine_proof_is_blocked",
+      "test_hardening.HardeningTests.test_duplicate_json_keys_are_rejected",
+      "test_hardening.HardeningTests.test_ed25519_rfc8032_vector",
+      "test_hardening.HardeningTests.test_evidence_map_may_not_self_author_derived_lineage",
+      "test_hardening.HardeningTests.test_fake_external_signature_is_rejected",
+      "test_hardening.HardeningTests.test_freeform_proof_ref_cannot_replace_signed_attestation",
+      "test_hardening.HardeningTests.test_freeze_candidate_rejects_dirty_product_tree",
+      "test_hardening.HardeningTests.test_integration_authorization_must_precede_source",
+      "test_hardening.HardeningTests.test_integration_result_must_remain_ancestor_of_final",
+      "test_hardening.HardeningTests.test_old_event_cannot_be_rewritten_even_with_rehashed_tail",
+      "test_hardening.HardeningTests.test_post_integration_receipt_is_required",
+      "test_hardening.HardeningTests.test_product_change_after_candidate_invalidates_completion",
+      "test_hardening.HardeningTests.test_raw_receipt_output_must_be_git_durable",
+      "test_hardening.HardeningTests.test_review_contract_forces_medium_floor",
+      "test_hardening.HardeningTests.test_trust_key_must_exist_at_base",
+      "test_hardening.HardeningTests.test_uncommitted_evidence_cannot_complete",
+      "test_hardening.HardeningTests.test_valid_r7_flow_is_proven",
+      "test_hardening.HardeningTests.test_work_order_cannot_be_mutated_after_dispatch",
+      "test_hardening.HardeningTests.test_wrong_product_commit_identity_is_rejected",
+      "test_harness.HybridHarnessTests.test_baseline_is_green",
+      "test_harness.HybridHarnessTests.test_mutation_selftest_is_not_embedded_in_unit_discovery",
+      "test_portability_r8.R8PortabilityHistoryTests.test_forbidden_closure_path_cannot_be_laundered_by_revert",
+      "test_portability_r8.R8PortabilityHistoryTests.test_mutate_then_revert_does_not_restore_immutability",
+      "test_portability_r8.R8PortabilityHistoryTests.test_replace_refs_are_rejected_even_though_gitproof_ignores_overlay",
+      "test_portability_r8.R8PortabilityHistoryTests.test_review_consumer_binds_exact_attestation_sha_and_blob",
+      "test_portability_r8.R8PortabilityHistoryTests.test_trajectory_helper_reports_intermediate_violation",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_base_owned_runner_emits_exact_test_and_oracle_observation",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_declared_oracle_must_have_succeeded_at_runtime",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_h99_style_partition_overclaim_is_rejected",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_manifest_test_id_not_seen_as_pass_is_rejected",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_plain_prose_wrapping_has_stable_clause_identity",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_runtime_case_metadata_must_match_manifest",
+      "test_r10_semantic_proof.R10SemanticProofTests.test_valid_case_derived_runtime_bound_coverage_passes",
+      "test_r11_efficiency.R11EfficiencyTests.test_attempt_retry_preserves_old_history_and_creates_new_dispatch",
+      "test_r11_efficiency.R11EfficiencyTests.test_contract_observation_kind_mismatch_blocks_coverage",
+      "test_r11_efficiency.R11EfficiencyTests.test_declared_complete_with_findings_has_invalid_completion_effective_state",
+      "test_r11_efficiency.R11EfficiencyTests.test_h10_style_assert_true_oracle_is_rejected",
+      "test_r11_efficiency.R11EfficiencyTests.test_resume_keeps_runtime_timeout_diagnostic_separate_from_durable_state",
+      "test_r11_efficiency.R11EfficiencyTests.test_structured_raises_oracle_is_machine_observable",
+      "test_r11_efficiency.R11EfficiencyTests.test_trivial_constant_equal_oracle_is_rejected_even_if_test_passes",
+      "test_r12_lean.R12LeanTests.test_brief_is_bounded_and_avoids_harness_source_as_normal_context",
+      "test_r12_lean.R12LeanTests.test_candidate_check_refuses_idle_template",
+      "test_r12_lean.R12LeanTests.test_default_finding_rows_are_deduplicated_and_bounded",
+      "test_r12_lean.R12LeanTests.test_r12_policy_keeps_lean_guards_machine_declared",
+      "test_r12_lean.R12LeanTests.test_verifier_runner_uses_compact_compressed_transport_by_default",
+      "test_r9_hardening.R9HardeningTests.test_attestation_prerequisite_time_after_issuance_is_rejected",
+      "test_r9_hardening.R9HardeningTests.test_future_dated_review_attestation_claim_is_rejected",
+      "test_r9_hardening.R9HardeningTests.test_h8_style_future_issued_time_is_rejected_by_pure_temporal_gate",
+      "test_r9_hardening.R9HardeningTests.test_logical_clause_hash_is_stable_across_markdown_line_wrapping",
+      "test_r9_hardening.R9HardeningTests.test_wrapped_normative_bullet_is_one_logical_clause_not_fragments",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_attestation_evidence_digest_tamper_is_rejected",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_implementation_branch_reset_is_detected_when_reflog_exists",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_integration_attestation_cannot_predate_director_readiness",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_negative_balance_requirement_forces_domain_partitions",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_no_negative_balance_is_machine_extracted_as_normative",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_requirement_must_reach_verifier_coverage",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_review_attestation_cannot_be_bound_to_same_commit_review_event",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_semantic_trigger_respects_word_boundary",
+      "test_requirement_traceability.RequirementTraceabilityTests.test_unmapped_normative_clause_is_rejected"
+    ],
+    "pattern": "test_*.py",
+    "schema": "hybrid_harness.verifier_execution.v2",
+    "skipped_test_ids": [],
+    "start_dir": "tests",
+    "tests": [
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_continuation.ContinuationTests.test_chat_only_pass_does_not_advance"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_continuation.ContinuationTests.test_fresh_durable_pass_advances_to_director_when_ready"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_continuation.ContinuationTests.test_human_only_for_explicit_attention"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_continuation.ContinuationTests.test_mission_complete_is_terminal"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_continuation.ContinuationTests.test_stale_review_returns_to_reviewer"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_candidate_lock_cannot_self_expand_closure_policy"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_canonical_amend_is_detected_locally"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_completion_requires_released_lease"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_declared_complete_without_machine_proof_is_blocked"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_duplicate_json_keys_are_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_ed25519_rfc8032_vector"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_evidence_map_may_not_self_author_derived_lineage"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_fake_external_signature_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_freeform_proof_ref_cannot_replace_signed_attestation"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_freeze_candidate_rejects_dirty_product_tree"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_integration_authorization_must_precede_source"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_integration_result_must_remain_ancestor_of_final"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_old_event_cannot_be_rewritten_even_with_rehashed_tail"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_post_integration_receipt_is_required"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_product_change_after_candidate_invalidates_completion"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_raw_receipt_output_must_be_git_durable"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_review_contract_forces_medium_floor"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_trust_key_must_exist_at_base"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_uncommitted_evidence_cannot_complete"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_valid_r7_flow_is_proven"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_work_order_cannot_be_mutated_after_dispatch"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_hardening.HardeningTests.test_wrong_product_commit_identity_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_harness.HybridHarnessTests.test_baseline_is_green"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_harness.HybridHarnessTests.test_mutation_selftest_is_not_embedded_in_unit_discovery"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_portability_r8.R8PortabilityHistoryTests.test_forbidden_closure_path_cannot_be_laundered_by_revert"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_portability_r8.R8PortabilityHistoryTests.test_mutate_then_revert_does_not_restore_immutability"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_portability_r8.R8PortabilityHistoryTests.test_replace_refs_are_rejected_even_though_gitproof_ignores_overlay"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_portability_r8.R8PortabilityHistoryTests.test_review_consumer_binds_exact_attestation_sha_and_blob"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_portability_r8.R8PortabilityHistoryTests.test_trajectory_helper_reports_intermediate_violation"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r10_semantic_proof.R10SemanticProofTests.test_base_owned_runner_emits_exact_test_and_oracle_observation"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r10_semantic_proof.R10SemanticProofTests.test_declared_oracle_must_have_succeeded_at_runtime"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r10_semantic_proof.R10SemanticProofTests.test_h99_style_partition_overclaim_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r10_semantic_proof.R10SemanticProofTests.test_manifest_test_id_not_seen_as_pass_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r10_semantic_proof.R10SemanticProofTests.test_plain_prose_wrapping_has_stable_clause_identity"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r10_semantic_proof.R10SemanticProofTests.test_runtime_case_metadata_must_match_manifest"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r10_semantic_proof.R10SemanticProofTests.test_valid_case_derived_runtime_bound_coverage_passes"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r11_efficiency.R11EfficiencyTests.test_attempt_retry_preserves_old_history_and_creates_new_dispatch"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r11_efficiency.R11EfficiencyTests.test_contract_observation_kind_mismatch_blocks_coverage"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r11_efficiency.R11EfficiencyTests.test_declared_complete_with_findings_has_invalid_completion_effective_state"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r11_efficiency.R11EfficiencyTests.test_h10_style_assert_true_oracle_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r11_efficiency.R11EfficiencyTests.test_resume_keeps_runtime_timeout_diagnostic_separate_from_durable_state"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r11_efficiency.R11EfficiencyTests.test_structured_raises_oracle_is_machine_observable"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r11_efficiency.R11EfficiencyTests.test_trivial_constant_equal_oracle_is_rejected_even_if_test_passes"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r12_lean.R12LeanTests.test_brief_is_bounded_and_avoids_harness_source_as_normal_context"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r12_lean.R12LeanTests.test_candidate_check_refuses_idle_template"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r12_lean.R12LeanTests.test_default_finding_rows_are_deduplicated_and_bounded"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r12_lean.R12LeanTests.test_r12_policy_keeps_lean_guards_machine_declared"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r12_lean.R12LeanTests.test_verifier_runner_uses_compact_compressed_transport_by_default"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r9_hardening.R9HardeningTests.test_attestation_prerequisite_time_after_issuance_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r9_hardening.R9HardeningTests.test_future_dated_review_attestation_claim_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r9_hardening.R9HardeningTests.test_h8_style_future_issued_time_is_rejected_by_pure_temporal_gate"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [
+          "ORACLE_SOURCE_UNAVAILABLE"
+        ],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r9_hardening.R9HardeningTests.test_logical_clause_hash_is_stable_across_markdown_line_wrapping"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [
+          "ORACLE_SOURCE_UNAVAILABLE"
+        ],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_r9_hardening.R9HardeningTests.test_wrapped_normative_bullet_is_one_logical_clause_not_fragments"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_attestation_evidence_digest_tamper_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_implementation_branch_reset_is_detected_when_reflog_exists"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_integration_attestation_cannot_predate_director_readiness"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_negative_balance_requirement_forces_domain_partitions"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_no_negative_balance_is_machine_extracted_as_normative"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_requirement_must_reach_verifier_coverage"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_review_attestation_cannot_be_bound_to_same_commit_review_event"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_semantic_trigger_respects_word_boundary"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "PASS",
+        "test_id": "test_requirement_traceability.RequirementTraceabilityTests.test_unmapped_normative_clause_is_rejected"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.integration.test_api_analytics"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.integration.test_restart_persistence"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.integration.test_scenarios"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.integration.test_store_quota"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.test_parsers"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.test_redaction"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.test_semantic_assurance"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.test_store"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.test_time_handling"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_balance_currency_split"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_burn_rate"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_confidence"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_demo_isolation"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_engine_details_passthrough"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_events"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_forecast"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_normalize"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_pacing"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_plans"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_provider_order"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_recommendation"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_risk"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_risk_runway_factor"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_runway"
+      },
+      {
+        "case_id": null,
+        "observed_oracle_ids": [],
+        "oracle_ids": [],
+        "oracle_observations": [],
+        "oracle_quality_findings": [],
+        "partitions": [],
+        "status": "ERROR",
+        "test_id": "unittest.loader._FailedTest.unit.test_series"
+      }
+    ]
+  }
+}

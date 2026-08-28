@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Awaitable, Callable, Optional
 
 from app.config import Settings
@@ -33,13 +34,38 @@ class Collector:
         # tick counter advances demo_snapshots() between cycles.
         self._demo_seeded: bool = False
         self._demo_tick: int = 0
-        self.providers = [
-            ZaiProvider(settings.zai_api_key, settings.zai_base_url, settings.request_timeout_seconds),
-            MiniMaxProvider(settings.minimax_api_key, settings.minimax_base_url, settings.request_timeout_seconds),
-            DeepSeekProvider(settings.deepseek_api_key, settings.deepseek_base_url, settings.request_timeout_seconds),
-            OpenRouterProvider(settings.openrouter_api_key, settings.openrouter_management_key, settings.openrouter_base_url, settings.request_timeout_seconds),
-            CodexProvider(settings.resolve_codex_auth_path(), settings.codex_base_url, settings.request_timeout_seconds),
-        ]
+        self.providers = self._build_providers()
+
+    def _build_providers(self) -> list:
+        """Instantiate providers from DB overrides layered over .env defaults."""
+        from app.provider_settings import merge_provider_configs
+
+        merged = merge_provider_configs(self.store, self.settings)
+        s, timeout = self.settings, self.settings.request_timeout_seconds
+        instances: dict[str, object] = {
+            "zai": ZaiProvider(merged["zai"].get("api_key") or "", merged["zai"].get("base_url") or s.zai_base_url, timeout),
+            "minimax": MiniMaxProvider(merged["minimax"].get("api_key") or "", merged["minimax"].get("base_url") or s.minimax_base_url, timeout),
+            "deepseek": DeepSeekProvider(merged["deepseek"].get("api_key") or "", merged["deepseek"].get("base_url") or s.deepseek_base_url, timeout),
+            "openrouter": OpenRouterProvider(
+                merged["openrouter"].get("api_key") or "",
+                merged["openrouter"].get("management_key") or "",
+                merged["openrouter"].get("base_url") or s.openrouter_base_url,
+                timeout,
+            ),
+            "codex": CodexProvider(
+                Path(merged["codex"]["auth_path"]).expanduser() if merged["codex"].get("auth_path") else s.resolve_codex_auth_path(),
+                merged["codex"].get("base_url") or s.codex_base_url,
+                timeout,
+            ),
+        }
+        return [inst for slug, inst in instances.items() if merged[slug].get("_enabled", True)]
+
+    def rebuild_providers(self, store=None) -> None:
+        """Re-read config (admin cabinet edits) without restarting the process."""
+        if not self._lock.locked():
+            self.providers = self._build_providers()
+        else:
+            log.info("collector busy; provider list rebuilt on next cycle")
 
     async def collect(self) -> list[dict]:
         async with self._lock:

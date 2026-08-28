@@ -1,0 +1,18 @@
+{
+  "schema": "hybrid_harness.event.v2",
+  "seq": 2,
+  "prev_event_sha256": "1d6326a04497aff5f66b3b7c935affd09dab068f52300317cce32f3462e3fc88",
+  "phase": "r13-closure",
+  "actor_id": "agent",
+  "subject_head": "4fe15feb34b494603c86f69dd1cb90bf500fa030",
+  "verdict": "pass",
+  "recorded_at_utc": "2026-08-27T01:34:49Z",
+  "validate_active": "PASS",
+  "portable_check": "PASS",
+  "selftest": "PASS mutations=43",
+  "final_report": "PASS",
+  "validate_ready": "FAIL NO_ACTIVE_MISSION_FOR_COMPLETION (no mission dispatched; ROLE_BOUNDARY for DIRECTOR)",
+  "harness_fix": "print_findings tolerates severity-less ActiveFinding (validate-ready crash)",
+  "tests": "321 passed (pytest tests -q)",
+  "candidate_head": "4fe15feb34b494603c86f69dd1cb90bf500fa030"
+}

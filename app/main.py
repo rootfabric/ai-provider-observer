@@ -10,6 +10,8 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.admin import router as admin_router
+from app.auth import hash_password
 from app.collector import Collector, add_trends
 from app.config import Settings
 from app.engine import AnalyticsEngine
@@ -20,6 +22,17 @@ settings = Settings()
 store = Store(settings.database_path, include_demo_rows=settings.demo_mode)
 engine = AnalyticsEngine(store, settings)
 collector = Collector(settings, store, on_collect=lambda: engine.refresh_all())
+
+
+# Optional bootstrap: ADMIN_USER/ADMIN_PASSWORD in .env create the first
+# cabinet account automatically; otherwise the UI offers first-time setup.
+if not store.count_users():
+    import os
+
+    _bootstrap_user = os.getenv("ADMIN_USER", "").strip()
+    _bootstrap_password = os.getenv("ADMIN_PASSWORD", "")
+    if _bootstrap_user and _bootstrap_password:
+        store.create_user(_bootstrap_user, hash_password(_bootstrap_password))
 
 
 @asynccontextmanager
@@ -35,6 +48,10 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="AI Provider Observer", version="0.1.0", lifespan=lifespan)
+app.state.store = store
+app.state.settings = settings
+app.state.collector = collector
+app.include_router(admin_router)
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 

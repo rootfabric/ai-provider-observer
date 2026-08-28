@@ -1,0 +1,383 @@
+======================================================================
+ERROR: integration.test_api_analytics (unittest.loader._FailedTest.integration.test_api_analytics)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: integration.test_api_analytics
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/integration/test_api_analytics.py", line 17, in <module>
+    from fastapi.testclient import TestClient
+ModuleNotFoundError: No module named 'fastapi'
+
+
+======================================================================
+ERROR: integration.test_restart_persistence (unittest.loader._FailedTest.integration.test_restart_persistence)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: integration.test_restart_persistence
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/integration/test_restart_persistence.py", line 20, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: integration.test_scenarios (unittest.loader._FailedTest.integration.test_scenarios)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: integration.test_scenarios
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/integration/test_scenarios.py", line 28, in <module>
+    from fastapi.testclient import TestClient
+ModuleNotFoundError: No module named 'fastapi'
+
+
+======================================================================
+ERROR: integration.test_store_quota (unittest.loader._FailedTest.integration.test_store_quota)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: integration.test_store_quota
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/integration/test_store_quota.py", line 7, in <module>
+    from app.models import ProviderSnapshot, QuotaWindow
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: test_parsers (unittest.loader._FailedTest.test_parsers)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_parsers
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/test_parsers.py", line 1, in <module>
+    from app.providers.codex import CodexProvider
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: test_redaction (unittest.loader._FailedTest.test_redaction)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_redaction
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/test_redaction.py", line 36, in <module>
+    from fastapi.testclient import TestClient
+ModuleNotFoundError: No module named 'fastapi'
+
+
+======================================================================
+ERROR: test_semantic_assurance (unittest.loader._FailedTest.test_semantic_assurance)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_semantic_assurance
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/test_semantic_assurance.py", line 14, in <module>
+    from tests.test_hardening import ActiveFixture, write_json
+ModuleNotFoundError: No module named 'tests'
+
+
+======================================================================
+ERROR: test_store (unittest.loader._FailedTest.test_store)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_store
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/test_store.py", line 1, in <module>
+    from app.models import ProviderSnapshot
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: test_time_handling (unittest.loader._FailedTest.test_time_handling)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_time_handling
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/test_time_handling.py", line 20, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_balance_currency_split (unittest.loader._FailedTest.unit.test_balance_currency_split)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_balance_currency_split
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_balance_currency_split.py", line 12, in <module>
+    from app.engine import AnalyticsEngine
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_burn_rate (unittest.loader._FailedTest.unit.test_burn_rate)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_burn_rate
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_burn_rate.py", line 9, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_confidence (unittest.loader._FailedTest.unit.test_confidence)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_confidence
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_confidence.py", line 4, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_demo_isolation (unittest.loader._FailedTest.unit.test_demo_isolation)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_demo_isolation
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_demo_isolation.py", line 20, in <module>
+    from app.demo import demo_snapshots
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_engine_details_passthrough (unittest.loader._FailedTest.unit.test_engine_details_passthrough)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_engine_details_passthrough
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_engine_details_passthrough.py", line 12, in <module>
+    from app.engine import AnalyticsEngine
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_events (unittest.loader._FailedTest.unit.test_events)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_events
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_events.py", line 10, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_forecast (unittest.loader._FailedTest.unit.test_forecast)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_forecast
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_forecast.py", line 9, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_normalize (unittest.loader._FailedTest.unit.test_normalize)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_normalize
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_normalize.py", line 5, in <module>
+    from app.demo import demo_snapshots
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_pacing (unittest.loader._FailedTest.unit.test_pacing)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_pacing
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_pacing.py", line 9, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_plans (unittest.loader._FailedTest.unit.test_plans)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_plans
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_plans.py", line 9, in <module>
+    from app.analytics.plans import (
+    ...<5 lines>...
+    )
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_provider_order (unittest.loader._FailedTest.unit.test_provider_order)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_provider_order
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_provider_order.py", line 4, in <module>
+    from app.engine import PROVIDER_DISPLAY_ORDER, AnalyticsEngine, _display_rank
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_recommendation (unittest.loader._FailedTest.unit.test_recommendation)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_recommendation
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_recommendation.py", line 7, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_risk (unittest.loader._FailedTest.unit.test_risk)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_risk
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_risk.py", line 10, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_risk_runway_factor (unittest.loader._FailedTest.unit.test_risk_runway_factor)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_risk_runway_factor
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_risk_runway_factor.py", line 6, in <module>
+    from app.analytics import risk
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_runway (unittest.loader._FailedTest.unit.test_runway)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_runway
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_runway.py", line 9, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+======================================================================
+ERROR: unit.test_series (unittest.loader._FailedTest.unit.test_series)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: unit.test_series
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/usr/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/home/yurig/ai-provider-observer/tests/unit/test_series.py", line 9, in <module>
+    from app.analytics import types as t
+ModuleNotFoundError: No module named 'app'
+
+
+----------------------------------------------------------------------
+Ran 92 tests in 15.957s
+
+FAILED (errors=25)
+HARNESS_VERIFIER_RESULT_ZLIB_B64=eNrtXduO2zgS/Rc/LgIjyWKwSd6yQRZZINgEnZl9WQwIWqIspiVKQ1J2nMH8+54iJVnumym5E7QIPSTdtqQqnmJdqWLzz5X4JpLGipRZYSyTqVm9+d/K/Z5UykrVcCsrtX43+PArrpq1vyfnllWqOLCaG8PSShimKst4uuMqEatn4aQyLUzO0kbzTSE8uZaKYbZiqdQisZVm+1wopgVPD2Oo503JlR9pBiLiW13IRGKg1gpF944hVkpj8A3uLetCWMEkhih0KRUvxtAxlgOqFjsp9vhhG60cVv+N0B2tnOtUKKm26w/db8M54CqVKccwiiq5po80A0YUGcHERZYUlWk0hFoB9CGYaqVkwgvGSwEagJgCakKqAj68KEIJeSGRvLT4o8E0GvxSCG6IEv0Io5OKpOAaz/RS30ubVw2mgye5VICnqyqjgW5IECINpNuQKpD4vhqM8VocoHiapuWrQxtGRaQvf/nlxWums+TV87+/ZDunrIHP7iS+SwSA1Ph3YP388QYINaBruSNpASXfBsor49cCCgC9hFYyI7eKW1ICaUZCg2EK2EzZyleLrNMxLeqCY9xEHMMjW4JKD63pPOXvYqDAfmCGjN0eiF/aJJZZ3BZGUCorttqNoJWd/O4/lQ0u13AhIsV4q0YnE0hCdZvCelpalFyCC/knckuQTDa0/4epVkWKaYfn6US5IfB7LckduStOu/Fdzk1O3pnLQNJ1dWvUiZC19RPvDDBw4jv5w8mrrWA8gy4NJkuqHS/cr2Zg5GGkNd/344IJ100rVYhhK20XBQJpef9JDldzDBe6SjGjFKlsSpYVVagdWk1DgAPwYxHfpKEAwTbBPqpREERJk5gerbqd4c5thVFyomX6HzT+PU0dJgNaEfbwvtLXrML3eqBeZQPTJCt105hKU3Ob5IEEdaW2R31wGBnBsxJ2erdHUcKY9YfDRsv0g/80IEgiJW9Gz25h3ir0QYeCtJr8ozdQn3GIciPSFPhglI0iHZImgch0H6bqSlu+kQUNWb9aX736fPzigyQjPgx9U6U3EgTVMXpyGORRngVvFCQMjpsD6aDQdhonPzHM+ryG6BzzKO2cC8RU0l2ewjQuna+G+z6Nb97bUCTd5mR8bRTdqooiNUmw4JN5dpZpmhJKt5EqNbArstJBsGAm54zyFMTtzTROsPyvLuIeWC6KGryAFw8Y5wk1+QKS8U5WxUl80i+eQ5OQGlqZ+Pi2vnrx/Ev7zWf64obWsmpPsU43SoGLgCF0iNwtBKOCG0JeV22M0LsL2PUZT0vQeaWc7xDAmiQRInUxl4ZiZSmm8chfv0YaenAZt4Y103TQnIOzLO+y7HHk8a3M3AT56qJNbaBw3Pgc/2IWUGuYPG7D3Ow1r2u4LkjJUHZNlQSQNLjUeatpTFoZw/xBqhSWI+xxPyEludEe6DTy3ts74l2u13HcVA1l8DQnSP2czIQ5cnnBRJahkkGkOYDDi/f9pwF5srWyJnu0mtIqQYpJxo0sJPe25BQ3QVlF0VzBaG8GiEBWfRQeaD+7ht1T0eRF5bJz00MayeDuMoByrxQTb9zMt5nJsPQAZeiYJNshbzuSaU6z6ayExK9dqiA6s7xTg4PIUj6JKb4Wojb9hNN/VNXAY8EHG9IfI2Cc5L8yXZV9iTwFiMHAEyoDoGBcGtKBHkRXRrUzN8i/AolbaK5ErUH+3kLPGbJNfLwtJh9yZOa9wk2VfklVoQKXlx/xc+h+tRS+viObIOcHteK7Sqamyxva1J68C+JX6QdjUQUFkD9mtkkuUEgjUjYkIZli9GRAxYm876WTioxTmdCqJNPV3kdcDLmrNf3YWxwBNOmSr95bbaH72LZBrnacuM40AujB9GQmKUz6OOaAkrlwn9+Rj6D6HLasDAVSSnJaYD3514Os8er1XXnjMMiDpCs/jLReydtMVBrTUBV1px2dZ5E1rqpNnVDbhGPI9v5Adp52/qq1+pYJDZWEQoMfqjNkU9N1UhJoe8G2Q005z6eotm6lpQ1VVPIR/TaA8QSxjWZZX6dIPtwqQB/pRnBxj4jUG4ZzhZumgHskVpUSN0dBkTqDgy4RN4/W6QtI+o50IxFtRra+Ol74dfD9PbrQ10ap3DrPwcvaqcLtWZrOUJLzp+ue5waqnFBFbTzkfjWrXVBEobX1Nd9joD1ZiRiqo68fYAzO0/SrmrSgKcmDPQJvJbbt/PLCWdaQVlsdp5VbvuiTvkfhW91mPYgr8MKUGZDvM0clfAS+w0fbtRmwPPq4W5nGJaxuO5i+IvSpmq2Y4ZQq+iq5fcIt9jzCAPqcEsF2u3V1jqndmhmK/jai8GPNewGnRpU3/UWXSp+YKRXb9MC6qDiS1zX7F5eFSInSemAFrROoJSIfLw6AYMY+TMUw9JXBVRiYqfAvGEaRMIlQXMtqNG9fhv/RVJafebTNaTSSKBNyK3mCpC0Sz97cTz9ypkbz8xI4Dj7kRhfZcqQmhQ8tDz1A17qy2Nt60mhNKSEzyHJs+OONhv/1ETPsCeR0mQ8gwY+koqyguMfyP+wxobY+s6L1V1+x2lzTUkk4iV0bQMNuh38WKATDxefzXPk9XBZI8sZML/JeFT5+WqeUtPLo1h+DHwNo+EsB5zVqfrQ016NupoR3zw8s4+37mcBH3VPBt8P2JUqa35+tMnf55OXq4jAXh7k4zMVhLg7zLofZrhbRyhEt/Xfren1Xyo8tp998unr77uN79uXTb1fv3rPf/vP2v2///fHtPz++/0mF9gMDgHDcUtnSqrO06iytOkurztKqs7TqLK06S6vO0qqztOosrTpLq87SqrO06iytOkurztKqs7TqLK06S6vO0qqztOosrTpLq05npu79gaVFxtUbz/Jv65rYGwTRkuPL3FXyfWHfz4rfI0yr47uXdP+1dNwGryFA279qhpW01Ds1pct/rlzCLNPVGwVH9mzlE5djvdRTuefzIEU9vXDHeyKHs7eVbmy2we+rz2+/fOkETqN5vNcnfz2LAOSEFztR4D7/yikKmA++DIsC4dnXdE8e5SO/QJw/3rOvNucO8fxL15kjnPA6eO6Iz72onjm+e16hzx3V2Jf7M8cb0nYwd4hTGiIiwBzaqjFzqOOaSCICG9TeMnO80xpvZg46qCVo7hgnNSvNHHRgG9XcUQY0eM0c4oOtZzPHFtQUN3OM97XrzRzWmEbCuUMNbnGcA9CRzZezhzSlLfTJg/4JDauRyWB0K21k+C9s8o1OGhPajyOTwejG6CeP/2e1bEcmiJHN5JGhD29zjwz4uAb8yMCP3RoQGfzwTQuRAR+9nWIG+H/8Ro9YhDBhC0os0B9pc0ws4gjethML4MfYUBSLLEZudYoF9mWbsGYghR+zPWzOwMM2rs0Z4fgtdXNGO26z35yRXrQN8ekD/4EbJGMAP37rZgyoL9tU+pMlsDrzl+MeWziX7ISNXDQXbd99+obz0zYWxyyKC7Y8Ry2WyZuxY5bKtG3iUUtk0gb2mCUSvLU+biFctOk/ZtGE/jmCmGUQ9ocSnpAE3l9dfbo6EcEFpwfEg+uugw3iQXc8cyEiTIPjIGaL6uSkinmjOB6iMW8cd5zvMXNA7uiReWM4PRVltljOHtgSA7L+LJkIwAyOuYkAzY0TeCJA9MDhQDGg2z219dupSPojlSLAcjztKQIw7UFUMSBxZ2TFAOT0+K4IEN04WSwGRHToWSQ4bpzHFgMqf1RcBEjaU+z++v2v/wOptBmd
+HARNESS_VERIFIER_SUMMARY=tests:92,passed:67,failed:25,quality:2

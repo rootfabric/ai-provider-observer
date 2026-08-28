@@ -1,0 +1,13 @@
+{
+  "schema": "hybrid_harness.candidate_lock.v3",
+  "candidate_head": "a1ccfc032f0d8b6f59000aeb06e5b7d0e48952a2",
+  "branch": "main",
+  "created_at_utc": "2026-08-27T02:55:09Z",
+  "closure_allowed_paths": [
+    "evidence/**",
+    "config/control/project-state.v1.json",
+    "config/control/missions/**",
+    "config/control/requirements/**"
+  ],
+  "rule": "Any non-closure diff after candidate invalidates review freshness."
+}

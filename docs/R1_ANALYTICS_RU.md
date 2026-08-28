@@ -58,6 +58,7 @@ providers → Collector.collect()
 
 | Ключ | Окно | Применимость |
 |---|---|---|
+| `10m` | все | всегда — мелкая дискретизация: последние ~10 минут расхода |
 | `15m` (`burn_short`) | все | всегда |
 | `1h` (`burn_medium`) | все | всегда |
 | `3h` (`burn_long`) | все | всегда |
@@ -75,12 +76,16 @@ Guards: ≥3 валидных точки, span ≥5 минут; иначе `insu
 ```
 eta_current      ← burn_15m        eta_stable   ← burn_1h
 eta_conservative ← burn_3h         eta_X = remaining / burn_X
+eta_short        ← burn_10m        (реакция на burst в пределах ~10 минут)
 survival_margin  = eta_current − time_to_reset      (< 0 ⟹ закончится ДО reset)
+survival_margin_short = eta_short − time_to_reset  (< 0 ⟹ текущий burst не дотягивает до reset)
 ```
 
 - `recovery_mode`: `hard_reset` — reset гарантирован API; `estimated_reset` — вычислен
   (OpenRouter); `unknown` — rolling/неизвестен (margin тогда не показывается).
 - Confidence по длине истории сегмента: `<15м` LOW · `15м–2ч` MEDIUM · `>2ч` HIGH.
+  `confidence_short` считается по span самой регрессии `burn_10m` (а не всей истории),
+  поэтому короткое 10-минутное окно не заимствует доверие длинной истории.
 
 ## 6. Weekly pacing и прогноз конца недели
 

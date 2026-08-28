@@ -147,6 +147,41 @@ def test_compute_burns_weekly_adds_24h_and_3d():
     assert burns["24h"].value == pytest.approx(1.0, rel=1e-6)
 
 
+def test_compute_burns_always_returns_10m_window():
+    """The 10-minute lookback is part of the standard set (fine-grained pace)."""
+    base = datetime(2026, 8, 24, 12, 0, tzinfo=timezone.utc)
+    # Per-minute cadence inside the 10m window: 20% → 23% over 9 minutes.
+    points = [
+        _pct_point((base + timedelta(minutes=i)).isoformat(), 20.0 + i / 3.0)
+        for i in range(10)
+    ]
+    burns = compute_burns(points, base + timedelta(minutes=9), None, CFG, window_type="five_hour")
+    assert "10m" in burns
+    stat = burns["10m"]
+    assert stat.status == t.STATUS_OK
+    assert stat.lookback == "10m"
+    # 3 pp over 9 minutes ⇒ 20 pp per hour.
+    assert stat.value == pytest.approx(20.0, rel=1e-6)
+    assert stat.span_minutes == pytest.approx(9.0, rel=1e-9)
+    # Both windows regress the same dense slice; the 10m one exists even
+    # when the burst is shorter than an hour.
+    assert burns["1h"].status == t.STATUS_OK
+
+
+def test_compute_burns_10m_insufficient_on_sparse_data():
+    """30-minute cadence feeds the 1h window but starves the 10m one."""
+    base = datetime(2026, 8, 24, 12, 0, tzinfo=timezone.utc)
+    points = [
+        _pct_point((base + timedelta(minutes=30 * i)).isoformat(), 20.0 + i)
+        for i in range(7)
+    ]
+    burns = compute_burns(points, base + timedelta(hours=3), None, CFG, window_type="five_hour")
+    assert burns["10m"].status == t.STATUS_INSUFFICIENT_DATA
+    assert burns["10m"].value is None  # never 0
+    # The long windows still work on the same series.
+    assert burns["1h"].status == t.STATUS_OK
+
+
 # ---------------------------------------------------------------------------
 # compute_acceleration
 # ---------------------------------------------------------------------------
