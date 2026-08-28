@@ -60,8 +60,8 @@ def test_orphaned_enforcement_target(tmp_path):
 
 def test_review_refreshes_rule(tmp_path):
     fixture(tmp_path)
-    review_rule(tmp_path, "SEC-1", reviewed_on="2026-09-20", reviewed_by="director")
-    report = health_report(tmp_path, today=date(2026,10,1))
+    review_rule(tmp_path, "SEC-1", reviewed_on="2026-08-20", reviewed_by="director")
+    report = health_report(tmp_path, today=date(2026,9,1))
     assert report["rules"][0]["status"] == "ACTIVE"
 
 
