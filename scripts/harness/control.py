@@ -865,8 +865,11 @@ def cmd_brief(args: list[str]) -> int:
     active = state.get("active_mission") if isinstance(state, dict) else None
     active_errors = validate_active(ROOT)
     readiness = validate_active(ROOT, require_completion=True) if isinstance(active, dict) else []
-    effective = _effective_status(state, readiness, active_errors)
-    if not isinstance(active, dict):
+    rule_errors = _rule_error_rows()
+    effective = "SYSTEM_BLOCKED" if rule_errors else _effective_status(state, readiness, active_errors)
+    if rule_errors:
+        nxt = {"handoff_class":"SYSTEM_BLOCKED","next_actor":"DIRECTOR","next_action":"REPAIR_RULE_LIFECYCLE"}
+    elif not isinstance(active, dict):
         nxt = {"handoff_class":"ROLE_BOUNDARY","next_actor":"DIRECTOR","next_action":"DISPATCH_OR_SELECT_MISSION"}
     elif effective == "MISSION_COMPLETE":
         nxt = {"handoff_class":"MISSION_COMPLETE","next_actor":None,"next_action":None}
@@ -875,7 +878,7 @@ def cmd_brief(args: list[str]) -> int:
     else:
         nxt = _next_from_findings(readiness)
 
-    print("HYBRID HARNESS BRIEF R12")
+    print("HYBRID HARNESS BRIEF R13.2")
     print(f"runtime_reason={runtime_reason}")
     print(f"effective_status={effective}")
     print(f"work_order={state.get('active_work_order') if isinstance(state, dict) else None}")
@@ -884,6 +887,9 @@ def cmd_brief(args: list[str]) -> int:
     print(f"handoff_class={nxt.get('handoff_class')}")
     print(f"active_errors={len(active_errors)}")
     print(f"completion_findings={len(readiness)}")
+    print(f"rule_health_errors={len(rule_errors)}")
+    if rule_errors:
+        print("rule_health_codes=" + ",".join(f"{r.get('status')}:{r.get('rule_id')}" for r in rule_errors[:6]))
 
     read_paths: list[str] = []
     wo_id = state.get("active_work_order") if isinstance(state, dict) else None
@@ -921,6 +927,8 @@ def cmd_brief(args: list[str]) -> int:
         print("command_hint=record director readiness only after review+verification evidence validates")
     elif action == "CLOSE_MISSION_AFTER_PROOF":
         print("command_hint=validate-ready && portable-check && final-report")
+    elif action == "REPAIR_RULE_LIFECYCLE":
+        print("command_hint=rules; inspect only failing rule(s) with rule-show RULE_ID")
     print("BRIEF: PASS")
     return 0
 
@@ -932,8 +940,13 @@ def cmd_diagnose(args: list[str]) -> int:
     active = state.get("active_mission") if isinstance(state, dict) else None
     active_errors = validate_active(ROOT)
     readiness = validate_active(ROOT, require_completion=True) if isinstance(active, dict) else []
-    findings = active_errors if active_errors else readiness
-    print("HYBRID HARNESS DIAGNOSE R12")
+    rule_errors = _rule_error_rows()
+    if rule_errors:
+        from audit import Finding
+        findings = [Finding("RULE_" + str(r.get("status")), "ERROR", f"{r.get('rule_id')}: {r.get('message')}") for r in rule_errors]
+    else:
+        findings = active_errors if active_errors else readiness
+    print("HYBRID HARNESS DIAGNOSE R13.2")
     print(f"scope={'active_validation' if active_errors else 'completion_readiness'}")
     print(f"finding_count={len(findings)}")
     if full:
@@ -989,6 +1002,12 @@ def cmd_candidate_check(args: list[str]) -> int:
         if active_errors:
             print("CANDIDATE_CHECK: FAIL active validation", file=sys.stderr)
             print_findings(active_errors, limit=6)
+            return 1
+        rule_errors = _rule_error_rows()
+        if rule_errors:
+            print("CANDIDATE_CHECK: FAIL rule lifecycle health", file=sys.stderr)
+            for row in rule_errors[:6]:
+                print(f"ERROR RULE_HEALTH {row.get('status')} {row.get('rule_id')}: {row.get('message')}", file=sys.stderr)
             return 1
         lock = write_candidate_lock(ROOT, strict_load(ROOT / "config/control/harness/harness-policy.v1.json").get("closure_tail", {}).get("allowed_paths", []))
     except Exception as exc:
