@@ -1,0 +1,206 @@
+{
+  "schema": "hybrid_harness.rule_review_state.v1",
+  "revision": "R13.2-baseline",
+  "reviews": {
+    "HC-GIT-001": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "HC-SELF-ACCEPT-001": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "HC-EXACT-HEAD-001": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "HC-MUTATION-LEASE-001": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "HH-PROSE-001": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "HH-RULE-LIFECYCLE-001": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "HH-CONTEXT-001": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "HH-NEGATIVE-001": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-MISSION-CONTINUITY": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-DURABLE-HANDOFF": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "PROC-HUMAN-NOT-COURIER": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-EXTERNAL-TRUST-R5": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-GIT-DURABLE-EVIDENCE-R5": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-APPEND-ONLY-BLOB-R5": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-INTEGRATION-LINEAGE-R5": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-SEMANTIC-RISK-R6": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-ACCEPTANCE-CONTRACT-R6": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-PREDICATE-COVERAGE-R6": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-REQUIREMENT-TRACEABILITY-R7": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-CAUSAL-ATTESTATION-R7": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-ATTEMPT-TRANSPARENCY-R7": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-GIT-PORTABILITY-R8": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-HISTORY-IMMUTABILITY-R8": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-CONSUMER-CONTENT-BINDING-R8": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-CLOSURE-TRAJECTORY-R8": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-TEMPORAL-CAUSALITY-R9": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-NORMATIVE-BULLET-PARSER-R9": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-MACHINE-FINAL-REPORT-R9": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-SELFTEST-ISOLATION-R9": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-CASE-DERIVED-COVERAGE-R10": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-RUNTIME-TEST-BINDING-R10": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-SEMANTIC-ORACLE-R10": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-NORMATIVE-PARAGRAPH-PARSER-R10": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-STRUCTURED-ORACLE-R11": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-SAFE-ATTEMPT-RETRY-R11": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-DERIVED-EFFECTIVE-STATUS-R11": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-DURABLE-RESUME-R11": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-EXTERNAL-CUSTODY-R11": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-TOKEN-BOUNDED-AGENT-R12": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    },
+    "CTRL-DURABLE-RAW-COMPACT-STDOUT-R12": {
+      "last_reviewed": "2026-08-28",
+      "reviewed_by": "R13.2 migration",
+      "note": "Baseline lifecycle migration; future reviews are per-rule and Git-tracked."
+    }
+  }
+}

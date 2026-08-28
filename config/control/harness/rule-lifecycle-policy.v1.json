@@ -1,0 +1,27 @@
+{
+  "schema": "hybrid_harness.rule_lifecycle_policy.v1",
+  "default_review_every_days": 90,
+  "review_every_days_by_class": {
+    "SECURITY_INVARIANT": 45,
+    "CONTROL_INVARIANT": 90,
+    "PROCESS_GUARD": 120,
+    "EFFICIENCY_INVARIANT": 180
+  },
+  "stale_is_error_for_classes": [
+    "SECURITY_INVARIANT"
+  ],
+  "allowed_rule_statuses": [
+    "ACTIVE",
+    "DRAFT",
+    "DEPRECATED",
+    "SUPERSEDED"
+  ],
+  "principles": {
+    "rules_are_never_auto_deleted": true,
+    "review_state_is_git_tracked": true,
+    "missing_enforcement_target_is_error": true,
+    "missing_test_target_is_error": true,
+    "security_rule_staleness_fails_closed": true,
+    "new_machine_rules_require_test_links": true
+  }
+}
