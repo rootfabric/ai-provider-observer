@@ -119,14 +119,24 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def _rule_error_rows() -> list[dict]:
+    """Return ERROR-severity lifecycle rows; config failure is itself an ERROR."""
+    try:
+        report = rule_health_report(ROOT)
+    except RuleLifecycleError as exc:
+        return [{"rule_id":"<config>", "status":"BROKEN", "severity":"ERROR", "message":str(exc)}]
+    return [row for row in report["rules"] if row.get("severity") == "ERROR"]
+
+
 def cmd_status() -> int:
     state = strict_load(ROOT / "config/control/project-state.v1.json")
     active_errors = validate_active(ROOT)
     readiness = validate_active(ROOT, require_completion=True) if isinstance(state, dict) and state.get("active_mission") else []
     complete_claim = isinstance(state, dict) and (state.get("status") == "MISSION_COMPLETE" or (isinstance(state.get("active_mission"), dict) and state["active_mission"].get("complete") is True))
     completion_proven = bool(complete_claim and not readiness)
-    effective = _effective_status(state, readiness, active_errors)
-    print("HYBRID HARNESS STATUS R12")
+    rule_errors = _rule_error_rows()
+    effective = "SYSTEM_BLOCKED" if rule_errors else _effective_status(state, readiness, active_errors)
+    print("HYBRID HARNESS STATUS R13.2")
     print(f"declared_status={state.get('status')}")
     print(f"effective_status={effective}")
     print(f"active_checkpoint={state.get('active_checkpoint')}")
@@ -135,6 +145,9 @@ def cmd_status() -> int:
     print(f"active_mission={state.get('active_mission')}")
     print(f"mutation_lease={state.get('mutation_lease')}")
     print(f"completion_proven={completion_proven}")
+    print(f"rule_health_errors={len(rule_errors)}")
+    if rule_errors:
+        print("rule_health_codes=" + ",".join(f"{r.get('status')}:{r.get('rule_id')}" for r in rule_errors[:8]))
     if active_errors:
         print("active_validation=FAIL")
         print_findings(active_errors, limit=6)
@@ -421,7 +434,17 @@ def _print_active(findings, label: str) -> int:
 
 
 def cmd_validate_active() -> int:
-    return _print_active(validate_active(ROOT), "VALIDATE_ACTIVE")
+    findings = validate_active(ROOT)
+    if findings:
+        return _print_active(findings, "VALIDATE_ACTIVE")
+    rule_errors = _rule_error_rows()
+    if rule_errors:
+        for row in rule_errors[:8]:
+            print(f"ERROR RULE_HEALTH {row.get('status')} {row.get('rule_id')}: {row.get('message')}")
+        print(f"VALIDATE_ACTIVE: FAIL ({len(rule_errors)} rule health errors)")
+        return 1
+    print("VALIDATE_ACTIVE: PASS")
+    return 0
 
 
 def _portable_errors() -> list[str]:
@@ -435,6 +458,13 @@ def cmd_validate_ready() -> int:
     rc = _print_active(findings, "VALIDATE_READY")
     if rc != 0:
         return rc
+    rule_errors = _rule_error_rows()
+    if rule_errors:
+        for row in rule_errors[:8]:
+            print(f"ERROR RULE_HEALTH {row.get('status')} {row.get('rule_id')}: {row.get('message')}")
+        print(f"RULE_HEALTH_READY: FAIL ({len(rule_errors)} errors)")
+        return 1
+    print("RULE_HEALTH_READY: PASS")
     portable = _portable_errors()
     for err in portable:
         print(f"ERROR {err}")
@@ -459,7 +489,7 @@ def cmd_hygiene() -> int:
         "RULE_LIFECYCLE_INCOMPLETE", "PROTECTED_RULE_RETIREMENT_UNSAFE", "AUTO_RULE_DELETION_FORBIDDEN",
         "MUTABLE_STATE_IN_PROSE", "ROOT_ROUTER_TOO_LONG", "ROOT_ROUTER_TOO_HEAVY",
         "CONTEXT_BUDGET_EXCEEDED", "CONDITIONAL_CONTEXT_BUDGET_EXCEEDED", "CONTEXT_ROUTE_TARGET_MISSING",
-        "MACHINE_RULE_PROSE_BLOAT"
+        "MACHINE_RULE_PROSE_BLOAT", "RULE_STALE", "RULE_BROKEN", "RULE_ORPHANED", "RULE_REVIEW_STATE_ORPHANED"
     }
     selected = [f for f in findings if f.code in hygiene_codes]
     print_findings(selected)
@@ -1053,8 +1083,10 @@ def cmd_rules(args: list[str]) -> int:
     except RuleLifecycleError as exc:
         print(f"RULES: FAIL {exc}", file=sys.stderr)
         return 1
+    errors = [r for r in report["rules"] if r["severity"] == "ERROR"]
     if "--json" in args:
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0 if not errors else 1
     else:
         print("HYBRID HARNESS RULE HEALTH R13.2")
         print(f"rule_count={report['rule_count']}")
@@ -1066,7 +1098,6 @@ def cmd_rules(args: list[str]) -> int:
                     f"{row['status']}\t{row['rule_id']}\tseverity={row['severity']}"
                     f"\tlast_reviewed={row['last_reviewed']}\tdue={row['review_due']}\t{row['message']}"
                 )
-    errors = [r for r in report["rules"] if r["severity"] == "ERROR"]
     print("RULES: " + ("PASS" if not errors else "FAIL"))
     return 0 if not errors else 1
 
@@ -1087,6 +1118,7 @@ def cmd_rule_show(args: list[str]) -> int:
         return 2
     if "--json" in args:
         print(json.dumps(row, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
     else:
         print("HYBRID HARNESS RULE R13.2")
         for key in (
@@ -1136,7 +1168,7 @@ def cmd_rule_review(args: list[str]) -> int:
 def cmd_rule_add(args: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="rule-add", add_help=False)
     parser.add_argument("rule_id")
-    parser.add_argument("--class", dest="rule_class", required=True)
+    parser.add_argument("--class", dest="rule_class", choices=("SECURITY_INVARIANT","CONTROL_INVARIANT","PROCESS_GUARD","EFFICIENCY_INVARIANT"), required=True)
     parser.add_argument("--source", required=True)
     parser.add_argument("--applies-when", required=True)
     parser.add_argument("--enforcement", choices=("machine", "mixed", "prose"), required=True)
