@@ -77,3 +77,13 @@ def test_add_rule_requires_real_test_and_enforcement_targets(tmp_path):
     assert {x["rule_id"] for x in report["rules"]} == {"SEC-1","CTRL-2"}
     added = next(x for x in report["rules"] if x["rule_id"] == "CTRL-2")
     assert added["status"] == "ACTIVE"
+
+
+def test_future_review_date_is_rejected(tmp_path):
+    fixture(tmp_path)
+    try:
+        review_rule(tmp_path, "SEC-1", reviewed_on="2999-01-01", reviewed_by="director")
+    except Exception as exc:
+        assert "RULE_REVIEW_DATE_IN_FUTURE" in str(exc)
+    else:
+        raise AssertionError("future review date must fail closed")

@@ -23,3 +23,11 @@
 ## Stop classes
 
 Only `ROLE_BOUNDARY`, `EXTERNAL_WAIT`, `HUMAN_DECISION_REQUIRED`, `SYSTEM_BLOCKED`, `MISSION_COMPLETE`. Runtime timeout/interrupt is diagnostic only; resume with `brief TIMEOUT` / `brief INTERRUPTED`.
+
+## Rule maintenance (R13.2)
+
+- Global Harness rules are Git-tracked policy. Never edit `rule-review-state.v1.json` by hand.
+- For rule work use `./CONTROL_HARNESS.sh rules`, `rule-show`, `rule-add`, and `rule-review`.
+- `rule-add` is allowed only with no active mission and a clean worktree; machine/mixed rules require real enforcement and test targets that already exist.
+- `rule-review` records the review date/actor/note and commits the review state. Security-rule staleness fails closed; other stale classes are surfaced as warnings according to policy.
+- BROKEN/ORPHANED rule health is a Harness defect, not a product defect. Repair it before accepting product work.

@@ -144,6 +144,8 @@ def _health_for_rule(root: Path, rule: dict[str, Any], review: dict[str, Any] | 
     reviewed_day = _parse_day(review.get("last_reviewed") if isinstance(review, dict) else None)
     if isinstance(review, dict) and review.get("last_reviewed") and reviewed_day is None:
         broken_reasons.append("last_reviewed invalid")
+    if reviewed_day is not None and reviewed_day > today:
+        broken_reasons.append("last_reviewed is in the future")
 
     declared_status = str(rule.get("status") or "ACTIVE").upper()
     allowed = set(policy.get("allowed_rule_statuses", ["ACTIVE", "DRAFT", "DEPRECATED", "SUPERSEDED"]))
@@ -263,6 +265,8 @@ def review_rule(root: Path, rule_id: str, *, reviewed_on: str | None = None,
     day = _parse_day(reviewed_on) if reviewed_on else date.today()
     if day is None:
         raise RuleLifecycleError("RULE_REVIEW_DATE_INVALID")
+    if day > date.today():
+        raise RuleLifecycleError("RULE_REVIEW_DATE_IN_FUTURE")
     state = load_review_state(root)
     reviews = state.setdefault("reviews", {})
     reviews[rule_id] = {

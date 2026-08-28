@@ -22,6 +22,7 @@
     "missing_enforcement_target_is_error": true,
     "missing_test_target_is_error": true,
     "security_rule_staleness_fails_closed": true,
-    "new_machine_rules_require_test_links": true
+    "new_machine_rules_require_test_links": true,
+    "future_review_dates_forbidden": true
   }
 }
