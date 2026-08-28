@@ -87,3 +87,43 @@ def test_future_review_date_is_rejected(tmp_path):
         assert "RULE_REVIEW_DATE_IN_FUTURE" in str(exc)
     else:
         raise AssertionError("future review date must fail closed")
+
+
+def test_unknown_class_rejected(tmp_path):
+    fixture(tmp_path)
+    rule = {
+      "id":"X","class":"MADE_UP_CLASS","source":"x","applies_when":"x",
+      "enforcement":"machine","enforced_by":["guard.py"],"retirement":"CONTROL_REVISION_REQUIRED",
+      "prose_mode":"router_only","owner":"proof-kernel","tests":["test_guard.py"]
+    }
+    try:
+        add_rule(tmp_path, rule)
+    except Exception as exc:
+        assert "RULE_CLASS_INVALID" in str(exc)
+    else:
+        raise AssertionError("unknown rule class must fail closed")
+
+
+def test_empty_review_actor_is_rejected(tmp_path):
+    fixture(tmp_path)
+    try:
+        review_rule(tmp_path, "SEC-1", reviewed_on="2026-08-20", reviewed_by="")
+    except Exception as exc:
+        assert "RULE_REVIEW_ACTOR_REQUIRED" in str(exc)
+    else:
+        raise AssertionError("review actor is durable provenance and may not be empty")
+
+
+def test_non_positive_cadence_rejected_before_write(tmp_path):
+    fixture(tmp_path)
+    rule = {
+      "id":"CTRL-BAD-CADENCE","class":"CONTROL_INVARIANT","source":"x","applies_when":"x",
+      "enforcement":"machine","enforced_by":["guard.py"],"retirement":"CONTROL_REVISION_REQUIRED",
+      "prose_mode":"router_only","owner":"proof-kernel","tests":["test_guard.py"],"review_every_days":0
+    }
+    try:
+        add_rule(tmp_path, rule)
+    except Exception as exc:
+        assert "RULE_REVIEW_CADENCE_INVALID" in str(exc)
+    else:
+        raise AssertionError("non-positive cadence must fail closed")
