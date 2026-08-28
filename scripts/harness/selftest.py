@@ -55,6 +55,20 @@ def run(source_root: Path) -> tuple[bool, list[str]]:
         j = json.loads(p.read_text(encoding="utf-8")); j["rules"][0]["retirement"] = "DELETE_AFTER_30_DAYS"; write_json(p, j)
     mutations.append(("bad-protected-retirement", unsafe_retirement, "PROTECTED_RULE_RETIREMENT_UNSAFE"))
 
+    def stale_security_rule(r: Path):
+        p = r / "config/control/harness/rule-review-state.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8"))
+        j["reviews"]["CTRL-EXTERNAL-TRUST-R5"]["last_reviewed"] = "2000-01-01"
+        write_json(p, j)
+    mutations.append(("bad-stale-security-rule", stale_security_rule, "RULE_STALE"))
+
+    def orphan_rule_target(r: Path):
+        p = r / "config/control/harness/rule-registry.v1.json"
+        j = json.loads(p.read_text(encoding="utf-8"))
+        j["rules"][0]["enforced_by"] = ["definitely-missing-rule-enforcement.py"]
+        write_json(p, j)
+    mutations.append(("bad-orphan-rule-target", orphan_rule_target, "RULE_ORPHANED"))
+
     def stale_prose(r: Path):
         p = r / "HARNESS_CONTROL.md"
         p.write_text(p.read_text(encoding="utf-8") + "\nCurrent checkpoint: H0.1\n", encoding="utf-8")

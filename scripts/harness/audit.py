@@ -8,6 +8,7 @@ from typing import Iterable
 
 from strictjson import StrictJSONError, load as strict_load
 from active_validation import validate_active
+from rules import health_report as rule_health_report, lifecycle_issues
 
 
 @dataclass(frozen=True)
@@ -60,6 +61,8 @@ def structural_findings(root: Path) -> list[Finding]:
         CONFIG / "instruction-hygiene-policy.v1.json",
         CONFIG / "context-routing.v1.json",
         CONFIG / "rule-registry.v1.json",
+        CONFIG / "rule-lifecycle-policy.v1.json",
+        CONFIG / "rule-review-state.v1.json",
         CONFIG / "checkpoint-catalog.v1.json",
         CONFIG / "golden-cases.v1.json",
         CONFIG / "continuation-policy.v1.json",
@@ -73,6 +76,7 @@ def structural_findings(root: Path) -> list[Finding]:
         CONFIG / "requirements-manifest.schema.v1.json",
         Path("scripts/harness/verifier_runner.py"),
         Path("scripts/harness/verifier_api.py"),
+        Path("scripts/harness/rules.py"),
     ]
     for rel in required:
         if not (root / rel).is_file():
@@ -363,6 +367,14 @@ def rule_findings(root: Path) -> list[Finding]:
     return findings
 
 
+def rule_health_findings(root: Path) -> list[Finding]:
+    """R13.2: detect stale, broken and orphaned rules from Git-tracked lifecycle state."""
+    return [
+        Finding(str(i["code"]), str(i["severity"]), str(i["message"]))
+        for i in lifecycle_issues(root)
+    ]
+
+
 def mutable_prose_findings(root: Path) -> list[Finding]:
     findings: list[Finding] = []
     try:
@@ -458,7 +470,7 @@ def all_findings(root: Path) -> list[Finding]:
     findings = structural_findings(root)
     if any(f.severity == "ERROR" for f in findings):
         return findings
-    for fn in (control_findings, continuation_findings, rule_findings, mutable_prose_findings, context_findings, golden_findings):
+    for fn in (control_findings, continuation_findings, rule_findings, rule_health_findings, mutable_prose_findings, context_findings, golden_findings):
         findings.extend(fn(root))
     findings.extend(Finding(f.code, "ERROR", f.message) for f in validate_active(root))
     return findings
@@ -469,11 +481,13 @@ def summary(root: Path) -> dict:
     hygiene = load_json(root, CONFIG / "instruction-hygiene-policy.v1.json")
     registry = load_json(root, CONFIG / "rule-registry.v1.json")
     always_paths = [root / p for p in routing.get("always", []) if (root / p).is_file()]
+    rule_health = rule_health_report(root)
     return {
         "root_router_lines": _line_count(root / "AGENTS.md"),
         "always_context_estimated_tokens": _token_estimate(always_paths),
         "rule_count": len(registry.get("rules", [])),
         "protected_rule_count": sum(1 for r in registry.get("rules", []) if r.get("class") in set(hygiene.get("protected_rule_classes", []))),
+        "rule_health_counts": rule_health.get("counts", {}),
         "routes": sorted(routing.get("routes", {}).keys()),
         "auto_rule_deletion": False,
     }

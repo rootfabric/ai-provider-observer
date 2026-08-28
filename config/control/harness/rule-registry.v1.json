@@ -506,8 +506,7 @@
       "enforced_by": [
         "trust.py",
         "review-policy.v1.json",
-        "active_validation.py",
-        "external_attestation.py"
+        "active_validation.py"
       ],
       "retirement": "SECURITY_REVISION_REQUIRED",
       "prose_mode": "router_only"
@@ -540,6 +539,29 @@
       ],
       "retirement": "CONTROL_REVISION_REQUIRED",
       "prose_mode": "router_only"
+    },
+    {
+      "id": "CTRL-RULE-FRESHNESS-R13-2",
+      "class": "CONTROL_INVARIANT",
+      "source": "R13.2 rule lifecycle hardening",
+      "applies_when": "Harness validation and rule maintenance",
+      "enforcement": "machine",
+      "enforced_by": [
+        "rules.py",
+        "audit.py",
+        "rule-lifecycle-policy.v1.json",
+        "rule-review-state.v1.json"
+      ],
+      "retirement": "CONTROL_REVISION_REQUIRED",
+      "prose_mode": "router_only",
+      "status": "ACTIVE",
+      "owner": "proof-kernel",
+      "tests": [
+        "test_rule_lifecycle.py"
+      ],
+      "lifecycle_version": 1,
+      "introduced_revision": "R13.2",
+      "review_every_days": 90
     }
   ],
   "revision": "HYBRID-HARNESS-R12"

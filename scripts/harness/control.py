@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import argparse
 import os
 import sys
 import hashlib
@@ -23,6 +24,7 @@ from strictjson import load as strict_load
 from semantic import semantic_contract_errors, infer_semantic_tags, risk_floor, required_partitions, RISK_ORDER
 from requirements import extract_normative_clauses, validate_requirements_manifest
 from portable import portable_clone_validate
+from rules import RuleLifecycleError, add_rule, health_report as rule_health_report, review_rule
 
 
 def _verbose_output() -> bool:
@@ -1029,6 +1031,166 @@ def cmd_event_record(args: list[str]) -> int:
     return 0
 
 
+
+def _rule_control_window() -> tuple[bool, str]:
+    """Rule-policy mutation is maintenance work and may not piggyback on a product mission."""
+    try:
+        state = strict_load(ROOT / "config/control/project-state.v1.json")
+    except Exception as exc:
+        return False, f"project state invalid: {exc}"
+    if isinstance(state, dict) and isinstance(state.get("active_mission"), dict):
+        return False, "active mission must be closed before rule-policy mutation"
+    from gitproof import worktree_changed_paths
+    dirty = worktree_changed_paths(ROOT)
+    if dirty:
+        return False, "clean worktree required before rule-policy mutation: " + ",".join(dirty[:12])
+    return True, ""
+
+
+def cmd_rules(args: list[str]) -> int:
+    try:
+        report = rule_health_report(ROOT)
+    except RuleLifecycleError as exc:
+        print(f"RULES: FAIL {exc}", file=sys.stderr)
+        return 1
+    if "--json" in args:
+        print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        print("HYBRID HARNESS RULE HEALTH R13.2")
+        print(f"rule_count={report['rule_count']}")
+        for status in ("ACTIVE", "STALE", "BROKEN", "ORPHANED", "DRAFT", "DEPRECATED", "SUPERSEDED"):
+            print(f"{status.lower()}={report.get('counts', {}).get(status, 0)}")
+        for row in report["rules"]:
+            if row["status"] != "ACTIVE":
+                print(
+                    f"{row['status']}\t{row['rule_id']}\tseverity={row['severity']}"
+                    f"\tlast_reviewed={row['last_reviewed']}\tdue={row['review_due']}\t{row['message']}"
+                )
+    errors = [r for r in report["rules"] if r["severity"] == "ERROR"]
+    print("RULES: " + ("PASS" if not errors else "FAIL"))
+    return 0 if not errors else 1
+
+
+def cmd_rule_show(args: list[str]) -> int:
+    if not args:
+        print("usage: rule-show RULE_ID [--json]", file=sys.stderr)
+        return 2
+    rid = args[0]
+    try:
+        report = rule_health_report(ROOT)
+    except RuleLifecycleError as exc:
+        print(f"RULE_SHOW: FAIL {exc}", file=sys.stderr)
+        return 1
+    row = next((x for x in report["rules"] if x["rule_id"] == rid), None)
+    if row is None:
+        print(f"RULE_SHOW: FAIL RULE_NOT_FOUND:{rid}", file=sys.stderr)
+        return 2
+    if "--json" in args:
+        print(json.dumps(row, ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        print("HYBRID HARNESS RULE R13.2")
+        for key in (
+            "rule_id", "rule_class", "status", "severity", "last_reviewed",
+            "review_due", "days_since_review", "review_every_days", "message",
+        ):
+            print(f"{key}={row.get(key)}")
+        print("missing_enforcement_targets=" + ",".join(row.get("missing_enforcement_targets", [])))
+        print("missing_test_targets=" + ",".join(row.get("missing_test_targets", [])))
+    print("RULE_SHOW: PASS")
+    return 0
+
+
+def cmd_rule_review(args: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="rule-review", add_help=False)
+    parser.add_argument("rule_id")
+    parser.add_argument("--date")
+    parser.add_argument("--by", default="DIRECTOR")
+    parser.add_argument("--note", default="")
+    try:
+        ns = parser.parse_args(args)
+    except SystemExit:
+        return 2
+    ok, reason = _rule_control_window()
+    if not ok:
+        print(f"RULE_REVIEW: FAIL {reason}", file=sys.stderr)
+        return 1
+    try:
+        path = review_rule(ROOT, ns.rule_id, reviewed_on=ns.date, reviewed_by=ns.by, note=ns.note)
+        report = rule_health_report(ROOT)
+        row = next(x for x in report["rules"] if x["rule_id"] == ns.rule_id)
+    except (RuleLifecycleError, StopIteration) as exc:
+        print(f"RULE_REVIEW: FAIL {exc}", file=sys.stderr)
+        return 1
+    commit = _git_commit_paths(
+        [path.relative_to(ROOT).as_posix()],
+        f"control(rules): review {ns.rule_id}",
+    )
+    print(f"RULE_ID={ns.rule_id}")
+    print(f"RULE_STATUS={row['status']}")
+    print(f"REVIEW_DUE={row['review_due']}")
+    print(f"RULE_REVIEW_COMMIT={commit}")
+    print("RULE_REVIEW: PASS")
+    return 0
+
+
+def cmd_rule_add(args: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="rule-add", add_help=False)
+    parser.add_argument("rule_id")
+    parser.add_argument("--class", dest="rule_class", required=True)
+    parser.add_argument("--source", required=True)
+    parser.add_argument("--applies-when", required=True)
+    parser.add_argument("--enforcement", choices=("machine", "mixed", "prose"), required=True)
+    parser.add_argument("--enforced-by", action="append", required=True)
+    parser.add_argument("--retirement", required=True)
+    parser.add_argument("--owner", required=True)
+    parser.add_argument("--test", action="append", default=[])
+    parser.add_argument("--review-every-days", type=int)
+    parser.add_argument("--prose-mode", default="router_only")
+    parser.add_argument("--by", default="DIRECTOR")
+    parser.add_argument("--note", default="initial rule activation")
+    try:
+        ns = parser.parse_args(args)
+    except SystemExit:
+        return 2
+    ok, reason = _rule_control_window()
+    if not ok:
+        print(f"RULE_ADD: FAIL {reason}", file=sys.stderr)
+        return 1
+    rule = {
+        "id": ns.rule_id,
+        "class": ns.rule_class,
+        "source": ns.source,
+        "applies_when": ns.applies_when,
+        "enforcement": ns.enforcement,
+        "enforced_by": ns.enforced_by,
+        "retirement": ns.retirement,
+        "prose_mode": ns.prose_mode,
+        "owner": ns.owner,
+        "tests": ns.test,
+    }
+    if ns.review_every_days is not None:
+        rule["review_every_days"] = ns.review_every_days
+    try:
+        registry_path, state_path = add_rule(ROOT, rule, reviewed_by=ns.by, note=ns.note)
+        report = rule_health_report(ROOT)
+        row = next(x for x in report["rules"] if x["rule_id"] == ns.rule_id)
+        if row["status"] != "ACTIVE":
+            raise RuleLifecycleError(f"RULE_NOT_ACTIVE_AFTER_ADD:{row['status']}:{row['message']}")
+    except (RuleLifecycleError, StopIteration) as exc:
+        print(f"RULE_ADD: FAIL {exc}", file=sys.stderr)
+        return 1
+    commit = _git_commit_paths(
+        [registry_path.relative_to(ROOT).as_posix(), state_path.relative_to(ROOT).as_posix()],
+        f"control(rules): add {ns.rule_id}",
+    )
+    print(f"RULE_ID={ns.rule_id}")
+    print(f"RULE_STATUS={row['status']}")
+    print(f"REVIEW_DUE={row['review_due']}")
+    print(f"RULE_ADD_COMMIT={commit}")
+    print("RULE_ADD: PASS")
+    return 0
+
+
 def cmd_demo() -> int:
     rc1 = cmd_validate()
     rc2 = cmd_hygiene() if rc1 == 0 else 1
@@ -1047,6 +1209,10 @@ def main() -> int:
         "continuation-demo": cmd_continuation_demo, "freeze-candidate": cmd_freeze_candidate, "report": cmd_report, "final-report": cmd_final_report, "demo": cmd_demo,
     }
     if cmd == "resume": return cmd_resume(args[1:])
+    if cmd == "rules": return cmd_rules(args[1:])
+    if cmd == "rule-show": return cmd_rule_show(args[1:])
+    if cmd == "rule-review": return cmd_rule_review(args[1:])
+    if cmd == "rule-add": return cmd_rule_add(args[1:])
     if cmd == "brief": return cmd_brief(args[1:])
     if cmd == "diagnose": return cmd_diagnose(args[1:])
     if cmd == "attempt-retry": return cmd_attempt_retry(args[1:])
@@ -1061,7 +1227,7 @@ def main() -> int:
     if cmd == "requirements-check": return cmd_requirements_check(args[1:])
     if cmd == "semantic-scan": return cmd_semantic_scan(args[1:])
     if cmd not in simple:
-        print("usage: control.py status|resume|brief|diagnose|attempt-retry|candidate-check|validate|validate-active|validate-ready|portable-check|semantic-scan|requirements-scan|requirements-check|acceptance-check|hygiene|selftest|continuation-demo|freeze-candidate|evidence-run|verifier-run|verifier-check|event-add|event-record|report|final-report|demo", file=sys.stderr)
+        print("usage: control.py status|resume|brief|diagnose|rules|rule-show|rule-review|rule-add|attempt-retry|candidate-check|validate|validate-active|validate-ready|portable-check|semantic-scan|requirements-scan|requirements-check|acceptance-check|hygiene|selftest|continuation-demo|freeze-candidate|evidence-run|verifier-run|verifier-check|event-add|event-record|report|final-report|demo", file=sys.stderr)
         return 2
     return simple[cmd]()
 
